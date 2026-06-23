@@ -576,6 +576,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 </span>
             </label>
             <?php endif; ?>
+            <button type="button" class="evk-b-field-clone" title="Klonuj pole"><span class="dashicons dashicons-admin-page"></span></button>
             <button type="button" class="evk-b-field-remove" title="Usuń"><span class="dashicons dashicons-no-alt"></span></button>
         </div>
 
@@ -773,7 +774,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <textarea name="<?php echo esc_attr($base); ?>[desc_content]" rows="3" placeholder="Tekst pomocy, instrukcja…"><?php echo esc_textarea($desc_content); ?></textarea>
             </div>
             <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:12px;">
-                <label class="evk-b-inline-check">
+                <label class="evk-b-inline-check" style="margin-left:0;">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[desc_collapsible]" value="1" <?php checked($desc_collapsible); ?>>
                     Zwijany (klik w tytuł)
                 </label>

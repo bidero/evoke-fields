@@ -102,9 +102,41 @@
         $(this).closest('.evk-b-field').toggleClass('evk-col-on', this.checked);
     });
 
+    $(document).on('click', '.evk-b-field-clone', function () {
+        var $field  = $(this).closest('.evk-b-field');
+        var oldBase = $field.attr('data-base');
+        var match   = oldBase.match(/\[([^\[\]]+)\]$/);
+        if (!match) return;
+        var oldIdx  = match[1];
+        var newIdx  = Date.now() + '' + (Math.random() * 1e4 | 0);
+        var escOld  = '[' + oldIdx + ']';
+        var escNew  = '[' + newIdx + ']';
+        var newBase = oldBase.slice(0, oldBase.length - escOld.length) + escNew;
+
+        var $clone = $field.clone(false);
+        $clone.attr('data-base', newBase).removeClass('is-collapsed');
+
+        $clone.find('[name]').each(function () {
+            $(this).attr('name', $(this).attr('name').split(escOld).join(escNew));
+        });
+        $clone.find('[data-base]').each(function () {
+            $(this).attr('data-base', $(this).attr('data-base').split(escOld).join(escNew));
+        });
+
+        // Unikalne _kopia na kluczu głównego pola
+        var $k = $clone.children('.evk-b-field-grid').find('.evk-b-key').first();
+        $k.val($k.val().replace(/_kopia\d*$/, '') + '_kopia');
+
+        $field.after($clone);
+        applyType($clone);
+
+        var $rep = $clone.closest('.evk-b-subfields').closest('.evk-b-field');
+        if ($rep.length) syncTitleSelect($rep);
+    });
+
     $(document).on('click', '.evk-b-field-top', function (e) {
         if ($(e.target).is('input, button, select, .dashicons-no-alt')) return;
-        if ($(e.target).closest('.evk-b-col-switch').length) return; // klik w przełącznik nie zwija pola
+        if ($(e.target).closest('.evk-b-col-switch, .evk-b-field-clone').length) return; // klik w przełącznik/klon nie zwija pola
         // Tylko klasa — widocznością bloków steruje CSS. (slideToggle ustawiał inline
         // display:block na WSZYSTKICH blokach konfiguracji, odsłaniając ustawienia
         // niewłaściwych typów pól — stąd „pojawiały się ustawienia niezwiązanych pól".)

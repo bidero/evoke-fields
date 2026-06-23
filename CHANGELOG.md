@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.22.0] — 2026-06-24
+
+### Dodane
+
+- **Klonowanie pola w builderze** — przycisk „Klonuj pole" (ikona strony) obok przycisku
+  „Usuń" w nagłówku każdego pola. Tworzy głęboką kopię pola (wartości, typ, opcje),
+  zamienia indeksy formularza na unikalne, dodaje sufiks `_kopia` do klucza pola.
+  Działa dla pól głównych i pól powtarzalnych (sub-fields). (`includes/builder.php`,
+  `assets/builder.js`, `assets/builder.css`)
+
+### Naprawione
+
+- **Pozycja checkboxów „Zwijany / Zwinięty na start" w polu Opis** — oba miały
+  `margin-left:auto` w kontenerze flex, co dzieliło wolne miejsce i przesuwało oba
+  do środka. Pierwszy checkbox dostał `margin-left:0` → układ „lewo / prawo".
+  (`includes/builder.php`)
+
 ## [1.21.2] — 2026-06-23
 
 ### Dodane
