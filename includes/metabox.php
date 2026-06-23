@@ -206,6 +206,20 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo evk_rep_wrap_affix('<input type="date" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $req . '>', $field);
             break;
 
+        case 'toggle':
+            $on_val  = $field['toggle_on']  ?? '1';
+            $off_val = $field['toggle_off'] ?? '0';
+            $on_lbl  = $field['toggle_on_label']  ?? 'Tak';
+            $off_lbl = $field['toggle_off_label'] ?? 'Nie';
+            $is_on   = ((string) $val === (string) $on_val);
+            echo '<label class="evk-rep-toggle">';
+            echo '<input type="hidden" name="' . esc_attr($name) . '" value="' . esc_attr($off_val) . '">';
+            echo '<input type="checkbox" name="' . esc_attr($name) . '" value="' . esc_attr($on_val) . '" class="evk-rep-toggle-input" ' . checked($is_on, true, false) . '>';
+            echo '<span class="evk-rep-toggle-slider"></span>';
+            echo '<span class="evk-rep-toggle-labels"><span class="evk-rep-toggle-off">' . esc_html($off_lbl) . '</span><span class="evk-rep-toggle-on">' . esc_html($on_lbl) . '</span></span>';
+            echo '</label>';
+            break;
+
         case 'checkbox':
             echo '<label class="evk-rep-cb"><input type="hidden" name="' . esc_attr($name) . '" value="0">'
                . '<input type="checkbox" name="' . esc_attr($name) . '" value="1" ' . checked(!empty($val), true, false) . '> Tak</label>';
@@ -398,7 +412,8 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $rows = is_array($rows) ? array_values($rows) : [];
         $rep_title_src = (($field['title_tpl'] ?? '') !== '') ? $field['title_tpl'] : ($field['title_field'] ?? '');
         echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '" style="grid-column:span 12;">';
-        echo '<label class="evk-s-label">' . esc_html($field['label'] ?? $fkey) . '</label>';
+        $rep_lbl = $field['label'] ?? $fkey;
+        if ($rep_lbl !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . '</label>';
         evk_rep_render_repeater_widget($base, $field['sub_fields'] ?? [], $rows, $rep_title_src, (int) ($ctx['depth'] ?? -1) + 1, !empty($field['collapsed']), $field['add_label'] ?? '');
         echo '</div>';
         return;
@@ -422,7 +437,10 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
     }
     $span = evk_rep_field_span($field);
     echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '" style="grid-column:span ' . $span . ';">';
-    echo '<label class="evk-s-label">' . esc_html($field['label'] ?? $fkey) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';
+    $lbl = $field['label'] ?? $fkey;
+    if ($lbl !== '') {
+        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';
+    }
     evk_rep_render_field_input($name, $field, $val, $c, $eid);
     echo '</div>';
 }
@@ -450,7 +468,12 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
         }
         if ($t === 'heading') {
             $acc = null;
-            $panels[$cur]['blocks'][] = ['type' => 'heading', 'label' => $f['label'] ?? ''];
+            $panels[$cur]['blocks'][] = ['type' => 'heading', 'label' => $f['label'] ?? '', 'field' => $f];
+            continue;
+        }
+        if ($t === 'description') {
+            $acc = null;
+            $panels[$cur]['blocks'][] = ['type' => 'description', 'label' => $f['label'] ?? '', 'field' => $f];
             continue;
         }
         if ($t === 'accordion') {
@@ -478,7 +501,32 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
         echo '<div class="evk-s-panel' . ($pi === 0 ? ' active' : '') . '" data-panel="' . $pi . '">';
         foreach ($p['blocks'] as $b) {
             if ($b['type'] === 'heading') {
-                echo '<h3 class="evk-s-heading">' . esc_html($b['label']) . '</h3>';
+                $f        = $b['field'] ?? [];
+                $size     = $f['heading_size'] ?? 'h3';
+                $subtxt   = $f['heading_sub']  ?? '';
+                $separator = !empty($f['heading_separator']);
+                $tag      = in_array($size, ['h1','h2','h3','h4','h5'], true) ? $size : 'h3';
+                echo '<div class="evk-s-heading-wrap' . ($separator ? ' has-separator' : '') . '">';
+                echo '<' . $tag . ' class="evk-s-heading evk-s-heading--' . esc_attr($tag) . '">' . esc_html($b['label']) . '</' . $tag . '>';
+                if ($subtxt !== '') echo '<p class="evk-s-heading-sub">' . esc_html($subtxt) . '</p>';
+                echo '</div>';
+            } elseif ($b['type'] === 'description') {
+                $f         = $b['field'] ?? [];
+                $content   = $f['desc_content'] ?? '';
+                $collapsed = !empty($f['desc_collapsed']);
+                $collapsible = !empty($f['desc_collapsible']);
+                if ($collapsible) {
+                    $open = $collapsed ? '' : ' open';
+                    echo '<details class="evk-s-desc evk-s-desc--collapsible"' . $open . '>';
+                    echo '<summary class="evk-s-desc-summary">' . esc_html($b['label']) . ' <span class="evk-s-desc-chevron dashicons dashicons-arrow-down-alt2"></span></summary>';
+                    echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
+                    echo '</details>';
+                } else {
+                    echo '<div class="evk-s-desc">';
+                    if ($b['label'] !== '') echo '<strong class="evk-s-desc-title">' . esc_html($b['label']) . '</strong>';
+                    echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
+                    echo '</div>';
+                }
             } elseif ($b['type'] === 'accordion') {
                 echo '<div class="evk-s-acc"><button type="button" class="evk-s-acc-head">' . esc_html($b['label']) . '<span class="dashicons dashicons-arrow-down-alt2"></span></button><div class="evk-s-acc-body">';
                 foreach ($b['fields'] as $it) {
@@ -650,6 +698,7 @@ function evk_rep_sanitize_value(string $type, $v) {
                 return empty($ids) ? '' : $ids;
             }
             return (int) $v > 0 ? [(int) $v] : '';
+        case 'toggle':   return sanitize_text_field((string) $v);
         case 'checkbox': return (!empty($v) && $v !== '0') ? '1' : '';
         case 'color':    return sanitize_hex_color((string) $v) ?: '';
         case 'date':     return sanitize_text_field((string) $v);

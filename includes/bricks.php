@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) exit;
 // HELPERY
 // =========================================================================
 
-function evk_rep_layout_types(): array { return ['tab', 'accordion', 'heading']; }
+function evk_rep_layout_types(): array { return ['tab', 'accordion', 'heading', 'description']; }
 function evk_rep_is_layout(string $type): bool { return in_array($type, evk_rep_layout_types(), true); }
 function evk_rep_is_repeater(array $group): bool { return array_key_exists('repeater', $group) ? !empty($group['repeater']) : true; }
 

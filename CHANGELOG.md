@@ -2,6 +2,58 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.21.2] — 2026-06-23
+
+### Dodane
+
+- **Opcja „Ukryj tytuł grupy"** — checkbox w ustawieniach grupy pól (metabox „Ustawienia").
+  Gdy zaznaczony, `<h2 class="evk-settings-group-title">` nie jest renderowany na stronie
+  ustawień. Niezależny od opcji „Bezramkowy" — można ukryć sam tytuł zachowując ramkę
+  (lub odwrotnie). Zapisywany jako `_evk_hide_title` w post meta grupy.
+  (`includes/builder.php`, `includes/field-groups.php`, `includes/settings.php`)
+
+## [1.21.1] — 2026-06-23
+
+### Naprawione
+
+- **Przełącznik — etykieta ON nie zmieniała się po kliknięciu.** Selektor CSS
+  `~*` nie działa na elementach nie-rodzeństwo. Zamienione na klasę `is-on`
+  dodawaną na wrapperze przez JS (`admin.js`); `admin.css` używa `.evk-rep-toggle.is-on`.
+
+- **Separator nagłówka wyświetlał się zawsze.** Selektor `.has-separator .evk-s-heading`
+  nie pasował do `<hX class="evk-s-heading--h3">`. Naprawiono jako
+  `.has-separator > h1/h2/h3/h4/h5` (child combinator). (`assets/admin.css`)
+
+- **Puste etykiety pola** — jeśli etykieta jest pusta, `<label>` nie jest renderowany
+  (metabox — pola single i repeatera). Builder pozwala teraz zapisać pustą etykietę
+  zamiast wstawiać klucz pola jako fallback. (`includes/metabox.php`, `includes/builder.php`)
+
+### Dodane
+
+- **H1** jako opcja rozmiaru pola Nagłówek (builder + metabox + CSS).
+  (`includes/builder.php`, `includes/metabox.php`, `assets/admin.css`)
+
+- **Padding opisu zwijany** — `.evk-s-desc--collapsible .evk-s-desc-body`
+  zmieniony na `12px 15px 12px`. (`assets/admin.css`)
+
+## [1.21.0] — 2026-06-23
+
+### Dodane — Faza 6B: nowe typy pól i rozbudowa układu
+
+- **Przełącznik (toggle)** — nowy typ pola danych. iOS-style slider z konfigurowanymi
+  wartościami ON/OFF (domyślnie `1`/`0`) oraz etykietami (domyślnie „Tak"/„Nie").
+  Wartości i etykiety ustawiane w builderze. Zapis jak `text`. (`includes/metabox.php`,
+  `includes/builder.php`, `assets/admin.css`, `assets/builder.css`, `assets/builder.js`)
+
+- **Opis (blok tekstowy)** — nowy typ układu `description`. Wyświetla sformatowany
+  blok informacyjny (HTML dozwolony przez `wp_kses_post`). Tryb zwijany
+  (`desc_collapsible` = klik w tytuł rozwija/zwija przez `<details>`) z opcją
+  „Zwinięty na start" (`desc_collapsed`). Tytuł z etykiety pola.
+
+- **Nagłówek — konfiguracja rozszerzona**: preset rozmiaru (H2/H3/H4/H5),
+  opcjonalny podtekst (`heading_sub`) oraz separator-linia (`heading_separator`).
+  Wsteczna zgodność: stare wpisy bez konfiguracji renderują się jak dotąd (H3).
+
 ## [1.20.1] — 2026-06-23
 
 ### Naprawione

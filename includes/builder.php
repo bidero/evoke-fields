@@ -86,6 +86,10 @@ function evk_group_opts_metabox(\WP_Post $post): void {
                 <input type="checkbox" name="evk_group_seamless" value="1" <?php checked($seamless); ?>>
                 Bezramkowy (seamless)
             </label>
+            <label>
+                <input type="checkbox" name="evk_group_hide_title" value="1" <?php checked(get_post_meta($post->ID, '_evk_hide_title', true)); ?>>
+                Ukryj tytuł grupy
+            </label>
         </div>
 
         <label class="evk-group-option-field">
@@ -238,6 +242,7 @@ add_action('save_post_evk_field_group', function ($post_id) {
     update_post_meta($post_id, '_evk_repeater',  !empty($_POST['evk_group_repeater'])  ? 1 : 0);
     update_post_meta($post_id, '_evk_collapsed', !empty($_POST['evk_group_collapsed']) ? 1 : 0);
     update_post_meta($post_id, '_evk_seamless',  !empty($_POST['evk_group_seamless'])  ? 1 : 0);
+    update_post_meta($post_id, '_evk_hide_title', !empty($_POST['evk_group_hide_title']) ? 1 : 0);
 
     $add_label = sanitize_text_field($_POST['evk_group_add_label'] ?? '');
     if ($add_label) update_post_meta($post_id, '_evk_add_label', $add_label);
@@ -304,6 +309,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'radio'    => 'Wybór (radio)',
         'button_group' => 'Grupa przycisków',
         'checkbox' => 'Checkbox (tak/nie)',
+        'toggle'   => 'Przełącznik (toggle)',
         'color'    => 'Kolor',
         'date'     => 'Data',
         'image'    => 'Obraz',
@@ -318,7 +324,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'Pola danych'        => $data,
         'Relacje'            => $relacje,
         'Repeater'           => ['repeater' => 'Repeater (pola powtarzalne)'],
-        'Układ (separatory)' => ['tab' => 'Zakładka', 'accordion' => 'Akordeon', 'heading' => 'Nagłówek'],
+        'Układ (separatory)' => ['tab' => 'Zakładka', 'accordion' => 'Akordeon', 'heading' => 'Nagłówek', 'description' => 'Opis (blok tekstowy)'],
     ];
 }
 
@@ -368,7 +374,7 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         else { return null; }
     }
     $label = sanitize_text_field($f['label'] ?? '');
-    $def   = ['_key' => $fkey, 'label' => $label !== '' ? $label : $fkey, 'type' => $type];
+    $def   = ['_key' => $fkey, 'label' => $label, 'type' => $type];
 
     if ($is_rep) {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 100;
@@ -428,6 +434,28 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         $def['min']   = is_numeric($f['min'] ?? '') ? (float) $f['min'] : 0;
         $def['max']   = is_numeric($f['max'] ?? '') ? (float) $f['max'] : 100;
         $def['step']  = is_numeric($f['step'] ?? '') && (float) $f['step'] > 0 ? (float) $f['step'] : 1;
+    } elseif ($type === 'heading') {
+        $size = sanitize_key($f['heading_size'] ?? 'h3');
+        if (!in_array($size, ['h1', 'h2', 'h3', 'h4', 'h5'], true)) $size = 'h3';
+        $def['heading_size'] = $size;
+        if (!empty($f['heading_separator'])) $def['heading_separator'] = true;
+        $sub_t = sanitize_text_field($f['heading_sub'] ?? '');
+        if ($sub_t !== '') $def['heading_sub'] = $sub_t;
+    } elseif ($type === 'description') {
+        $content = wp_kses_post($f['desc_content'] ?? '');
+        if ($content !== '') $def['desc_content'] = $content;
+        if (!empty($f['desc_collapsible'])) $def['desc_collapsible'] = true;
+        if (!empty($f['desc_collapsed']))   $def['desc_collapsed']   = true;
+    } elseif ($type === 'toggle') {
+        $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
+        $on  = sanitize_text_field($f['toggle_on']  ?? '1');
+        $off = sanitize_text_field($f['toggle_off'] ?? '0');
+        if ($on  !== '') $def['toggle_on']  = $on;
+        if ($off !== '') $def['toggle_off'] = $off;
+        $onl = sanitize_text_field($f['toggle_on_label']  ?? '');
+        $ofl = sanitize_text_field($f['toggle_off_label'] ?? '');
+        if ($onl !== '') $def['toggle_on_label']  = $onl;
+        if ($ofl !== '') $def['toggle_off_label'] = $ofl;
     } elseif (!$is_layout) {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         if (in_array($type, ['select', 'radio', 'button_group'], true)) {
@@ -495,6 +523,19 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $suffix              = $field['suffix'] ?? '';
     $rows_opt            = (int)($field['rows'] ?? 0);
     $title_tpl           = $field['title_tpl'] ?? '';
+    // Przełącznik
+    $toggle_on           = $field['toggle_on']  ?? '1';
+    $toggle_off          = $field['toggle_off'] ?? '0';
+    $toggle_on_label     = $field['toggle_on_label']  ?? '';
+    $toggle_off_label    = $field['toggle_off_label'] ?? '';
+    // Opis
+    $desc_content        = $field['desc_content']    ?? '';
+    $desc_collapsible    = !empty($field['desc_collapsible']);
+    $desc_collapsed      = !empty($field['desc_collapsed']);
+    // Nagłówek
+    $heading_size        = $field['heading_size']      ?? 'h3';
+    $heading_separator   = !empty($field['heading_separator']);
+    $heading_sub         = $field['heading_sub']       ?? '';
 
     $has_opts = in_array($type, ['select', 'radio', 'button_group', 'image_select'], true);
     $layout   = !$sub && evk_rep_is_layout($type);
@@ -504,6 +545,9 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $is_range = $type === 'range';
     $is_gallery = $type === 'gallery';
     $is_relationship = $type === 'relationship';
+    $is_toggle       = $type === 'toggle';
+    $is_description  = $type === 'description';
+    $is_heading_ext  = $type === 'heading'; // heading ma teraz własną konfigurację
     $cls      = 'evk-b-field'
         . ($has_opts ? ' is-opts'     : '')
         . ($layout   ? ' is-layout'   : '')
@@ -513,7 +557,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
         . ($is_img_select ? ' is-image-select' : '')
         . ($is_range ? ' is-range' : '')
         . ($is_gallery ? ' is-gallery' : '')
-        . ($is_relationship ? ' is-relationship' : '');
+        . ($is_relationship ? ' is-relationship' : '')
+        . ($is_toggle       ? ' is-toggle'       : '')
+        . ($is_description  ? ' is-description'  : '')
+        . ($is_heading_ext  ? ' is-heading-ext'  : '');
     ?>
     <div class="<?php echo esc_attr($cls); ?>" data-base="<?php echo esc_attr($base); ?>" data-ftype="<?php echo esc_attr($type); ?>">
         <div class="evk-b-field-top">
@@ -694,6 +741,68 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             </div>
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[rel_multiple]" value="1" <?php checked($rel_multi); ?>> Wielokrotny wybór (wiele wpisów)
+            </label>
+        </div>
+
+        <div class="evk-b-field-toggle">
+            <div class="evk-b-section-title">Konfiguracja przełącznika</div>
+            <div class="evk-b-inline-grid">
+                <div class="evk-b-ctrl">
+                    <label>Wartość gdy włączony</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[toggle_on]" value="<?php echo esc_attr($toggle_on); ?>" placeholder="1">
+                </div>
+                <div class="evk-b-ctrl">
+                    <label>Wartość gdy wyłączony</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[toggle_off]" value="<?php echo esc_attr($toggle_off); ?>" placeholder="0">
+                </div>
+                <div class="evk-b-ctrl">
+                    <label>Etykieta ON</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[toggle_on_label]" value="<?php echo esc_attr($toggle_on_label); ?>" placeholder="Tak">
+                </div>
+                <div class="evk-b-ctrl">
+                    <label>Etykieta OFF</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[toggle_off_label]" value="<?php echo esc_attr($toggle_off_label); ?>" placeholder="Nie">
+                </div>
+            </div>
+        </div>
+
+        <div class="evk-b-field-description">
+            <div class="evk-b-section-title">Treść opisu</div>
+            <div class="evk-b-ctrl">
+                <label>Tekst (HTML dozwolony)</label>
+                <textarea name="<?php echo esc_attr($base); ?>[desc_content]" rows="3" placeholder="Tekst pomocy, instrukcja…"><?php echo esc_textarea($desc_content); ?></textarea>
+            </div>
+            <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:12px;">
+                <label class="evk-b-inline-check">
+                    <input type="checkbox" name="<?php echo esc_attr($base); ?>[desc_collapsible]" value="1" <?php checked($desc_collapsible); ?>>
+                    Zwijany (klik w tytuł)
+                </label>
+                <label class="evk-b-inline-check">
+                    <input type="checkbox" name="<?php echo esc_attr($base); ?>[desc_collapsed]" value="1" <?php checked($desc_collapsed); ?>>
+                    Zwinięty na start
+                </label>
+            </div>
+        </div>
+
+        <div class="evk-b-field-heading-ext">
+            <div class="evk-b-section-title">Konfiguracja nagłówka</div>
+            <div class="evk-b-inline-grid">
+                <div class="evk-b-ctrl">
+                    <label>Rozmiar</label>
+                    <select name="<?php echo esc_attr($base); ?>[heading_size]">
+                        <?php foreach (['h1' => 'H1 — Największy', 'h2' => 'H2 — Duży', 'h3' => 'H3 — Średni (domyślny)', 'h4' => 'H4 — Mały', 'h5' => 'H5 — Bardzo mały'] as $hk => $hl): ?>
+                        <option value="<?php echo esc_attr($hk); ?>" <?php selected($heading_size, $hk); ?>><?php echo esc_html($hl); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="evk-b-ctrl" style="margin-top:10px;">
+                <label>Podtekst (opcjonalny)</label>
+                <input type="text" name="<?php echo esc_attr($base); ?>[heading_sub]" value="<?php echo esc_attr($heading_sub); ?>" placeholder="Krótki opis sekcji">
+            </div>
+            <label class="evk-b-inline-check" style="margin-top:10px;">
+                <input type="checkbox" name="<?php echo esc_attr($base); ?>[heading_separator]" value="1" <?php checked($heading_separator); ?>>
+                Separator (linia pod nagłówkiem)
             </label>
         </div>
 

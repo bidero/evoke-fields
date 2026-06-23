@@ -270,7 +270,7 @@ function evk_rep_render_settings_page(string $slug): void {
                 $g        = $groups[$gk];
                 $seamless = !empty($g['seamless']);
                 echo '<div class="evk-settings-group' . ($seamless ? ' evk-settings-group--seamless' : '') . '">';
-                if (!$seamless) {
+                if (!$seamless && empty($g['hide_title'])) {
                     echo '<h2 class="evk-settings-group-title">' . esc_html($g['label'] ?? $gk) . '</h2>';
                 }
                 evk_rep_render_option_group($gk, $g);

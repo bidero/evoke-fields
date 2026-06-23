@@ -155,3 +155,49 @@
 .evk-rep-tax-checks{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
 .evk-rep-tax-check{display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;}
 .evk-rep-tax-check input[type=checkbox]{margin:0;flex-shrink:0;}
+
+/* ── Przełącznik (toggle) — Faza 6B ── */
+.evk-rep-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.evk-rep-toggle-input{position:absolute;opacity:0;width:0;height:0;}
+.evk-rep-toggle-slider{position:relative;flex:0 0 44px;width:44px;height:24px;background:#d1d5db;border-radius:12px;transition:background .2s;}
+.evk-rep-toggle-slider::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:transform .2s;}
+.evk-rep-toggle-labels{display:flex;align-items:center;gap:6px;font-size:13px;}
+.evk-rep-toggle-off{color:#6b7280;font-weight:500;}
+.evk-rep-toggle-on{font-weight:600;color:#2563eb;display:none;}
+.evk-rep-toggle.is-on .evk-rep-toggle-off{display:none;}
+.evk-rep-toggle.is-on .evk-rep-toggle-on{display:inline;}
+.evk-rep-toggle-input:checked ~ .evk-rep-toggle-slider{background:#2563eb;}
+.evk-rep-toggle-input:checked ~ .evk-rep-toggle-slider::after{transform:translateX(20px);}
+
+/* ── Opis (description) — Faza 6B ── */
+.evk-s-desc{grid-column:1 / -1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 15px;}
+.evk-s-desc-title{display:block;margin-bottom:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b;}
+.evk-s-desc-body{font-size:13px;color:#374151;line-height:1.55;}
+.evk-s-desc-body p{margin:.35em 0;}
+.evk-s-desc-body p:first-child{margin-top:0;}
+.evk-s-desc-body p:last-child{margin-bottom:0;}
+.evk-s-desc--collapsible{border:1px solid #d7dde7;background:#f8fafc;border-radius:8px;padding:0;overflow:hidden;}
+.evk-s-desc-summary{display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer;padding:10px 15px;font-size:13px;font-weight:600;color:#1e293b;}
+.evk-s-desc-summary::-webkit-details-marker{display:none;}
+.evk-s-desc-summary .evk-s-desc-chevron{transition:transform .2s;color:#94a3b8;flex-shrink:0;}
+.evk-s-desc--collapsible[open] .evk-s-desc-chevron{transform:rotate(180deg);}
+.evk-s-desc--collapsible .evk-s-desc-body{padding:12px 15px 12px;border-top:1px solid #e2e8f0;}
+
+/* ── Nagłówek — rozbudowany (Faza 6B) ── */
+.evk-s-heading-wrap{grid-column:1 / -1;margin:4px 0 0;}
+.evk-s-heading-wrap > h1,
+.evk-s-heading-wrap > h2,
+.evk-s-heading-wrap > h3,
+.evk-s-heading-wrap > h4,
+.evk-s-heading-wrap > h5{border-bottom:0;}
+.evk-s-heading-wrap.has-separator > h1,
+.evk-s-heading-wrap.has-separator > h2,
+.evk-s-heading-wrap.has-separator > h3,
+.evk-s-heading-wrap.has-separator > h4,
+.evk-s-heading-wrap.has-separator > h5{border-bottom:1px solid #d1d5db;}
+.evk-s-heading--h1{font-size:18px;font-weight:700;color:#111827;padding-bottom:8px;margin:0 0 2px;}
+.evk-s-heading--h2{font-size:15px;font-weight:700;color:#111827;padding-bottom:8px;margin:0 0 2px;}
+.evk-s-heading--h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding-bottom:7px;margin:0 0 2px;}
+.evk-s-heading--h4{font-size:12px;font-weight:700;color:#374151;padding-bottom:6px;margin:0 0 2px;}
+.evk-s-heading--h5{font-size:11px;font-weight:600;color:#6b7280;padding-bottom:5px;margin:0 0 2px;}
+.evk-s-heading-sub{margin:2px 0 0;font-size:12px;color:#6b7280;line-height:1.4;}

@@ -221,3 +221,30 @@
 .evk-group-option-field input{width:100%;height:38px;margin:0;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
 .evk-group-option-field input[name=evk_group_title_field]{font-family:Menlo,Consolas,monospace;}
 .evk-group-option-field em{display:block;color:#6b7280;font-style:normal;font-size:12px;line-height:1.45;overflow-wrap:anywhere;}
+
+/* ── Faza 6B: nowe typy — widoczność paneli ── */
+.evk-b-field-toggle,
+.evk-b-field-description,
+.evk-b-field-heading-ext{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-toggle .evk-b-field-toggle{display:block;}
+.evk-b-field.is-description .evk-b-field-description{display:block;}
+.evk-b-field.is-heading-ext .evk-b-field-heading-ext{display:block;}
+
+/* Opis i nagłówek rozbudowany = layout → ukryj key/width, col-switch, extra */
+.evk-b-field.is-description .evk-b-ctrl-key,
+.evk-b-field.is-description .evk-b-ctrl-width,
+.evk-b-field.is-description .evk-b-col-switch,
+.evk-b-field.is-description .evk-b-field-column,
+.evk-b-field.is-description > .evk-b-field-extra{display:none!important;}
+
+/* Nagłówek ma własną konfigurację zamiast opts, ale key/width już były ukryte przez is-layout */
+.evk-b-field.is-heading-ext > .evk-b-field-extra{display:none!important;}
+
+/* Ukryj nowe panele w widoku zielonym (collapsed) */
+.evk-b-field.is-collapsed > .evk-b-field-toggle,
+.evk-b-field.is-collapsed > .evk-b-field-description,
+.evk-b-field.is-collapsed > .evk-b-field-heading-ext{display:none!important;}
+
+/* Badge kolory dla nowych typów */
+.evk-b-field[data-ftype="toggle"] .evk-b-badge{background:#8b5cf6;}
+.evk-b-field[data-ftype="description"] .evk-b-badge{background:#0ea5e9;}

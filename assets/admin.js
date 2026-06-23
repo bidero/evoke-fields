@@ -269,4 +269,16 @@
         $('.evk-rep-button-group input:checked, .evk-rep-image-select input:checked').closest('label').addClass('is-selected');
     });
 
+    /* ── Przełącznik (toggle) — synchronizacja etykiet ON/OFF ── */
+    function syncToggleLabel($cb) {
+        var $wrap = $cb.closest('.evk-rep-toggle');
+        $wrap.toggleClass('is-on', $cb.is(':checked'));
+    }
+    $(document).on('change', '.evk-rep-toggle-input', function () {
+        syncToggleLabel($(this));
+    });
+    $(function () {
+        $('.evk-rep-toggle-input').each(function () { syncToggleLabel($(this)); });
+    });
+
 })(jQuery);

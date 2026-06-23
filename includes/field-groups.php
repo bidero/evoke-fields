@@ -225,6 +225,7 @@ function evk_rep_groups(): array {
             'repeater'    => (bool) get_post_meta($post->ID, '_evk_repeater', true),
             'collapsed'   => (bool) get_post_meta($post->ID, '_evk_collapsed', true),
             'seamless'    => (bool) get_post_meta($post->ID, '_evk_seamless', true),
+            'hide_title'  => (bool) get_post_meta($post->ID, '_evk_hide_title', true),
             'fields'      => $fields,
         ];
         $al = get_post_meta($post->ID, '_evk_add_label', true);

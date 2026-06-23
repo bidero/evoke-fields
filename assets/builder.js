@@ -9,14 +9,17 @@
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA' };
+    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE' };
 
     function applyType($field) {
         var t = $field.children('.evk-b-field-grid').find('.evk-b-type').first().val();
         $field.toggleClass('is-opts',     t === 'select' || t === 'radio' || t === 'button_group' || t === 'image_select');
         $field.toggleClass('is-layout',   t === 'tab' || t === 'accordion' || t === 'heading');
         $field.toggleClass('is-repeater', t === 'repeater');
-        $field.toggleClass('is-taxonomy', t === 'taxonomy');
+        $field.toggleClass('is-taxonomy',    t === 'taxonomy');
+        $field.toggleClass('is-toggle',      t === 'toggle');
+        $field.toggleClass('is-description', t === 'description');
+        $field.toggleClass('is-heading-ext', t === 'heading');
         $field.toggleClass('is-image-select', t === 'image_select');
         $field.toggleClass('is-range',    t === 'range');
         $field.toggleClass('is-gallery',  t === 'gallery');
