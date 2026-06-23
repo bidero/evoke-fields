@@ -800,30 +800,32 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             </label>
         </div>
 
-        <div class="evk-b-field-extra">
-            <div class="evk-b-section-title">Opcje pola</div>
-            <div class="evk-b-inline-grid">
-                <div class="evk-b-ctrl evk-b-opt-placeholder">
-                    <label>Placeholder</label>
-                    <input type="text" name="<?php echo esc_attr($base); ?>[placeholder]" value="<?php echo esc_attr($placeholder); ?>" placeholder="tekst podpowiedzi">
+        <details class="evk-b-field-extra">
+            <summary class="evk-b-section-title evk-b-extra-summary">Opcje pola<span class="dashicons dashicons-arrow-down-alt2 evk-b-extra-chevron"></span></summary>
+            <div class="evk-b-extra-body">
+                <div class="evk-b-inline-grid">
+                    <div class="evk-b-ctrl evk-b-opt-placeholder">
+                        <label>Placeholder</label>
+                        <input type="text" name="<?php echo esc_attr($base); ?>[placeholder]" value="<?php echo esc_attr($placeholder); ?>" placeholder="tekst podpowiedzi">
+                    </div>
+                    <div class="evk-b-ctrl evk-b-opt-affix">
+                        <label>Przed polem (prefiks)</label>
+                        <input type="text" name="<?php echo esc_attr($base); ?>[prefix]" value="<?php echo esc_attr($prefix); ?>" placeholder="np. $">
+                    </div>
+                    <div class="evk-b-ctrl evk-b-opt-affix">
+                        <label>Po polu (sufiks)</label>
+                        <input type="text" name="<?php echo esc_attr($base); ?>[suffix]" value="<?php echo esc_attr($suffix); ?>" placeholder="np. PLN">
+                    </div>
+                    <div class="evk-b-ctrl evk-b-opt-rows">
+                        <label>Wiersze (textarea)</label>
+                        <input type="number" min="1" max="50" step="1" name="<?php echo esc_attr($base); ?>[rows]" value="<?php echo $rows_opt > 0 ? esc_attr((string) $rows_opt) : ''; ?>" placeholder="3">
+                    </div>
                 </div>
-                <div class="evk-b-ctrl evk-b-opt-affix">
-                    <label>Przed polem (prefiks)</label>
-                    <input type="text" name="<?php echo esc_attr($base); ?>[prefix]" value="<?php echo esc_attr($prefix); ?>" placeholder="np. $">
-                </div>
-                <div class="evk-b-ctrl evk-b-opt-affix">
-                    <label>Po polu (sufiks)</label>
-                    <input type="text" name="<?php echo esc_attr($base); ?>[suffix]" value="<?php echo esc_attr($suffix); ?>" placeholder="np. PLN">
-                </div>
-                <div class="evk-b-ctrl evk-b-opt-rows">
-                    <label>Wiersze (textarea)</label>
-                    <input type="number" min="1" max="50" step="1" name="<?php echo esc_attr($base); ?>[rows]" value="<?php echo $rows_opt > 0 ? esc_attr((string) $rows_opt) : ''; ?>" placeholder="3">
-                </div>
+                <label class="evk-b-inline-check" style="margin:10px 0 0;">
+                    <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
+                </label>
             </div>
-            <label class="evk-b-inline-check" style="margin:10px 0 0;">
-                <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
-            </label>
-        </div>
+        </details>
 
         <?php if (!$sub): ?>
         <div class="evk-b-field-column">

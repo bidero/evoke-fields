@@ -104,8 +104,13 @@
 .evk-cols-hidden .evk-b-col-switch,
 .evk-cols-hidden .evk-b-field-column{display:none !important;}
 
-/* ── Opcje pola (placeholder / prefiks / sufiks / wiersze / wymagane) ── */
+/* ── Opcje pola (placeholder / prefiks / sufiks / wiersze / wymagane) — zwijane ── */
 .evk-b-field-extra{margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-extra-summary{display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;list-style:none;}
+.evk-b-extra-summary::-webkit-details-marker{display:none;}
+.evk-b-extra-chevron{margin-left:auto;transition:transform .2s;color:#94a3b8;font-size:15px;width:15px;height:15px;}
+.evk-b-field-extra[open] .evk-b-extra-chevron{transform:rotate(180deg);}
+.evk-b-extra-body{margin-top:12px;}
 /* child combinator — inaczej blok znikał też w polach powtarzalnych (potomkach repeatera) */
 .evk-b-field.is-layout > .evk-b-field-extra,
 .evk-b-field.is-repeater > .evk-b-field-extra{display:none;}

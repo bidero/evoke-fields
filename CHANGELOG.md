@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.22.2] — 2026-06-24
+
+### Zmienione
+
+- **Blok „Opcje pola"** (placeholder / prefiks / sufiks / wiersze / wymagane) jest teraz
+  zwijanym `<details>` — domyślnie **zwinięty**, rozwija się po kliknięciu nagłówka
+  (chevron obraca się). Mniej szumu w konfiguracji każdego pola. (`includes/builder.php`,
+  `assets/builder.css`)
+
 ## [1.22.1] — 2026-06-24
 
 ### Zmienione
