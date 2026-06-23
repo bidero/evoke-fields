@@ -1,0 +1,223 @@
+/* ===== EVK Repeater — builder (układ Evoke ONE) ===== */
+
+#evk-b-groups{display:flex;flex-direction:column;gap:18px;margin:6px 0 0;}
+
+/* ── Karta grupy ── */
+.evk-b-group{background:#fff;border:1px solid #d7dde7;border-radius:12px;box-shadow:0 1px 3px rgba(15,23,42,.06);overflow:hidden;}
+.evk-b-group-head{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:16px 20px;background:#fff;border-bottom:1px solid #eef0f2;}
+.evk-b-group-head .evk-b-handle{cursor:move;color:#94a3b8;flex:0 0 auto;}
+.evk-b-group-label{flex:1 1 220px;min-width:160px;height:40px;margin:0;font-size:15px;font-weight:600;border:1px solid #d1d5db;border-radius:7px;background:#fff;}
+.evk-b-group-key{flex:0 0 180px;height:40px;margin:0;font-family:Menlo,Consolas,monospace;font-size:12px;color:#475569;border:1px solid #d1d5db;border-radius:7px;background:#fff;}
+.evk-b-group-remove{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#b91c1c;padding:5px;display:inline-flex;border-radius:6px;}
+.evk-b-group-remove:hover{color:#dc2626;background:#fef2f2;}
+
+.evk-b-group-body{padding:22px 20px;}
+.evk-b-section{margin-bottom:24px;}
+.evk-b-section:last-child{margin-bottom:0;}
+.evk-b-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin:0 0 12px;}
+
+/* ── Typy treści (chipy) ── */
+.evk-b-pts{display:flex;flex-wrap:wrap;gap:8px;}
+
+/* ── Pola ── */
+.evk-b-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;min-height:6px;}
+
+.evk-b-field{background:#f8fafc;border:1px solid #d7dde7;border-radius:10px;padding:16px;transition:border-color .15s,box-shadow .15s;}
+.evk-b-field:hover{border-color:#cbd5e1;box-shadow:0 1px 4px rgba(15,23,42,.06);}
+
+/* Górny rząd: uchwyt + (badge) + etykieta na całą szerokość + kosz */
+.evk-b-field-top{display:flex;align-items:center;gap:10px;}
+.evk-b-field-top > *{margin:0;}
+.evk-b-field .evk-b-handle{flex:0 0 auto;cursor:move;color:#cbd5e1;}
+.evk-b-field .evk-b-handle:hover{color:#94a3b8;}
+.evk-b-fld-label{flex:1 1 auto;min-width:0;height:40px;font-size:14px;font-weight:600;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#111827;}
+.evk-b-field-remove{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#9ca3af;padding:6px;display:inline-flex;border-radius:7px;}
+.evk-b-field-remove:hover{color:#dc2626;background:#fef2f2;}
+
+/* Badge separatora (ukryty gdy pusty) */
+.evk-b-badge{flex:0 0 auto;display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#2563eb;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;}
+.evk-b-badge:empty{display:none;}
+
+/* Siatka kontrolek z etykietami — wypełnia szerokość, zawija na wąskim */
+.evk-b-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-top:14px;}
+.evk-b-ctrl{display:flex;flex-direction:column;min-width:0;}
+.evk-b-ctrl > label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px;}
+.evk-b-ctrl input,.evk-b-ctrl select{width:100%;height:38px;margin:0;border:1px solid #d1d5db;border-radius:6px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.evk-b-ctrl input{font-family:Menlo,Consolas,monospace;font-size:12px;color:#475569;}
+.evk-b-ctrl input:focus,.evk-b-ctrl select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;}
+.evk-b-fld-label:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;}
+
+/* Opcje listy (tylko select/radio) */
+.evk-b-field-opts{display:none;margin-top:14px;}
+.evk-b-field.is-opts .evk-b-field-opts{display:block;}
+.evk-b-field-opts > label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px;}
+.evk-b-opts-image{display:none;}
+.evk-b-field.is-image-select .evk-b-opts-standard{display:none;}
+.evk-b-field.is-image-select .evk-b-opts-image{display:inline;}
+.evk-b-field-opts code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11px;letter-spacing:0;text-transform:none;}
+.evk-b-field-opts textarea{width:100%;font-family:Menlo,Consolas,monospace;font-size:12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
+
+/* Separatory układu (tab/accordion/heading) */
+.evk-b-field.is-layout{background:#eef4ff;border-color:#bfd3ff;}
+.evk-b-field.is-layout .evk-b-ctrl-key,
+.evk-b-field.is-layout .evk-b-ctrl-width{display:none;}
+
+/* Przyciski „dodaj" */
+.evk-b-field-add{display:inline-flex;align-items:center;gap:6px;border:1px dashed #cbd5e1;background:#fff;color:#475569;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:border-color .15s,color .15s,background .15s;}
+.evk-b-field-add:hover{border-color:#2563eb;color:#2563eb;background:#f8fbff;}
+.evk-b-field-add .dashicons{font-size:15px;width:15px;height:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+
+/* Placeholder sortowania */
+.evk-b-placeholder{border:2px dashed #93c5fd;background:#eff6ff;border-radius:10px;height:120px;}
+
+/* ── Kolumna w panelu admina ── */
+/* Przełącznik w górnym pasku pola (z prawej, obok kosza) */
+.evk-b-col-switch{flex:0 0 auto;gap:6px;margin:0;}
+.evk-b-col-switch-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;}
+.evk-b-col-switch .evk-switch{width:38px;height:20px;}
+.evk-b-col-switch .evk-switch-slider:before{height:14px;width:14px;}
+.evk-b-col-switch input:checked + .evk-switch-slider:before{transform:translateX(18px);}
+.evk-b-col-switch:has(input:checked) .evk-b-col-switch-label{color:#2563eb;}
+/* Blok konfiguracji — pojawia się dopiero po włączeniu przełącznika */
+.evk-b-field-column{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.evk-col-on .evk-b-field-column{display:block;}
+/* Nigdy dla separatorów / repeatera / pola zwiniętego */
+.evk-b-field.is-layout .evk-b-col-switch,
+.evk-b-field.is-repeater .evk-b-col-switch,
+.evk-b-field.is-layout .evk-b-field-column,
+.evk-b-field.is-repeater .evk-b-field-column,
+/* Zwinięte pole — chowamy całe ciało klasowo (bez inline display, by nie odsłaniać
+   bloków konfiguracji niewłaściwych typów). !important bije reguły is-opts/evk-col-on. */
+.evk-b-field.is-collapsed > .evk-b-field-grid,
+.evk-b-field.is-collapsed > .evk-b-field-opts,
+.evk-b-field.is-collapsed > .evk-b-field-image-select,
+.evk-b-field.is-collapsed > .evk-b-field-range,
+.evk-b-field.is-collapsed > .evk-b-field-tax,
+.evk-b-field.is-collapsed > .evk-b-field-gallery,
+.evk-b-field.is-collapsed > .evk-b-field-relationship,
+.evk-b-field.is-collapsed > .evk-b-field-extra,
+.evk-b-field.is-collapsed > .evk-b-field-column,
+.evk-b-field.is-collapsed > .evk-b-subfields-wrap{display:none !important;}
+/* Grupa-repeater: kolumny nie mają sensu — twardo ukryj */
+.evk-cols-hidden .evk-b-col-switch,
+.evk-cols-hidden .evk-b-field-column{display:none !important;}
+
+/* ── Opcje pola (placeholder / prefiks / sufiks / wiersze / wymagane) ── */
+.evk-b-field-extra{margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+/* child combinator — inaczej blok znikał też w polach powtarzalnych (potomkach repeatera) */
+.evk-b-field.is-layout > .evk-b-field-extra,
+.evk-b-field.is-repeater > .evk-b-field-extra{display:none;}
+.evk-b-opt-placeholder,.evk-b-opt-affix,.evk-b-opt-rows{display:none;}
+.evk-b-field[data-ftype="text"] .evk-b-opt-placeholder,
+.evk-b-field[data-ftype="textarea"] .evk-b-opt-placeholder,
+.evk-b-field[data-ftype="number"] .evk-b-opt-placeholder,
+.evk-b-field[data-ftype="email"] .evk-b-opt-placeholder,
+.evk-b-field[data-ftype="url"] .evk-b-opt-placeholder{display:flex;}
+.evk-b-field[data-ftype="text"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="number"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="email"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="url"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="date"] .evk-b-opt-affix{display:flex;}
+.evk-b-field[data-ftype="textarea"] .evk-b-opt-rows{display:flex;}
+
+/* Szablon tytułu wiersza repeatera */
+.evk-b-title-tpl-row{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding-bottom:12px;border-bottom:1px dashed #d7dde7;}
+.evk-b-title-tpl-row label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
+.evk-b-title-tpl-row input{border:1px solid #d1d5db;border-radius:6px;height:36px;padding:0 10px;font-size:12px;font-family:Menlo,Consolas,monospace;}
+
+/* ── Pole typu Repeater — pod-pola ── */
+.evk-b-field.is-repeater{background:#eef4ff;border-color:#bfd3ff;}
+.evk-b-subfields-wrap{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-repeater > .evk-b-subfields-wrap{display:block;}
+.evk-b-subfields-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:10px;}
+.evk-b-subfields{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;min-height:4px;}
+.evk-b-field.is-sub{background:#f8fafc;}
+.evk-b-subfield-add{display:inline-flex;align-items:center;gap:6px;border:1px dashed #cbd5e1;background:#fff;color:#475569;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:border-color .15s,color .15s;}
+.evk-b-subfield-add:hover{border-color:#2563eb;color:#2563eb;background:#f8fbff;}
+.evk-b-subfield-add .dashicons{font-size:14px;width:14px;height:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+
+/* ── Pole repeater: wybór pola etykiety wiersza ── */
+.evk-b-title-row{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed #d7dde7;}
+.evk-b-title-row label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;white-space:normal;}
+.evk-b-title-row select{border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12px;min-width:220px;background:#fff;}
+
+/* ── Inline checkbox (np. „Zwinięte na start" w polu repeater) ── */
+.evk-b-inline-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#374151;white-space:nowrap;margin-left:auto;}
+.evk-b-inline-check input{margin:0;}
+
+/* ── Builder stron ustawień — style przeniesione do evk-admin.css ── */
+
+/* ── Pole typu Taksonomia ── */
+.evk-b-field-tax{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-taxonomy .evk-b-field-tax{display:block;}
+
+/* ── Pole Relacja (relationship) ── */
+.evk-b-field-relationship{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-relationship .evk-b-field-relationship{display:block;}
+.evk-b-rel-pts{display:flex;flex-wrap:wrap;gap:8px;}
+.evk-b-rel-pts label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#374151;padding:5px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
+.evk-b-rel-pts label:hover{border-color:#93c5fd;background:#f8fbff;}
+.evk-b-rel-pts label:has(input:checked){border-color:#2563eb;background:#eff6ff;color:#1e3a8a;font-weight:600;}
+.evk-b-rel-pts code{font-size:10px;color:#6b7280;}
+.evk-b-field-tax .evk-b-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin:0 0 12px;}
+.evk-b-field-tax .evk-b-ctrl-grid{display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;}
+
+/* ── Dodatkowe konfiguracje pól ── */
+.evk-b-field-image-select,.evk-b-field-range,.evk-b-field-gallery{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-image-select .evk-b-field-image-select,.evk-b-field.is-range .evk-b-field-range,.evk-b-field.is-gallery .evk-b-field-gallery{display:block;}
+.evk-b-gallery-cats-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px;}
+.evk-b-gallery-cats-label code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11px;letter-spacing:0;text-transform:none;}
+.evk-b-field-gallery textarea{width:100%;font-family:Menlo,Consolas,monospace;font-size:12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
+.evk-b-gallery-cat-manual,.evk-b-gallery-cat-taxonomy{display:none;}
+.evk-b-field-gallery[data-cat-source="manual"] .evk-b-gallery-cat-manual{display:block;}
+.evk-b-field-gallery[data-cat-source="taxonomy"] .evk-b-gallery-cat-taxonomy{display:block;}
+
+/* Ściągawka „jak wyświetlić" */
+.evk-b-cheat{margin-top:14px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12.5px;color:#475569;line-height:1.65;}
+.evk-b-cheat-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2563eb;margin-bottom:8px;}
+.evk-b-cheat-title .dashicons{font-size:15px;width:15px;height:15px;}
+.evk-b-cheat-row{margin-top:8px;color:#111827;font-weight:600;}
+.evk-b-cheat-steps{margin:4px 0 0 20px;padding:0;list-style:decimal;}
+.evk-b-cheat-steps li{margin:2px 0;}
+.evk-b-cheat-tags{margin:4px 0 0;padding:0;list-style:none;}
+.evk-b-cheat-tags li{margin:3px 0;}
+.evk-b-cheat code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11.5px;letter-spacing:0;text-transform:none;}
+.evk-b-inline-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+
+/* ── Etykieta przycisku repeatera ── */
+.evk-b-add-label-wrap{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed #d7dde7;}
+.evk-b-add-label-wrap label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;white-space:normal;}
+.evk-b-add-label-wrap input{width:100%;border:1px solid #d1d5db;border-radius:6px;height:36px;font-size:13px;font-family:inherit;padding:0 10px;}
+
+/* ── Etykieta przycisku w nagłówku grupy ── */
+.evk-b-group-addlabel{flex:0 0 180px;height:40px;margin:0;font-size:13px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#475569;}
+
+/* ── Boczny metabox „Lokalizacja" ── */
+.evk-group-location{display:flex;flex-direction:column;gap:14px;}
+.evk-group-location .evk-group-option-field span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
+.evk-group-object-type{width:100%;height:36px;margin:0;border:1px solid #d1d5db;border-radius:7px;background:#fff;padding:0 8px;font-size:13px;font-weight:600;color:#111827;}
+.evk-group-object-type:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;}
+.evk-loc-block{display:none;}
+.evk-group-location[data-object-type="post"] .evk-loc-post,
+.evk-group-location[data-object-type="term"] .evk-loc-term,
+.evk-group-location[data-object-type="user"] .evk-loc-user,
+.evk-group-location[data-object-type="media"] .evk-loc-media{display:block;}
+.evk-loc-block .evk-b-section-title{margin:0 0 8px;}
+.evk-loc-checks{display:flex;flex-direction:column;gap:6px;}
+.evk-loc-checks label{display:flex;align-items:center;gap:8px;margin:0;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;cursor:pointer;line-height:1.3;white-space:normal;font-size:13px;color:#374151;transition:border-color .15s,background .15s,color .15s;}
+.evk-loc-checks label:hover{border-color:#93c5fd;background:#f8fbff;}
+.evk-loc-checks label:has(input:checked){border-color:#2563eb;background:#eff6ff;color:#1e3a8a;font-weight:600;}
+.evk-loc-checks input{margin:0;flex:0 0 auto;}
+.evk-loc-checks code{font-size:10px;color:#6b7280;margin-left:auto;}
+.evk-loc-user .description{margin:0;}
+
+/* ── Boczny metabox ustawień grupy ── */
+.evk-group-options{display:flex;flex-direction:column;gap:16px;}
+.evk-group-options-checks{display:flex;flex-direction:column;gap:10px;}
+.evk-group-options-checks label{display:flex;align-items:flex-start;gap:8px;line-height:1.35;white-space:normal;}
+.evk-group-options-checks input{margin-top:1px;flex:0 0 auto;}
+.evk-group-option-field{display:flex;flex-direction:column;gap:6px;margin:0;}
+.evk-group-option-field span{font-size:12px;font-weight:700;color:#111827;}
+.evk-group-option-field input{width:100%;height:38px;margin:0;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
+.evk-group-option-field input[name=evk_group_title_field]{font-family:Menlo,Consolas,monospace;}
+.evk-group-option-field em{display:block;color:#6b7280;font-style:normal;font-size:12px;line-height:1.45;overflow-wrap:anywhere;}

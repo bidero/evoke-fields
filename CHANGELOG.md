@@ -1,0 +1,358 @@
+# Changelog — Evoke FIELDS
+
+Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
+
+## [1.20.1] — 2026-06-23
+
+### Naprawione
+- **„Opcje pola" nie pokazywały się w polach repeatera.** Selektor ukrywający blok
+  używał descendant combinatora (`.is-repeater .evk-b-field-extra`), więc chował go
+  też w polach zagnieżdżonych. Zmienione na child (`>`). (`assets/builder.css`)
+
+### Zmienione
+- Nazewnictwo: „pod-pola" → **„pola powtarzalne"** (typ pola, tytuł sekcji, przycisk
+  „Dodaj pole powtarzalne"). (`includes/builder.php`)
+
+## [1.20.0] — 2026-06-23
+
+### Dodane — szybkie opcje pól (Faza 6 cz. A)
+- **Placeholder** dla pól tekstowych (tekst, textarea, liczba, e-mail, URL).
+- **Przełącznik „Pole wymagane"** — atrybut `required` (gdzie formularz to wspiera)
+  + czerwona gwiazdka przy etykiecie.
+- **Liczba wierszy dla textarea** (1–50).
+- **Prefiks / sufiks** wokół pola (np. `PLN`, `$`) dla tekst/liczba/e-mail/URL/data —
+  jak na przykładzie „30 | PLN".
+- **Szablon tytułu wiersza repeatera z kluczy**, np. `{tytul} | {cena_dania}` —
+  na poziomie grupy (pole „Etykieta wiersza") i pola repeatera (osobne pole szablonu).
+  Podgląd na żywo w builderze. Ma pierwszeństwo przed pojedynczym kluczem.
+- Opcje pola pokazują się kontekstowo wg typu (`data-ftype`).
+  (`includes/builder.php`, `includes/metabox.php`, `assets/{builder,admin}.{js,css}`)
+
+## [1.19.1] — 2026-06-23
+
+### Zmienione — media w panelu szczegółów załącznika
+- Pola grupy „Media" pokazują się teraz w **panelu „Szczegóły załącznika" w modalu
+  mediów** (przy podglądzie, z prawej) przez `attachment_fields_to_edit` /
+  `attachment_fields_to_save`, zamiast metaboxa pod podglądem. Obsługiwane proste
+  typy pól (tekst, textarea, lista, radio, checkbox, liczba, URL, e-mail, kolor,
+  data). Odczyt w pętli galerii (Isotope) bez zmian. (`includes/metabox.php`,
+  `includes/builder.php`)
+
+## [1.19.0] — 2026-06-23
+
+### Dodane — lokalizacja „Media (załączniki)"
+- Grupa pól może celować w **Media (załączniki)** — pola pojawiają się na ekranie
+  edycji załącznika (szczegóły obrazka), zapis do post meta załącznika. Reużywa pełny
+  render metaboxa (wszystkie typy pól). (`includes/builder.php`, `includes/metabox.php`,
+  `includes/field-groups.php`)
+- **Pola media dostępne w pętli galerii jako pola bieżącego obrazu** — w iteracji
+  pętli galerii (zwykłej i spłaszczonej) tag pola media (np. `{evk_field_rozmiar}`)
+  rozwiązuje się z meta aktualnego obrazu. Idealne do klas Isotope (rozmiar/format
+  per obraz). Poza pętlą działa też dla oglądanego załącznika (queried object).
+  (`includes/bricks.php`)
+
+## [1.18.0] — 2026-06-23
+
+### Dodane — sortowanie galerii
+- Pole Galeria ma opcję **Sortowanie obrazów (front)**: kolejność dodania (domyślnie),
+  **losowo**, **losowo — zmiana co godzinę**, **losowo — zmiana co dzień**. Tasowanie
+  „co godzinę/dzień" jest deterministyczne w obrębie okna (stabilne dla UX, Isotope i
+  cache), różne per galeria. Dotyczy pętli galerii: zwykłej, opcji oraz spłaszczonej
+  z repeatera. (`includes/builder.php`, `includes/bricks.php`)
+
+## [1.17.0] — 2026-06-23
+
+### Zmienione — spłaszczona galeria niesie pola wiersza
+- W pętli **„EVK Galeria — wszystkie wiersze: …"** każdy obraz niesie teraz także
+  **pozostałe (skalarne) pola swojego wiersza repeatera** — np. `{evk_field_tytul}`.
+  Dzięki temu spłaszczone obrazy można rozróżniać/filtrować po dowolnym polu wiersza
+  (np. tytule nad zdjęciami), nie tylko po kategorii galerii. Pola galerii/relacji
+  z wiersza są pomijane (to tablice). (`includes/bricks.php`)
+
+## [1.16.0] — 2026-06-23
+
+### Dodane — spłaszczona galeria z repeatera (Isotope)
+- **Pętla „EVK Galeria — wszystkie wiersze: …"** — zwraca WSZYSTKIE obrazy ze
+  wszystkich wierszy repeatera jako **jedną płaską listę** (jeden kontener = jedna
+  siatka Isotope, obrazy obok siebie). Każdy obraz zachowuje swoją kategorię.
+  Rozwiązuje problem zagnieżdżonych pętli renderujących osobne galerie pod sobą.
+- **Pętla „EVK Galeria kategorie — wszystkie: …"** — kategorie użyte we wszystkich
+  wierszach (distinct) na przyciski filtrów dla spłaszczonej listy.
+- Oba z wariantem „(Opcje)" dla stron opcji. (`includes/bricks.php`)
+
+## [1.15.0] — 2026-06-23
+
+### Dodane — galeria/relacja w repeaterze
+- **Pętle galerii i relacji rejestrowane także dla pod-pól repeatera** (ścieżki
+  zagnieżdżone, np. `repeater.galeria`). Pozwala zagnieździć w Bricks pętlę galerii
+  wewnątrz pętli repeatera: wiersz repeatera → jego galeria (obrazy + kategorie).
+  Dotyczy też relacji oraz wariantu „(Opcje)" i pętli „EVK Galeria kategorie".
+  (`includes/bricks.php`)
+
+## [1.14.4] — 2026-06-23
+
+### Naprawione — obraz w danych dynamicznych Bricks (rozwiązanie z forum)
+- Element Image bierze **`$value[0]`** ze zwrotu tagu, więc w kontekście `image`/`media`
+  tag zwraca teraz **tablicę indeksowaną z URL-em pod `[0]`** (`[$url]`), zgodnie ze
+  wzorcem z forum Bricks (`$value = !empty($value) ? [$value] : [];`). Wcześniej:
+  string → `src="h"` (pierwszy znak), tablica asocjacyjna → brak `[0]` → pusto.
+  Teraz element Image renderuje obraz z pola „dane dynamiczne" (z linkiem do lightbox).
+  (`includes/bricks.php`)
+
+## [1.14.3] — 2026-06-23
+
+### Naprawione — obraz w danych dynamicznych Bricks (właściwa naprawa)
+- W kontekście `image`/`media` Bricks robi **dostęp tablicowy** na zwrocie tagu
+  (`$value['url']` / `['id']`). String URL dawał `src="h"` (pierwszy znak `https`),
+  a samo ID — pusto. Tag obrazka zwraca teraz **znormalizowaną tablicę**
+  `['id','url','src','size','full','alt']`, więc element Image w polu „dane dynamiczne"
+  renderuje obraz poprawnie (z kontrolą rozmiaru, srcset, lightbox). (`includes/bricks.php`)
+
+## [1.14.2] — 2026-06-23
+
+### Naprawione — obraz w danych dynamicznych Bricks
+- **Wiązanie obrazka w polu „dane dynamiczne" (np. element Image) zwracało pusto.**
+  Element Image woła filtr z kontekstem `image`/`media` i oczekuje **ID załącznika**,
+  a nasze tagi zwracały URL niezależnie od kontekstu. Teraz w kontekście obrazka tag
+  zwraca ID → binding działa, z kontrolą rozmiaru i srcset. (Wcześniej działało tylko
+  przez „niestandardowy URL", bo to kontekst tekstowy.) (`includes/bricks.php`)
+- **Podgląd galerii w builderze Bricks** używa najnowszego obrazu z biblioteki jako
+  placeholdera (zamiast pustego ID 0), więc pętla galerii nie wygląda na „pustą".
+  (`includes/bricks.php`)
+
+## [1.14.1] — 2026-06-23
+
+### Zmienione
+- **Ściągawka galerii** zaleca teraz wiązanie obrazka w Bricks przez
+  `{evk_field_img__id}` + Size „Large/Full" (zamiast URL). Bricks narzucał sztywne
+  `width/height` (np. 800×600) na obrazkach wiązanych przez URL, bo nie znał ich
+  wymiarów — wiązanie przez ID daje rzeczywiste wymiary per obraz, srcset i poprawny
+  lightbox. (`includes/builder.php`)
+
+## [1.14.0] — 2026-06-23
+
+### Dodane — galeria
+- **Pętla „EVK Galeria kategorie: …"** — zwraca tylko kategorie faktycznie UŻYTE w
+  danej galerii (distinct, `{slug, name}`), idealne na przyciski filtrów Isotope
+  pasujące 1:1 do zawartości. Wariant „(Opcje)" dla stron opcji. (`includes/bricks.php`)
+- **Kontrola rozmiaru obrazka w tagach**: `{evk_field_img__large}` (oraz `medium`,
+  `full`, `medium_large`, `thumbnail`, własne rozmiary) zwraca URL danego rozmiaru.
+  Rozwiązuje niską rozdzielczość i kwadratowe przycięcie przy wiązaniu przez `__id`
+  z rozmiarem „thumbnail". (`includes/bricks.php`)
+
+### Zmienione
+- Ściągawka galerii: dodano sekcję przycisków filtrów oraz wskazówkę o rozmiarze obrazka.
+
+## [1.13.0] — 2026-06-23
+
+### Dodane — pętla termów taksonomii
+- **Nowy typ pętli Bricks „EVK Termy: …"** dla każdej publicznej taksonomii (w tym
+  własnych). Zwraca termy z **`hide_empty = false`** (puste termy też się pokazują —
+  częsta przyczyna „brak wyników" w natywnej pętli Terms), z natywnym kontekstem
+  termu Bricks (tagi `{term_*}`) oraz działającymi tagami pól EVK termu
+  (`{evk_field_…}`). Idealne pod filtry Isotope. (`includes/bricks.php`)
+- Filtry `loop_object_type` / `loop_object_id` rozpoznają teraz wprost
+  `WP_Term` / `WP_User` / `WP_Post`, dzięki czemu pętle relacji i termów dostają
+  poprawny kontekst obiektu w Bricks.
+
+## [1.12.2] — 2026-06-23
+
+### Naprawione — galeria
+- **Pętla galerii (i relacji, pod-repeatera) na stronie opcji nie zwracała danych.**
+  Dane opcji grupy pojedynczej są w `evk_rep_opt_{grupa}` zagnieżdżone pod kluczem
+  pola, a pętla rejestrowała ścieżkę opcji jako sam klucz pola → szukała nieistniejącej
+  opcji. Ścieżka opcji to teraz `grupa.pole`. Błąd dotyczył wszystkich pętli pól w
+  grupach pojedynczych na stronach opcji. (`includes/bricks.php`)
+- **Przełączenie galerii z „kategorie" na „prostą" nie zapisywało się.** Parser przy
+  zapisie wnioskował źródło z pozostałej treści textarea (przywracał `manual`). Teraz
+  wartość selektora źródła jest respektowana wprost. (`includes/builder.php`)
+- Ściągawka galerii wskazuje wariant pętli „EVK Galeria Opcje: …" dla stron opcji.
+
+## [1.12.1] — 2026-06-23
+
+### Dodane
+- **Ściągawka w konfiguracji pola Galeria** — po wybraniu typu „Galeria" pokazuje
+  się krótka instrukcja „jak wyświetlić w Bricks" (pętla + tagi `{evk_field_img}` /
+  `{evk_field_cat__label}` oraz proste tagi `__ids` / `__count`). Proste tagi
+  aktualizują się na żywo wg klucza pola. (`includes/builder.php`,
+  `assets/builder.{css,js}`)
+
+## [1.12.0] — 2026-06-23
+
+### Dodane — pole Relationship
+- **Nowy typ pola „Relacja (posty)"** — wybór powiązanych wpisów z wyszukiwarką AJAX,
+  lista wybranych z drag-sortem i usuwaniem, tryb pojedynczy/wielokrotny, konfigurowalne
+  typy treści do przeszukania. (`includes/builder.php`, `includes/metabox.php`,
+  `assets/admin.{js,css}`)
+- **Bricks:** relacja rejestruje się jako **pętla zwracająca powiązane wpisy** z
+  natywnym kontekstem posta (renderujesz je zwykłymi tagami posta). Tagi pojedyncze:
+  `{evk_field_klucz__ids}`, `__count`, `__url` (link 1.), `{evk_field_klucz}` (tytuł 1.).
+  Bulk-prime cache powiązanych postów. (`includes/bricks.php`)
+
+### Zmienione — galeria
+- **Źródło kategorii obrazów**: oprócz listy ręcznej można teraz pobrać kategorie
+  **z taksonomii** (termy danej taksonomii jako opcje kategorii per obraz).
+  (`includes/builder.php`, `includes/metabox.php`, `includes/bricks.php`)
+- **Dopracowane UI galerii**: większe, zaokrąglone kafelki z hover, kosz na hover,
+  `object-fit: cover`, spójny przycisk dodawania. (`assets/admin.css`)
+
+## [1.11.0] — 2026-06-23
+
+### Dodane — pole Galeria
+- **Nowy typ pola „Galeria"** — multi-wybór obrazów z biblioteki mediów, miniatury
+  z drag-sortem i usuwaniem. Jedno pole, dwa tryby zależne od konfiguracji:
+  - **Puste „Kategorie obrazów"** = prosta galeria (lista ID, jak ACF Gallery).
+  - **Wypełnione kategorie** (format `wartość : Etykieta`) = każdy obraz dostaje
+    selektor kategorii; front zwraca jedną płaską listę z kategorią przy każdym
+    obrazie (filtrowalną). (`includes/builder.php`, `includes/metabox.php`,
+    `assets/admin.{js,css}`, `assets/builder.{css,js}`)
+- **Integracja z Bricks:**
+  - Galeria rejestruje się jako **pętla** (rows `{img, cat}`) — w pętli używasz
+    natywnych tagów obrazu + kategorii do renderu i filtrowania.
+  - Tagi pojedyncze: `{evk_field_klucz__ids}` (CSV ID), `{evk_field_klucz__count}`,
+    `{evk_field_klucz}` (URL pierwszego). (`includes/bricks.php`)
+- **Wydajność:** przy pętli galerii jeden bulk-prime cache załączników
+  (`_prime_post_caches`) zamiast N zapytań — zamiast osobnej warstwy „Object Cache".
+
+## [1.10.1] — 2026-06-23
+
+### Naprawione
+- **Zwijanie pola w builderze odsłaniało ustawienia niewłaściwych typów** (Image
+  Select, suwak, taksonomia, pod-pola repeatera pojawiały się przy polu innego
+  typu; znikały po zapisie). Przyczyna: `slideToggle` ustawiał inline `display:block`
+  na wszystkich blokach konfiguracji. Zwijanie jest teraz wyłącznie klasowe
+  (CSS `.is-collapsed`), więc widocznością steruje typ pola. (`assets/builder.js`,
+  `assets/builder.css`)
+- **Kolumna bez ustawionej „Pozycji" doklejała się na samym końcu tabeli** i wyglądała
+  jakby nie działała. Domyślnie wstawiana jest teraz tuż po kolumnie głównej
+  (tytuł / nazwa / nazwa użytkownika). (`includes/admin-columns.php`)
+
+## [1.10.0] — 2026-06-22
+
+### Dodane (Faza 4 — kolumny w panelu admina)
+- **Pola można pokazać jako kolumny** w tabelach wpisów, termów i użytkowników
+  (`includes/admin-columns.php`). Per pole (grupy pojedyncze): przełącznik „Pokaż
+  jako kolumnę", **tytuł kolumny**, **pozycja** i **sortowanie**.
+  - Wartości formatowane wg typu: obraz → miniatura, kolor → próbka, checkbox →
+    znacznik, taksonomia → nazwy termów, listy → etykieta, link → odnośnik,
+    tekst/WYSIWYG → skrócony podgląd.
+  - Sortowanie przez `meta_key` + `orderby` (`meta_value`/`meta_value_num`) na
+    `pre_get_posts` / `pre_get_users` / `get_terms_args`.
+  - Konfiguracja kolumny w builderze pola (`includes/builder.php`,
+    `assets/builder.{css,js}`) — ukrywana dla separatorów, repeaterów i grup-repeaterów.
+
+### Uwagi
+- Kolumny dotyczą grup **pojedynczych** (w repeaterze wartość to tablica wierszy).
+- **Wyszukiwanie po wartości kolumny** (searchable) = Faza 4b — wymaga modyfikacji
+  zapytań SQL i trafi w osobnej paczce po weryfikacji rdzenia na żywo.
+
+## [1.9.0] — 2026-06-22
+
+### Dodane (Faza 3b)
+- **Tagi Bricks dla pól termów i użytkowników działają na froncie.** Resolver
+  rozpoznaje typ obiektu grupy i czyta z właściwego źródła:
+  - pola termów → `term meta` bieżącego termu (queried object archiwum lub
+    iteracja natywnej pętli Bricks po termach),
+  - pola użytkownika → `user meta` bieżącego użytkownika (archiwum autora lub
+    pętla po użytkownikach). (`includes/bricks.php`)
+- **Image Select: picker z biblioteki mediów.** Przycisk „Dodaj obrazy z biblioteki"
+  w konfiguracji pola dopisuje wybrane obrazy jako linie `URL : Etykieta` — koniec
+  ręcznego wklejania adresów. (`includes/builder.php`, `assets/builder.js`,
+  `includes/field-groups.php`)
+
+### Zmienione
+- **Dopracowane UI metaboxu „Lokalizacja"**: stylizowany select typu obiektu oraz
+  pozycje typów treści / taksonomii jako zaznaczalne karty z podświetleniem
+  wybranych. (`assets/builder.css`)
+
+## [1.8.0] — 2026-06-22
+
+### Dodane (Faza 3 — lokalizacje)
+- **Grupa pól może teraz celować w różne typy obiektów**, nie tylko wpisy. Nowy
+  metabox **Lokalizacja** (zastępuje „Typy treści") z wyborem „Pokaż w":
+  - **Wpisy / strony** — jak dotąd (typy treści).
+  - **Termy taksonomii** — pola na ekranie dodawania i edycji termu wybranych
+    taksonomii; zapis do term meta.
+  - **Profil użytkownika** — pola na ekranie edycji profilu; zapis do user meta.
+  (`includes/builder.php`, `includes/locations.php`, `assets/builder.{css,js}`)
+
+### Zmienione
+- **Render i zapis pól uogólnione na dowolny typ meta** (`post` / `term` / `user`)
+  przez `get_metadata()` / `update_metadata()`. Wspólne helpery
+  `evk_rep_render_group_object()` i `evk_rep_save_group_object()` w `metabox.php`;
+  metabox wpisu i zapis `save_post` przepisane na nie (rejestrowane tylko dla grup
+  o lokalizacji „wpisy"). Schemat grupy zyskał `object_type` i `taxonomies`.
+  (`includes/metabox.php`, `includes/field-groups.php`)
+
+### Uwagi
+- Integracja z Bricks (tagi/pętle) działa jak dotąd dla wpisów i stron opcji.
+  Front-end dla termów/użytkowników to osobny krok (Faza 3b).
+
+## [1.7.1] — 2026-06-22
+
+### Naprawione
+- **Ikony w przyciskach (np. Import / Eksport) nie były w jednej linii z tekstem.**
+  Zamiast inline-hacków per przycisk dodano jedną globalną regułę: każdy przycisk
+  `.button` z dashiconem w panelu wtyczki dostaje `inline-flex` + wyrównanie do osi.
+  Usunięto ręczne `vertical-align` z przycisków Narzędzi. (`assets/evk-admin.css`,
+  `includes/tools.php`)
+
+## [1.7.0] — 2026-06-22
+
+### Dodane (Faza 2)
+- **Narzędzia** — nowa podstrona `Evoke FIELDS → Narzędzia` (`includes/tools.php`):
+  - **Eksport** pełnej konfiguracji do JSON: grupy pól, typy treści, taksonomie,
+    strony ustawień oraz wartości stron opcji (`evk_rep_opt_*`). Bez danych pól z
+    wpisów (postmeta) — są nieprzenośne między witrynami.
+  - **Import** pliku eksportu z mergem (grupy wg klucza, CPT/taksonomie/strony wg
+    slug, opcje wg nazwy) i opcjonalnym nadpisywaniem istniejących.
+  - **Czyszczenie osieroconych kluczy** (bezpieczne): usuwa osierocone opcje
+    `evk_rep_opt_{klucz}` po skasowanych grupach oraz martwe odwołania do grup w
+    stronach ustawień. Skan z podglądem przed usunięciem.
+
+### Zmienione
+- **Wydajność:** `evk_rep_groups()` i `evk_rep_loops()` memoizowane w obrębie
+  żądania (wcześniej dziesiątki odczytów transientu / przebudów drzewa pętli na
+  jednej stronie z wieloma tagami). Inwalidacja spięta z `evk_groups_cache_clear()`.
+  (`includes/field-groups.php`, `includes/bricks.php`)
+- **Odporność:** zapis typów treści i taksonomii pomija slugi zarezerwowane przez
+  WordPress (np. `post`, `page`, `category`) i puste, oraz przycina długość
+  (CPT ≤ 20, taksonomia ≤ 32 znaki). Pominięte slugi raportowane w komunikacie.
+  (`includes/cpt.php`, `includes/taxonomies.php`)
+
+## [1.6.3] — 2026-06-22
+
+### Naprawione
+- **Przełączniki w „Typach treści" / „Taksonomiach" — włączone (zielone) wyglądały
+  nierówno.** Reguła WP core `input[type=checkbox]:checked::before` (checkmark +
+  ujemny margines) przeciekała do gałki przełącznika tylko w stanie włączonym i
+  przesuwała ją w lewo-górę. Dodano `margin: 0` oraz `content: ""` na pseudo-elemencie
+  gałki, neutralizując styl rdzenia. (`assets/evk-admin.css`)
+
+## [1.6.2] — 2026-06-22
+
+### Naprawione (Faza 1)
+- **Strona ustawień: nie dało się wyczyścić repeatera.** Po usunięciu wszystkich
+  wierszy i zapisie pozycje wracały. Handler zapisu iterował po `$_POST['evk_opt']`,
+  a pusty repeater nie wysyła żadnych pól. Teraz iterujemy po grupach aktywnej
+  zakładki — pusty repeater zapisuje się jako pusta tablica. (`includes/settings.php`)
+- **Bezramkowa grupa (seamless) nie działała na stronie ustawień.** Render zawsze
+  owijał grupę w kartę z ramką i tytułem. Dodano modyfikator
+  `.evk-settings-group--seamless` (bez ramki/tytułu), respektujący flagę grupy.
+  (`includes/settings.php`, `assets/evk-admin.css`)
+- **Pole „Klucz grupy" — etykieta obok zamiast nad polem.** Przepisano z układu
+  tabelarycznego na stertę (etykieta → pole → opis), spójnie z „Etykietą przycisku".
+  (`includes/builder.php`)
+- **Image Select miał odwróconą kolejność `wartość : nazwa`.** Ujednolicono format do
+  `URL obrazka : Etykieta` (jak inne selecty). Parser jest odporny na kolejność i
+  wykrywa, która strona jest URL-em — stare wpisy `Etykieta : URL` nadal działają.
+  (`includes/builder.php`, `includes/metabox.php`)
+- **Przyciski w „Typach treści" / „Taksonomiach" się rozjeżdżały.** Zastąpiono
+  przyciski ↑/↓ uchwytem przeciągania (jQuery UI sortable) i jednym przyciskiem
+  usuwania — spójnie z builderem grup pól. (`includes/cpt.php`,
+  `includes/taxonomies.php`, `assets/evk-admin.css`, `evk-repeater.php`)
+- **Kosmetyka:** komunikat migracji pokazywał „(0 grup)" — teraz liczy faktycznie
+  zmigrowane grupy. (`includes/field-groups.php`)
+
+## [1.6.1]
+- Wersja bazowa przed Fazą 1 (CPT grup pól, integracja Bricks v8.2, strony ustawień).

@@ -1,0 +1,510 @@
+/* ===== EVK Repeater — wspólna warstwa (design Evoke ONE) ===== */
+/* Ładowane na stronach: Grupy pól / Typy treści / Taksonomie. Akcent #2563eb. */
+
+/* ── Chrome strony ── */
+.evk-admin #wpbody-content > .wrap{max-width:1280px;}
+
+.evk-admin .wrap > h1{
+    display:flex;align-items:center;gap:10px;
+    font-size:23px;font-weight:700;color:#111827;margin:18px 0 6px;
+}
+.evk-admin .wrap > h1 .dashicons{color:#2563eb;font-size:26px;width:26px;height:26px;}
+
+/* ── Przyciski (akcent niebieski) ── */
+.evk-admin .button-primary{
+    background:#2563eb;border-color:#2563eb;box-shadow:none;text-shadow:none;border-radius:7px;font-weight:600;
+}
+.evk-admin .button-primary:hover{background:#1d4ed8;border-color:#1d4ed8;}
+
+.evk-admin .button{border-radius:7px;}
+
+/* Ikona (dashicon) w przycisku ZAWSZE w jednej linii z tekstem — globalnie, bez
+   ręcznych inline-hacków na każdym przycisku. :has() jest już używane w tym CSS. */
+.evk-admin .button:has(> .dashicons){display:inline-flex;align-items:center;gap:6px;}
+.evk-admin .button > .dashicons{font-size:16px;width:16px;height:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ── Focus na polach ── */
+.evk-admin input[type=text]:focus,
+.evk-admin select:focus,
+.evk-admin textarea:focus{
+    border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;
+}
+
+/* ── Komponenty wielokrotnego użytku ── */
+
+/* Info box */
+.evk-b-info{display:flex;gap:11px;align-items:flex-start;background:#f8fafc;border:1px solid #d7dde7;border-radius:10px;padding:14px 16px;margin:14px 0 18px;font-size:13px;color:#374151;line-height:1.65;max-width:1040px;}
+.evk-b-info .dashicons{color:#2563eb;flex-shrink:0;margin-top:1px;}
+.evk-b-info code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:12px;}
+.evk-b-info em{color:#2563eb;font-style:normal;font-weight:600;}
+.evk-b-info strong{color:#111827;}
+
+/* iOS toggle */
+.evk-switch-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;white-space:nowrap;}
+.evk-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;}
+.evk-switch input{opacity:0;width:0;height:0;}
+.evk-switch-slider{position:absolute;inset:0;background:#cbd5e1;transition:.25s;border-radius:24px;}
+.evk-switch-slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.25s;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.evk-switch input:checked + .evk-switch-slider{background:#16a34a;}
+.evk-switch input:checked + .evk-switch-slider:before{transform:translateX(20px);}
+.evk-switch-label{font-size:13px;font-weight:600;color:#374151;}
+
+/* Chip (wybór) */
+.evk-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:#f8fafc;border:1px solid #d7dde7;border-radius:999px;font-size:12.5px;color:#374151;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.evk-chip:hover{background:#eff6ff;border-color:#93c5fd;}
+.evk-chip input{margin:0;}
+.evk-chip:has(input:checked){background:#eff6ff;border-color:#2563eb;color:#1d4ed8;font-weight:600;}
+
+/* Save bar (sticky) */
+.evk-save-bar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;margin-top:18px;padding:13px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #d7dde7;border-radius:10px;box-shadow:0 -2px 14px rgba(15,23,42,.06);z-index:5;}
+.evk-save-bar .dashicons{font-size:16px;width:16px;height:16px;vertical-align:text-bottom;}
+
+/* ── CPT / taksonomie (port SNN) — dociągnięcie do stylu Evoke ── */
+.evk-admin input[type=text],
+.evk-admin select,
+.evk-admin textarea{border:1px solid #d1d5db;border-radius:6px;}
+
+.evk-admin .form-table th{color:#111827;padding-top:16px;}
+.evk-admin .form-table td{padding-top:14px;}
+
+.evk-admin .postbox{border:1px solid #d7dde7;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+
+/* ── CPT: blok etykiet/przycisków ── */
+.evk-cpt-labels{margin-top:14px;padding-top:14px;border-top:1px dashed #d7dde7;display:flex;flex-direction:column;gap:10px;}
+.evk-cpt-labels-title{margin:0 0 2px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
+.evk-cpt-labels-title span{font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;}
+.evk-cpt-labels > label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#374151;max-width:360px;}
+.evk-cpt-labels > label input{border:1px solid #d1d5db;border-radius:6px;}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SETTINGS PAGE — zakładki (pille EVK z równym wrapperem)
+   ───────────────────────────────────────────────────────────────────────── */
+
+.evk-settings-tabs.nav-tab-wrapper,
+.wrap h2.evk-settings-tabs.nav-tab-wrapper,
+h1.evk-settings-tabs.nav-tab-wrapper {
+    border-bottom: 1px solid #c3c4c7;
+    background: #eef2f7;
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 8px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 0;
+    line-height: inherit;
+    box-sizing: border-box;
+}
+.evk-settings-tabs .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 34px;
+    border: 0 !important;
+    background: transparent !important;
+    border-radius: 7px !important;
+    padding: 0 18px !important;
+    color: #4b5563 !important;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1 !important;
+    margin: 0 !important;
+    transition: background .15s, color .15s, box-shadow .15s;
+}
+.evk-settings-tabs .nav-tab:hover {
+    background: #fff !important;
+    color: #1d4ed8 !important;
+}
+.evk-settings-tabs .nav-tab-active,
+.evk-settings-tabs .nav-tab.nav-tab-active {
+    background: #fff !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(15,23,42,.12) !important;
+}
+
+/* ── Settings page: karta grupy ── */
+.evk-settings-group {
+    background: #fff;
+    border: 1px solid #d7dde7;
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin: 0 0 20px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.06);
+}
+.evk-settings-group-title {
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eef2f7;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+}
+/* Grupa bezramkowa (seamless) na stronie ustawień — bez karty i tytułu */
+.evk-settings-group.evk-settings-group--seamless {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+}
+.evk-settings-form .submit {
+    padding-top: 0;
+    border-top: 0;
+}
+.evk-settings-form .button-primary {
+    background: #2563eb !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SETTINGS BUILDER — stron ustawień
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Intro tekst */
+.evk-b-wrap h1 { margin-bottom: 6px; }
+.evk-b-intro { color: #64748b; margin-bottom: 20px; font-size: 13px; }
+
+/* Kontener wszystkich stron — gap między kartami */
+#evk-settings-pages { display: flex; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+
+/* Konfiguracja strony — grid inputs */
+.evk-sp-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px 16px;
+}
+.evk-sp-meta label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #64748b;
+}
+.evk-sp-meta input {
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #111827;
+    text-transform: none;
+    letter-spacing: 0;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.evk-sp-meta input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); outline: none; }
+
+/* Pole wyboru ikony (picker) — dopasowanie do siatki konfiguracji strony */
+.evk-sp-meta .post-type-icon { display: flex; flex-direction: column; gap: 5px; }
+.evk-sp-meta .post-type-icon > label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #64748b;
+}
+.evk-sp-meta .post-type-icon br { display: none; }
+.evk-sp-meta .post-type-icon .dashicon-picker-btn {
+    width: 100%; min-width: 0; max-width: none; height: 38px;
+    border: 1px solid #d1d5db; border-radius: 6px; background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.evk-sp-meta .post-type-icon .dashicon-picker-btn:hover { border-color: #2563eb; }
+.evk-sp-meta .post-type-icon .dashicon-btn-label { font-size: 12px; color: #475569; }
+
+/* Lista zakładek */
+.evk-sp-tabs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+/* Karta zakładki */
+.evk-sp-tab {
+    border: 1px solid #d7dde7;
+    border-radius: 10px;
+    background: #f8fafc;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+}
+.evk-sp-tab:hover { border-color: #cbd5e1; box-shadow: 0 1px 4px rgba(15,23,42,.06); }
+
+.evk-sp-tab-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid #eef0f2;
+}
+.evk-sp-tab-handle { color: #cbd5e1; cursor: move; flex-shrink: 0; }
+.evk-sp-tab-label {
+    flex: 1 1 auto;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    background: #fff;
+    color: #111827;
+    margin: 0;
+    padding: 0 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.evk-sp-tab-label:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); outline: none; }
+
+.evk-sp-remove-tab {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 5px;
+    border-radius: 6px;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+.evk-sp-remove-tab:hover { color: #dc2626; background: #fef2f2; }
+
+/* Grupy pól w zakładce — chipy */
+.evk-sp-tab-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 14px;
+    min-height: 46px;
+}
+.evk-sp-group-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid #d7dde7;
+    border-radius: 20px;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+    user-select: none;
+}
+.evk-sp-group-pick:hover { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+.evk-sp-group-pick input[type=checkbox] { margin: 0; flex-shrink: 0; accent-color: #2563eb; cursor: pointer; }
+.evk-sp-group-pick:has(input:checked) { background: #dbeafe; border-color: #93c5fd; color: #1e40af; font-weight: 600; }
+.evk-sp-nogroups { color: #9ca3af; font-size: 13px; font-style: italic; }
+.evk-sp-nogroups a { color: #6b7280; }
+
+/* Przycisk "Dodaj zakładkę" */
+.evk-sp-add-tab {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    border: 1px dashed #cbd5e1 !important;
+    background: #fff !important;
+    color: #475569 !important;
+    border-radius: 8px !important;
+    padding: 7px 14px !important;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+    box-shadow: none !important;
+}
+.evk-sp-add-tab:hover { border-color: #2563eb !important; color: #2563eb !important; background: #f8fbff !important; }
+.evk-sp-add-tab .dashicons { font-size: 14px; width: 14px; height: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Przycisk "Dodaj stronę ustawień" */
+.evk-sp-add-page {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    border: 1px dashed #cbd5e1 !important;
+    background: #fff !important;
+    color: #475569 !important;
+    border-radius: 8px !important;
+    padding: 9px 16px !important;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+    box-shadow: none !important;
+    margin-bottom: 16px !important;
+}
+.evk-sp-add-page:hover { border-color: #2563eb !important; color: #2563eb !important; background: #f8fbff !important; }
+.evk-sp-add-page .dashicons { font-size: 15px; width: 15px; height: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Zapisz strony */
+.evk-b-wrap .submit { padding-top: 0; border-top: 0; }
+.evk-b-wrap .submit .button-primary {
+    background: #2563eb !important;
+    border-color: #1d4ed8 !important;
+    color: #fff !important;
+    height: 40px;
+    padding: 0 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TYPY TREŚCI / TAKSONOMIE — karty zwijane w stylu EVK
+   (zastępuje dawne, wbudowane style z cpt.php / taxonomies.php)
+   ───────────────────────────────────────────────────────────────────────── */
+
+.evk-admin #custom-post-type-settings > p,
+.evk-admin #taxonomy-settings > p { color: #64748b; font-size: 13px; margin: 0 0 16px; }
+
+.evk-admin .custom-post-type-row,
+.evk-admin .taxonomy-row {
+    display: block;
+    padding: 0;
+    margin: 0 0 14px;
+    background: #fff;
+    border: 1px solid #d7dde7;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15,23,42,.05);
+    overflow: hidden;
+}
+
+/* Nagłówek karty — klik zwija/rozwija */
+.evk-admin .evk-row-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid #eef0f2;
+    cursor: pointer;
+    user-select: none;
+}
+.evk-admin .custom-post-type-row.collapsed .evk-row-head,
+.evk-admin .taxonomy-row.collapsed .evk-row-head { border-bottom-color: transparent; }
+.evk-admin .evk-row-caret { color: #94a3b8; flex-shrink: 0; transition: transform .15s; }
+/* Uchwyt przeciągania wiersza (spójny z builderem grup pól) */
+.evk-admin .evk-row-handle { color: #cbd5e1; cursor: move; flex-shrink: 0; }
+.evk-admin .evk-row-handle:hover { color: #94a3b8; }
+.evk-admin .evk-sort-placeholder { border: 2px dashed #93c5fd; background: #eff6ff; border-radius: 12px; margin: 0 0 14px; }
+.evk-admin .custom-post-type-row.collapsed .evk-row-caret,
+.evk-admin .taxonomy-row.collapsed .evk-row-caret { transform: rotate(-90deg); }
+.evk-admin .evk-row-title {
+    flex: 1 1 auto; min-width: 0;
+    font-size: 14px; font-weight: 600; color: #111827;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.evk-admin .evk-row-title:empty::before { content: attr(data-empty); color: #94a3b8; font-weight: 500; }
+
+.evk-admin .evk-row-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.evk-admin .evk-row-actions button {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; padding: 0;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px;
+    color: #64748b; cursor: pointer; line-height: 1;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.evk-admin .evk-row-actions button:hover { background: #eef2f7; color: #1d4ed8; border-color: #cbd5e1; }
+.evk-admin .evk-row-actions .remove-post-type:hover,
+.evk-admin .evk-row-actions .remove-taxonomy:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.evk-admin .evk-row-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Ciało karty — siatka pól */
+.evk-admin .evk-row-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 18px 16px;
+}
+.evk-admin .custom-post-type-row.collapsed .evk-row-body,
+.evk-admin .taxonomy-row.collapsed .evk-row-body { display: none; }
+
+/* Etykiety-nagłówki pól */
+.evk-admin .evk-row-body .post-type-name > label,
+.evk-admin .evk-row-body .post-type-slug > label,
+.evk-admin .evk-row-body .post-type-icon > label,
+.evk-admin .evk-row-body .field-group > label {
+    display: block; margin: 0 0 5px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #64748b;
+}
+.evk-admin .evk-row-body .post-type-name br,
+.evk-admin .evk-row-body .post-type-slug br,
+.evk-admin .evk-row-body .post-type-icon br,
+.evk-admin .evk-row-body .field-group br { display: none; }
+
+/* Inputy / selecty */
+.evk-admin .custom-post-type-row input[type="text"],
+.evk-admin .taxonomy-row input[type="text"],
+.evk-admin .taxonomy-row select {
+    width: 100%; height: 38px; box-sizing: border-box;
+    border: 1px solid #d1d5db; border-radius: 6px; padding: 0 10px;
+    font-size: 13px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.evk-admin .taxonomy-row select[multiple] { height: auto; min-height: 104px; padding: 6px; line-height: 1.8; }
+.evk-admin .custom-post-type-row input[type="text"]:focus,
+.evk-admin .taxonomy-row input[type="text"]:focus,
+.evk-admin .taxonomy-row select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); outline: none; }
+
+/* Przełączniki (toggle) — wygląd jak .evk-switch */
+.evk-admin .custom-post-type-row input[type="checkbox"],
+.evk-admin .taxonomy-row input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; cursor: pointer; position: relative;
+    width: 44px; height: 24px; min-width: 44px; flex-shrink: 0; margin: 0;
+    background: #cbd5e1; border: 0; border-radius: 24px; transition: background .25s;
+}
+.evk-admin .custom-post-type-row input[type="checkbox"]::before,
+.evk-admin .taxonomy-row input[type="checkbox"]::before {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; margin: 0;
+    background: #fff; border-radius: 50%; transition: transform .25s; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.evk-admin .custom-post-type-row input[type="checkbox"]:checked,
+.evk-admin .taxonomy-row input[type="checkbox"]:checked { background: #16a34a; }
+/* margin:0 + content:"" neutralizują regułę WP core input:checked::before (checkmark
+   + ujemny margines), która przesuwała gałkę tylko we włączonych przełącznikach. */
+.evk-admin .custom-post-type-row input[type="checkbox"]:checked::before,
+.evk-admin .taxonomy-row input[type="checkbox"]:checked::before { content: ""; margin: 0; transform: translateX(20px); }
+
+/* Taksonomie: pola z przełącznikiem (caption nad toggle) */
+.evk-admin .taxonomy-row .checkbox-container { margin-top: 2px; }
+
+/* Typy treści: sekcja „obsługiwane funkcje" */
+.evk-admin .advanced-settings-wrap { grid-column: 1 / -1; padding-left: 0; margin-top: 2px; }
+.evk-admin .toggle-advanced-btn {
+    background: none; border: 0; padding: 4px 0; margin: 0 0 4px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: #2563eb;
+}
+.evk-admin .toggle-advanced-btn:hover { color: #1d4ed8; }
+.evk-admin .supports-section {
+    display: flex; flex-wrap: wrap; gap: 12px 20px;
+    padding: 14px; margin-top: 6px; background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;
+}
+.evk-admin .supports-section > label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: #374151; min-width: 0;
+}
+.evk-admin .supports-section .evk-cpt-labels { flex: 1 0 100%; margin-top: 6px; }
+
+/* Przyciski „Dodaj …" — ghost (dashed), spójne z resztą wtyczki */
+.evk-admin #add-custom-post-type-row,
+.evk-admin #add-taxonomy-row {
+    display: inline-flex !important; align-items: center; gap: 6px;
+    border: 1px dashed #cbd5e1 !important; background: #fff !important; color: #475569 !important;
+    border-radius: 8px !important; padding: 9px 16px !important; height: auto !important;
+    font-size: 13px; font-weight: 500; box-shadow: none !important; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.evk-admin #add-custom-post-type-row:hover,
+.evk-admin #add-taxonomy-row:hover { border-color: #2563eb !important; color: #2563eb !important; background: #f8fbff !important; }
+.evk-admin #add-custom-post-type-row .dashicons,
+.evk-admin #add-taxonomy-row .dashicons { font-size: 15px; width: 15px; height: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Picker ikony w wierszu typu treści — dopasowanie do pozostałych pól */
+.evk-admin .evk-row-body .post-type-icon .dashicon-picker-btn {
+    width: 100%; min-width: 0; max-width: none; height: 38px;
+    border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.evk-admin .evk-row-body .post-type-icon .dashicon-picker-btn:hover { border-color: #2563eb; }

@@ -1,0 +1,157 @@
+/* ===== EVK Repeater — metabox (edycja wpisu), design Evoke ONE ===== */
+
+/* wspólny wygląd pola (single + wiersz) */
+.evk-rep-field,.evk-s-field{display:flex;flex-direction:column;min-width:0;}
+.evk-rep-field > label,.evk-s-label{font-weight:600;font-size:12px;margin-bottom:5px;color:#111827;}
+.evk-rep-field input[type=text],.evk-rep-field input[type=url],.evk-rep-field input[type=email],
+.evk-rep-field input[type=number],.evk-rep-field input[type=date],.evk-rep-field textarea,.evk-rep-field select,
+.evk-s-field input[type=text],.evk-s-field input[type=url],.evk-s-field input[type=email],
+.evk-s-field input[type=number],.evk-s-field input[type=date],.evk-s-field textarea,.evk-s-field select{
+    width:100%;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.evk-rep-field input:focus,.evk-rep-field select:focus,.evk-rep-field textarea:focus,
+.evk-s-field input:focus,.evk-s-field select:focus,.evk-s-field textarea:focus{
+    border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;
+}
+.evk-rep-field input[type=color],.evk-s-field input[type=color]{width:48px;height:34px;padding:2px;border-radius:6px;cursor:pointer;}
+/* ── Prefiks / sufiks pola (np. „PLN") + wymagane ── */
+.evk-rep-affix{display:flex;align-items:stretch;max-width:100%;}
+.evk-rep-affix-pre,.evk-rep-affix-suf{display:inline-flex;align-items:center;padding:0 12px;background:#f1f5f9;border:1px solid #d1d5db;color:#475569;font-size:13px;font-weight:600;white-space:nowrap;}
+.evk-rep-affix-pre{border-right:0;border-radius:6px 0 0 6px;}
+.evk-rep-affix-suf{border-left:0;border-radius:0 6px 6px 0;}
+.evk-rep-affix > input{border-radius:0!important;min-width:0;flex:1 1 auto;}
+.evk-rep-affix > input:first-child{border-radius:6px 0 0 6px!important;}
+.evk-rep-affix > input:last-child{border-radius:0 6px 6px 0!important;}
+.evk-rep-affix-pre + input{border-left:0;}
+.evk-rep-affix > input:has(+ .evk-rep-affix-suf){border-right:0;}
+.evk-req{color:#dc2626;font-weight:700;margin-left:2px;}
+
+.evk-rep-image{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.evk-rep-image-preview img{max-width:60px;height:auto;border-radius:6px;display:block;}
+
+/* ── Galeria ── */
+.evk-gallery-items{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
+.evk-gallery-items:empty{display:none;}
+.evk-gallery-item{position:relative;width:108px;border:1px solid #e2e8f0;border-radius:10px;padding:7px;background:#fff;display:flex;flex-direction:column;gap:7px;cursor:move;box-shadow:0 1px 2px rgba(15,23,42,.05);transition:border-color .15s,box-shadow .15s,transform .15s;}
+.evk-gallery-item:hover{border-color:#93c5fd;box-shadow:0 4px 12px rgba(15,23,42,.1);transform:translateY(-1px);}
+.evk-gallery-thumb{position:relative;width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:7px;background:#f1f5f9;}
+.evk-gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.evk-gallery-cat{width:100%;font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;}
+.evk-gallery-cat:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.12);outline:none;}
+.evk-gallery-remove{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:#dc2626;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;opacity:0;transform:scale(.85);transition:opacity .15s,transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.evk-gallery-item:hover .evk-gallery-remove{opacity:1;transform:scale(1);}
+.evk-gallery-remove .dashicons{font-size:14px;width:14px;height:14px;line-height:14px;}
+.evk-gallery-placeholder{width:108px;height:130px;border:2px dashed #93c5fd;border-radius:10px;background:#eff6ff;}
+.evk-gallery-add{display:inline-flex!important;align-items:center;gap:6px;border:1px dashed #cbd5e1!important;background:#fff!important;color:#475569!important;box-shadow:none!important;border-radius:8px!important;}
+.evk-gallery-add:hover{border-color:#2563eb!important;color:#2563eb!important;background:#f8fbff!important;}
+.evk-gallery-add .dashicons{font-size:16px;width:16px;height:16px;line-height:1;}
+.evk-rep-radios{display:flex;flex-wrap:wrap;gap:6px 16px;}
+.evk-rep-radios label{display:inline-flex;align-items:center;gap:5px;}
+.evk-rep-cb{display:inline-flex;align-items:center;gap:6px;}
+.evk-rep-html{font-family:Menlo,Consolas,monospace;font-size:12px;}
+.evk-rep-button-group{display:flex;flex-wrap:wrap;gap:8px;}
+.evk-rep-button-group label{display:inline-flex;align-items:center;cursor:pointer;margin:0;}
+.evk-rep-button-group input{position:absolute;opacity:0;pointer-events:none;}
+.evk-rep-button-group span{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 14px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#374151;font-size:13px;font-weight:500;transition:border-color .15s,background .15s,color .15s,box-shadow .15s;}
+.evk-rep-button-group label:hover span{border-color:#93c5fd;color:#1d4ed8;background:#f8fbff;}
+.evk-rep-button-group label.is-selected span,.evk-rep-button-group input:checked + span{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;box-shadow:0 0 0 2px rgba(37,99,235,.12);}
+.evk-rep-image-select{display:flex;flex-wrap:wrap;gap:10px;}
+.evk-rep-image-select label{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:calc(var(--evk-img-w) + 22px);margin:0;padding:8px;border:1px solid #d7dde7;border-radius:8px;background:#fff;cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s;}
+.evk-rep-image-select input{position:absolute;opacity:0;pointer-events:none;}
+.evk-rep-image-select-img{display:flex;align-items:center;justify-content:center;width:var(--evk-img-w);height:var(--evk-img-h);}
+.evk-rep-image-select-img img{max-width:100%;max-height:100%;display:block;}
+.evk-rep-image-select-label{max-width:var(--evk-img-w);font-size:12px;line-height:1.25;color:#374151;text-align:center;overflow-wrap:anywhere;}
+.evk-rep-image-select label:hover{border-color:#93c5fd;background:#f8fbff;}
+.evk-rep-image-select label.is-selected{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.16);background:#eff6ff;}
+.evk-rep-image-select label:has(input:checked){border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.16);background:#eff6ff;}
+.evk-rep-range{display:grid;grid-template-columns:minmax(120px,1fr) 88px;gap:10px;align-items:center;}
+.evk-rep-range input[type=range]{width:100%;margin:0;}
+.evk-rep-range input[type=number]{width:88px;}
+
+/* ── Repeater: zwijane wiersze ── */
+.evk-rep-row{margin-bottom:10px;background:#fff;border:1px solid #d7dde7;border-radius:10px;overflow:hidden;}
+.evk-rep-row-head{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e5e7eb;}
+.evk-rep-row.collapsed .evk-rep-row-head{border-bottom:0;}
+.evk-rep-handle{cursor:move;color:#94a3b8;flex:0 0 auto;}
+.evk-rep-row-toggle{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#64748b;padding:2px;display:inline-flex;}
+.evk-rep-row-toggle .dashicons{transition:transform .15s;}
+.evk-rep-row.collapsed .evk-rep-row-toggle .dashicons{transform:rotate(-90deg);}
+.evk-rep-row-title{flex:1 1 auto;min-width:0;font-weight:600;font-size:13px;color:#111827;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.evk-rep-remove{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#9ca3af;padding:4px;border-radius:6px;display:inline-flex;}
+.evk-rep-remove:hover{color:#dc2626;background:#fef2f2;}
+.evk-rep-row-body{padding:14px;}
+.evk-rep-row.collapsed .evk-rep-row-body{display:none;}
+.evk-rep-row-fields{display:grid;grid-template-columns:repeat(12,1fr);gap:14px 16px;}
+.evk-rep-placeholder{height:48px;background:#eff6ff;border:2px dashed #93c5fd;border-radius:10px;margin-bottom:10px;}
+/* "Dodaj wiersz" — spójny styl ghost (dashed), jak pozostałe przyciski "Dodaj …" */
+.evk-rep-add{display:inline-flex!important;align-items:center;gap:6px;border:1px dashed #cbd5e1!important;background:#fff!important;color:#475569!important;text-shadow:none!important;box-shadow:none!important;border-radius:8px!important;padding:8px 16px!important;height:auto!important;line-height:1.4!important;font-weight:500;transition:border-color .15s,color .15s,background .15s;}
+.evk-rep-add:hover,.evk-rep-add:focus{border-color:#2563eb!important;color:#2563eb!important;background:#f8fbff!important;box-shadow:none!important;}
+
+/* ── Single: zakładki (pill, jak Evoke) ── */
+.evk-s-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:6px;margin:0 0 16px;border:1px solid #d7dde7;border-radius:10px;background:#eef2f7;}
+.evk-s-tab{border:0;margin:0;border-radius:7px;padding:8px 16px;color:#4b5563;background:transparent;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;}
+.evk-s-tab:hover{background:#fff;color:#1d4ed8;}
+.evk-s-tab.active{background:#fff;color:#111827;font-weight:600;box-shadow:0 1px 3px rgba(15,23,42,.12);}
+
+/* PANELE — grid 12-kol; szerokości pól działają także w trybie single */
+.evk-s-panels{display:block;}
+.evk-s-panel{display:none;}
+.evk-s-panel.active{display:grid;grid-template-columns:repeat(12,1fr);gap:16px 16px;}
+
+.evk-s-heading{grid-column:1 / -1;margin:6px 0 0;padding-bottom:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
+
+/* ── Single: akordeon ── */
+.evk-s-acc{grid-column:1 / -1;border:1px solid #d7dde7;border-radius:10px;overflow:hidden;}
+.evk-s-acc-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border:0;padding:12px 15px;font-size:13px;font-weight:600;color:#111827;cursor:pointer;text-align:left;}
+.evk-s-acc-head:hover{background:#eef4ff;}
+.evk-s-acc-head .dashicons{transition:transform .15s;color:#64748b;}
+.evk-s-acc.open .evk-s-acc-head .dashicons{transform:rotate(180deg);}
+.evk-s-acc-body{display:none;}
+.evk-s-acc.open .evk-s-acc-body{display:grid;grid-template-columns:repeat(12,1fr);gap:16px 16px;padding:15px;}
+
+/* ── Pole repeater w grupie pojedynczej ── */
+.evk-rep-field--repeater{display:flex;flex-direction:column;}
+.evk-rep-field--repeater > .evk-s-label{margin-bottom:8px;}
+.evk-rep-field--repeater .evk-rep-add-wrap{margin:0;}
+.evk-rep-add .dashicons{font-size:16px;width:16px;height:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;color:inherit!important;flex-shrink:0;}
+
+/* ── Tryb bezramkowy (seamless) — metabox bez ramki i belki ── */
+.postbox.evk-seamless{border:0;background:transparent;box-shadow:none;}
+.postbox.evk-seamless > .postbox-header{display:none;}
+.postbox.evk-seamless > .inside{margin:0;padding:0;}
+
+/* ── Strona ustawień ── */
+.evk-settings-wrap .evk-settings-tabs{margin-bottom:18px;}
+.evk-settings-group{background:#fff;border:1px solid #d7dde7;border-radius:10px;padding:18px 20px;margin:0 0 18px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.evk-settings-group-title{margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid #eef2f7;font-size:14px;font-weight:700;color:#111827;}
+.evk-settings-form .submit{padding-top:0;}
+
+/* ── Pola w termach / profilu użytkownika (Faza 3) ── */
+.evk-user-fields{margin:18px 0;}
+.evk-loc-group-title{margin:0 0 12px;font-size:14px;font-weight:700;color:#111827;}
+.evk-term-fields .evk-s{margin-top:6px;}
+
+/* ── Relacja (relationship) ── */
+.evk-rel{position:relative;}
+.evk-rel-selected{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.evk-rel-selected:empty{display:none;}
+.evk-rel-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #d7dde7;border-radius:8px;background:#fff;}
+.evk-rel-handle{color:#94a3b8;cursor:move;flex:0 0 auto;}
+.evk-rel-title{flex:1 1 auto;min-width:0;font-size:13px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.evk-rel-remove{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#9ca3af;padding:2px;border-radius:6px;display:inline-flex;}
+.evk-rel-remove:hover{color:#dc2626;background:#fef2f2;}
+.evk-rel-placeholder{height:38px;border:2px dashed #93c5fd;border-radius:8px;background:#eff6ff;margin-bottom:6px;}
+.evk-rel-search-wrap{position:relative;}
+.evk-rel-search{width:100%;}
+.evk-rel-results{position:absolute;top:100%;left:0;right:0;z-index:20;background:#fff;border:1px solid #d7dde7;border-radius:8px;box-shadow:0 6px 20px rgba(15,23,42,.12);margin-top:4px;max-height:260px;overflow-y:auto;display:none;}
+.evk-rel-result{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;}
+.evk-rel-result:last-child{border-bottom:0;}
+.evk-rel-result:hover{background:#eff6ff;}
+.evk-rel-result-title{font-size:13px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.evk-rel-result-type{font-size:11px;color:#6b7280;flex:0 0 auto;}
+.evk-rel-noresult{padding:10px 12px;color:#9ca3af;font-size:13px;}
+
+/* ── Taksonomia: wybór termów ── */
+.evk-rep-tax-checks{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
+.evk-rep-tax-check{display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;}
+.evk-rep-tax-check input[type=checkbox]{margin:0;flex-shrink:0;}
