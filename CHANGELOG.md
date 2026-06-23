@@ -2,6 +2,21 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.22.1] — 2026-06-24
+
+### Zmienione
+
+- **Ściągawka „Jak wyświetlić w Bricks"** (pole galeria) jest teraz zwijanym blokiem
+  `<details>` — domyślnie **zamknięta**, rozwija się po kliknięciu nagłówka (chevron
+  obraca się). Wcześniej zajmowała dużo miejsca w konfiguracji każdego pola galerii.
+  (`includes/builder.php`, `assets/builder.css`)
+
+### Usunięte
+
+- **Generyczny baner z podpowiedziami tagów** (`evk-b-info`) nad listą pól w edytorze
+  grupy — zbędny, bo ściągawki tagów są teraz przy konkretnych polach. Klasa CSS
+  `.evk-b-info` zostaje (używana na stronie Narzędzia). (`includes/builder.php`)
+
 ## [1.22.0] — 2026-06-24
 
 ### Dodane

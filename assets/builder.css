@@ -176,8 +176,12 @@
 
 /* Ściągawka „jak wyświetlić" */
 .evk-b-cheat{margin-top:14px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12.5px;color:#475569;line-height:1.65;}
-.evk-b-cheat-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2563eb;margin-bottom:8px;}
+.evk-b-cheat-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#2563eb;cursor:pointer;list-style:none;}
+.evk-b-cheat-title::-webkit-details-marker{display:none;}
 .evk-b-cheat-title .dashicons{font-size:15px;width:15px;height:15px;}
+.evk-b-cheat-chevron{margin-left:auto;transition:transform .2s;color:#94a3b8;}
+.evk-b-cheat[open] .evk-b-cheat-chevron{transform:rotate(180deg);}
+.evk-b-cheat-body{margin-top:8px;}
 .evk-b-cheat-row{margin-top:8px;color:#111827;font-weight:600;}
 .evk-b-cheat-steps{margin:4px 0 0 20px;padding:0;list-style:decimal;}
 .evk-b-cheat-steps li{margin:2px 0;}

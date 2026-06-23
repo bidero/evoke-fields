@@ -177,15 +177,6 @@ function evk_group_fields_metabox(\WP_Post $post): void {
     $fields = $json ? (json_decode($json, true) ?? []) : [];
     ?>
     <div class="evk-b" style="padding:0;">
-        <div class="evk-b-info" style="margin:0 0 16px;">
-            <span class="dashicons dashicons-info-outline"></span>
-            <div>
-                Tag w Bricks: <code>{evk_field_klucz}</code> &nbsp;|&nbsp;
-                Obraz: <code>__id</code> / <code>__alt</code> &nbsp;|&nbsp;
-                Lista: <code>__label</code> &nbsp;|&nbsp;
-                Taksonomia: <code>__id</code> / <code>__slug</code>
-            </div>
-        </div>
         <div class="evk-b-fields" id="evk-edit-fields">
             <?php
             $fi = 0;
@@ -669,26 +660,28 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             <p class="description" style="margin:10px 0 0;">Brak źródła = prosta galeria. Z kategoriami każdy obraz dostaje wybór kategorii, a front zwraca jedną listę z kategorią przy każdym obrazie.</p>
 
             <?php $cheat_key = $key !== '' ? $key : 'klucz'; ?>
-            <div class="evk-b-cheat">
-                <div class="evk-b-cheat-title"><span class="dashicons dashicons-lightbulb"></span> Jak wyświetlić w Bricks</div>
-                <div class="evk-b-cheat-row"><strong>Cała galeria (pętla — polecane):</strong></div>
-                <ol class="evk-b-cheat-steps">
-                    <li>Element z <em>Query Loop</em> → Type: <strong>„EVK Galeria: …"</strong> (na stronie opcji: <strong>„EVK Galeria Opcje: …"</strong>)</li>
-                    <li>W środku element <em>Image</em> → bind przez <code>{evk_field_img__id}</code> i ustaw <strong>Size = „Large" lub „Full"</strong> (nie „Thumbnail" — to mały, kwadratowy crop). Daje poprawne wymiary, srcset i lightbox do pełnego.<br><em>URL-e</em> <code>{evk_field_img}</code> / <code>{evk_field_img__large}</code> — raczej do tła / własnego HTML.</li>
-                    <li>Kategoria danego obrazu → <code>{evk_field_cat__label}</code> (slug do klasy: <code>{evk_field_cat}</code>)</li>
-                </ol>
-                <div class="evk-b-cheat-row"><strong>Przyciski filtrów (tylko użyte kategorie):</strong></div>
-                <ol class="evk-b-cheat-steps">
-                    <li>Druga pętla → Type: <strong>„EVK Galeria kategorie: …"</strong></li>
-                    <li>Przycisk z <code>{evk_field_name}</code> (nazwa) i <code>data-filter</code> = <code>{evk_field_slug}</code></li>
-                </ol>
-                <div class="evk-b-cheat-row"><strong>Proste tagi:</strong></div>
-                <ul class="evk-b-cheat-tags">
-                    <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__ids}">{evk_field_<?php echo esc_html($cheat_key); ?>__ids}</code> — lista ID (np. natywny element Galeria Bricks)</li>
-                    <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__count}">{evk_field_<?php echo esc_html($cheat_key); ?>__count}</code> — liczba obrazów</li>
-                    <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($cheat_key); ?>}</code> — URL pierwszego obrazu</li>
-                </ul>
-            </div>
+            <details class="evk-b-cheat">
+                <summary class="evk-b-cheat-title"><span class="dashicons dashicons-lightbulb"></span> Jak wyświetlić w Bricks<span class="dashicons dashicons-arrow-down-alt2 evk-b-cheat-chevron"></span></summary>
+                <div class="evk-b-cheat-body">
+                    <div class="evk-b-cheat-row"><strong>Cała galeria (pętla — polecane):</strong></div>
+                    <ol class="evk-b-cheat-steps">
+                        <li>Element z <em>Query Loop</em> → Type: <strong>„EVK Galeria: …"</strong> (na stronie opcji: <strong>„EVK Galeria Opcje: …"</strong>)</li>
+                        <li>W środku element <em>Image</em> → bind przez <code>{evk_field_img__id}</code> i ustaw <strong>Size = „Large" lub „Full"</strong> (nie „Thumbnail" — to mały, kwadratowy crop). Daje poprawne wymiary, srcset i lightbox do pełnego.<br><em>URL-e</em> <code>{evk_field_img}</code> / <code>{evk_field_img__large}</code> — raczej do tła / własnego HTML.</li>
+                        <li>Kategoria danego obrazu → <code>{evk_field_cat__label}</code> (slug do klasy: <code>{evk_field_cat}</code>)</li>
+                    </ol>
+                    <div class="evk-b-cheat-row"><strong>Przyciski filtrów (tylko użyte kategorie):</strong></div>
+                    <ol class="evk-b-cheat-steps">
+                        <li>Druga pętla → Type: <strong>„EVK Galeria kategorie: …"</strong></li>
+                        <li>Przycisk z <code>{evk_field_name}</code> (nazwa) i <code>data-filter</code> = <code>{evk_field_slug}</code></li>
+                    </ol>
+                    <div class="evk-b-cheat-row"><strong>Proste tagi:</strong></div>
+                    <ul class="evk-b-cheat-tags">
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__ids}">{evk_field_<?php echo esc_html($cheat_key); ?>__ids}</code> — lista ID (np. natywny element Galeria Bricks)</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__count}">{evk_field_<?php echo esc_html($cheat_key); ?>__count}</code> — liczba obrazów</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($cheat_key); ?>}</code> — URL pierwszego obrazu</li>
+                    </ul>
+                </div>
+            </details>
         </div>
 
         <div class="evk-b-field-range">
