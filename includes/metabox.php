@@ -199,6 +199,18 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo evk_rep_wrap_affix('<input type="url" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . '>', $field);
             break;
 
+        case 'link':
+            $lv     = is_array($val) ? $val : [];
+            $l_url  = (string) ($lv['url'] ?? '');
+            $l_ttl  = (string) ($lv['title'] ?? '');
+            $l_tgt  = !empty($lv['target']);
+            echo '<div class="evk-rep-link">';
+            echo '<input type="url" name="' . esc_attr($name) . '[url]" value="' . esc_attr($l_url) . '" placeholder="https://… lub /sciezka"' . $req . ' class="evk-rep-link-url">';
+            echo '<input type="text" name="' . esc_attr($name) . '[title]" value="' . esc_attr($l_ttl) . '" placeholder="Etykieta (tekst przycisku)" class="evk-rep-link-title">';
+            echo '<label class="evk-rep-link-target"><input type="checkbox" name="' . esc_attr($name) . '[target]" value="_blank" ' . checked($l_tgt, true, false) . '> Otwórz w nowym oknie</label>';
+            echo '</div>';
+            break;
+
         case 'color':
             echo '<input type="color" name="' . esc_attr($name) . '" value="' . esc_attr($val !== '' ? (string) $val : '#000000') . '"' . $req . '>';
             break;
@@ -725,6 +737,14 @@ function evk_rep_sanitize_value(string $type, $v) {
         case 'date':     return sanitize_text_field((string) $v);
         case 'time':     return sanitize_text_field((string) $v);
         case 'datetime': return sanitize_text_field(str_replace('T', ' ', (string) $v)); // 'Y-m-dTH:i' → 'Y-m-d H:i'
+        case 'link':
+            if (!is_array($v)) return '';
+            $url   = esc_url_raw(trim((string) ($v['url'] ?? '')));
+            $title = sanitize_text_field((string) ($v['title'] ?? ''));
+            if ($url === '' && $title === '') return '';
+            $out = ['url' => $url, 'title' => $title];
+            if (!empty($v['target'])) $out['target'] = '_blank';
+            return $out;
         case 'taxonomy':
             if (is_array($v)) {
                 $ids = array_values(array_unique(array_filter(array_map('intval', $v))));

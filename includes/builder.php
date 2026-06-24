@@ -302,6 +302,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'range'    => 'Suwak',
         'email'    => 'E-mail',
         'url'      => 'Link (URL)',
+        'link'     => 'Link / przycisk (URL + etykieta + cel)',
         'select'   => 'Lista rozwijana',
         'radio'    => 'Wybór (radio)',
         'button_group' => 'Grupa przycisków',
@@ -889,7 +890,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 W bazie zapis ISO (<code>Y-m-d</code> / <code>H:i</code> / <code>Y-m-d H:i</code>) — niezależny od formatu.
                 Tu ustawiasz tylko <strong>wyświetlanie</strong> (front/Bricks/kolumna). Przykłady:
                 <code>d.m.Y</code>, <code>j F Y</code>, <code>H:i</code>, <code>d.m.Y H:i</code>.
-                W danych dynamicznych Bricks dostępne też <code>:raw</code> (ISO) i <code>:timestamp</code>.
+                W Bricks dostępne też tagi <code>__raw</code> (ISO) i <code>__timestamp</code>.
             </p>
         </div>
 

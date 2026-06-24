@@ -2,6 +2,25 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.29.0] — 2026-06-24
+
+### Dodane — pole Link
+
+- **Nowy typ pola „Link / przycisk"** (`link`) — URL + etykieta + „Otwórz w nowym oknie"
+  w jednym polu (zamiast dwóch pól text). Zapis jako tablica `{url, title, target}`.
+  Działa w grupach pojedynczych, repeaterach, stronach opcji i kolumnach admina.
+- **Tagi Bricks:** `{evk_field_klucz}` = URL (do bindowania linku przycisku),
+  `__title` = etykieta, `__target` = `_blank`/puste, `__html` = gotowy `<a href target>`.
+  Lista propów Bricks rozszerzona o `title|target|html|raw|timestamp`.
+  (`includes/builder.php`, `includes/metabox.php`, `includes/bricks.php`,
+  `includes/admin-columns.php`, `assets/admin.css`, `assets/builder.js`)
+
+### Naprawione
+
+- **Hint formatu daty** błędnie podawał składnię propów Bricks jako `:raw`/`:timestamp` —
+  poprawne to `__raw`/`__timestamp` (i wcześniej nie były w ogóle w whiteliście propów,
+  teraz są). (`includes/builder.php`, `includes/bricks.php`)
+
 ## [1.28.0] — 2026-06-24
 
 ### Dodane — klaster daty

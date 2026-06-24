@@ -16,6 +16,10 @@
     border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;
 }
 .evk-rep-field input[type=color],.evk-s-field input[type=color]{width:48px;height:34px;padding:2px;border-radius:6px;cursor:pointer;}
+/* ── Pole Link (URL + etykieta + cel) ── */
+.evk-rep-link{display:flex;flex-direction:column;gap:7px;}
+.evk-rep-link-target{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#475569;cursor:pointer;}
+.evk-rep-link-target input{margin:0;}
 /* ── Prefiks / sufiks pola (np. „PLN") + wymagane ── */
 .evk-rep-affix{display:flex;align-items:stretch;max-width:100%;}
 .evk-rep-affix-pre,.evk-rep-affix-suf{display:inline-flex;align-items:center;padding:0 12px;background:#f1f5f9;border:1px solid #d1d5db;color:#475569;font-size:13px;font-weight:600;white-space:nowrap;}

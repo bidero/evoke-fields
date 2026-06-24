@@ -121,6 +121,12 @@ function evk_rep_column_value_html(array $field, $val): string {
         case 'datetime':
             $fmt = evk_rep_format_value($field, $val, '');
             return $fmt !== '' ? esc_html((string) $fmt) : '—';
+        case 'link':
+            $lv  = is_array($val) ? $val : [];
+            $url = (string) ($lv['url'] ?? '');
+            if ($url === '') return '—';
+            $ttl = (string) ($lv['title'] ?? '');
+            return '<a href="' . esc_url($url) . '" target="_blank" rel="noopener">' . esc_html($ttl !== '' ? $ttl : $url) . '</a>';
         case 'url':
             return '<a href="' . esc_url((string) $val) . '" target="_blank" rel="noopener">' . esc_html((string) $val) . '</a>';
         case 'wysiwyg':

@@ -56,7 +56,7 @@
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE' };
+    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE', link: 'LINK' };
 
     function applyType($field) {
         var t = $field.children('.evk-b-field-grid').find('.evk-b-type').first().val();
