@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.4] — 2026-06-25
+
+### Zmienione
+
+- **„Ukryj tytuł strony" jako switch** (zielony, jak „Kolumna") zamiast surowego checkboxa.
+- **Delikatny padding górny** na stronie opcji z ukrytym tytułem (`.evk-title-hidden`) —
+  zamiast pustki po H1. (`includes/settings.php`, `assets/evk-admin.css`)
+
 ## [1.35.3] — 2026-06-25
 
 ### Naprawione

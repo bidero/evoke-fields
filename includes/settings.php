@@ -141,9 +141,12 @@ function evk_rep_settings_page_card($pindex, string $slug, array $page, array $g
                         Menu nadrzędne (slug)
                         <input type="text" name="<?php echo esc_attr($base); ?>[parent]" value="<?php echo esc_attr($page['parent'] ?? ''); ?>" placeholder="puste = osobne menu główne">
                     </label>
-                    <label class="evk-sp-meta-check">
-                        <input type="checkbox" name="<?php echo esc_attr($base); ?>[hide_title]" value="1" <?php checked(!empty($page['hide_title'])); ?>>
-                        Ukryj tytuł strony (nagłówek H1)
+                    <label class="evk-switch-wrap evk-sp-meta-switch">
+                        <span>Ukryj tytuł strony (H1)</span>
+                        <span class="evk-switch">
+                            <input type="checkbox" name="<?php echo esc_attr($base); ?>[hide_title]" value="1" <?php checked(!empty($page['hide_title'])); ?>>
+                            <span class="evk-switch-slider"></span>
+                        </span>
                     </label>
                 </div>
             </div>
@@ -246,7 +249,7 @@ function evk_rep_render_settings_page(string $slug): void {
     $groups = evk_rep_groups();
     $url    = admin_url('admin.php');
     ?>
-    <div class="wrap evk-settings-wrap">
+    <div class="wrap evk-settings-wrap<?php echo !empty($page['hide_title']) ? ' evk-title-hidden' : ''; ?>">
         <h1<?php echo !empty($page['hide_title']) ? ' class="screen-reader-text"' : ''; ?>><?php echo esc_html($page['label'] ?? $slug); ?></h1>
         <?php if (!empty($_GET['updated'])): ?><div class="notice notice-success is-dismissible"><p>Zapisano zmiany.</p></div><?php endif; ?>
 
