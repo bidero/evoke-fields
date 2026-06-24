@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.33.3] — 2026-06-25
+
+### Zmienione
+
+- **Nagłówek-karta „Definicja pól" znów zawsze włączony** (bez przełącznika) — był OK na stałe.
+- **Przełącznik w pasku przerobiony na „Seamless (bez tła)"** — po włączeniu usuwa białe tło
+  wokół pól (`.evk-b-fields`); karta i nagłówek zostają. Stan pamiętany w `localStorage`,
+  klasa `evk-gf-seamless`. (`includes/builder.php`, `assets/builder.css`)
+
 ## [1.33.2] — 2026-06-25
 
 ### Zmienione
