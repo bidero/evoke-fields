@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.32.1] — 2026-06-25
+
+### Naprawione
+
+- **Pola owinięte w `<div>` (Relacja, Użytkownik, Link, suwak) zwężały się** do ~180px, gdy
+  miały tooltip — regresja po 1.31.1. Wrapper był „shrink-to-fit" w wierszu flex, więc input
+  `width:100%` liczył się od skurczonego kontenera. Przywrócono domyślne wypełnianie
+  (`flex:1`) z wyjątkiem kontrolek kompaktowych (toggle, kolor), które dalej nie rozciągają
+  się. (`assets/admin.css`)
+
 ## [1.32.0] — 2026-06-25
 
 ### Dodane — relacje dwukieronkowe (Faza ACF/MB, partia B, generyczna)
