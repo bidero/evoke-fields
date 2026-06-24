@@ -251,3 +251,39 @@ add_filter('get_terms_args', function ($args, $taxonomies) {
     $args['orderby']  = evk_rep_column_is_numeric($field) ? 'meta_value_num' : 'meta_value';
     return $args;
 }, 10, 2);
+
+// =========================================================================
+// WYSZUKIWANIE (Faza 4b cz.1 — wpisy). Standardowe pole „Szukaj" na liście
+// wpisów obejmuje też wartości pól kolumnowych EVK (postmeta). Podzapytanie
+// ID IN (SELECT …) zamiast JOIN — brak duplikatów, brak potrzeby DISTINCT.
+// =========================================================================
+
+add_filter('posts_search', function ($search, $wp_query) {
+    if (!is_admin() || $search === '' || !$wp_query->is_main_query()) return $search;
+    $term = (string) $wp_query->get('s');
+    if ($term === '') return $search;
+
+    // Typ treści listy (edit.php). Domyślnie 'post'.
+    $pt = $wp_query->get('post_type');
+    if (is_array($pt)) $pt = reset($pt);
+    if (!is_string($pt) || $pt === '') $pt = 'post';
+
+    $keys = [];
+    foreach (evk_rep_column_fields()['post'] as $c) {
+        if (in_array($pt, (array) $c['post_types'], true)) $keys[] = $c['key'];
+    }
+    $keys = array_values(array_unique($keys));
+    if (!$keys) return $search;
+
+    global $wpdb;
+    $like         = '%' . $wpdb->esc_like($term) . '%';
+    $placeholders = implode(',', array_fill(0, count($keys), '%s'));
+    $sub = $wpdb->prepare(
+        "{$wpdb->posts}.ID IN (SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key IN ($placeholders) AND meta_value LIKE %s)",
+        array_merge($keys, [$like])
+    );
+
+    // Wstaw „OR <sub>" tuż przed ostatnim nawiasem zamykającym grupę wyszukiwania,
+    // żeby zachować precedencję ( AND ( (tytuł…) OR <sub> ) ).
+    return preg_replace('/\)\s*$/', ' OR ' . $sub . ')', $search, 1);
+}, 10, 2);

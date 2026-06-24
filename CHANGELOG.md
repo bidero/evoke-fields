@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.26.0] — 2026-06-24
+
+### Dodane — Faza 4b cz. 1: wyszukiwanie po wartości kolumny (wpisy)
+
+- **Pole „Szukaj" na liście wpisów obejmuje teraz wartości pól kolumnowych EVK**
+  (oznaczonych „Pokaż jako kolumnę"). Wpisanie frazy znajduje wpisy, gdzie pasuje tytuł
+  **lub** wartość pola EVK zapisana w `postmeta`. Filtr `posts_search` dokleja podzapytanie
+  `ID IN (SELECT … FROM postmeta WHERE meta_key IN (…) AND meta_value LIKE …)` —
+  bez JOIN-u, więc bez duplikatów wyników. Zapytanie budowane przez `$wpdb->prepare`.
+  Tylko panel admina, tylko zapytanie główne, klucze ograniczone do pól danego typu treści.
+  (`includes/admin-columns.php`)
+
+  Termy i użytkownicy — w kolejnych częściach.
+
 ## [1.25.1] — 2026-06-24
 
 ### Dodane
