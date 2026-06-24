@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.30.1] — 2026-06-25
+
+### Naprawione
+
+- **Pole bez klucza znikało przy zapisie.** Gdy użytkownik nie wpisał etykiety (a więc JS
+  nie wygenerował klucza), pole danych było wyrzucane (`return null`) podczas zapisu —
+  utrata skonfigurowanego pola. Teraz przy pustym kluczu parser próbuje wyprowadzić klucz
+  z etykiety, a jeśli i ta pusta — nadaje standardowy fallback `pole_N`. Żadne pole nie
+  ginie. (`includes/builder.php`)
+- **Tooltip (ikona „?") nie był widoczny.** Opierał się na foncie dashicons, który
+  w metaboksie bywa zawodny. Zamieniony na literalne „?" w kółku (CSS, bez zależności od
+  fontu ikon). (`includes/metabox.php`, `assets/admin.css`)
+
 ## [1.30.0] — 2026-06-24
 
 ### Dodane — instrukcje pola + tooltip

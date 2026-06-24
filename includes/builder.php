@@ -399,8 +399,12 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
 
     $fkey = sanitize_key(remove_accents((string) ($f['key'] ?? '')));
     if ($fkey === '') {
-        if ($is_layout || $is_rep) { $fkey = $type . '_' . (++$auto); }
-        else { return null; }
+        // Brak klucza — spróbuj wyprowadzić z etykiety (jak JS na blur).
+        $fkey = sanitize_key(remove_accents((string) ($f['label'] ?? '')));
+    }
+    if ($fkey === '') {
+        // Nadal pusto → standardowy fallback, żeby skonfigurowane pole NIE znikło przy zapisie.
+        $fkey = ($is_layout || $is_rep ? $type : 'pole') . '_' . (++$auto);
     }
     $label = sanitize_text_field($f['label'] ?? '');
     $def   = ['_key' => $fkey, 'label' => $label, 'type' => $type];

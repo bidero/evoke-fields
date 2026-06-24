@@ -431,8 +431,9 @@ function evk_rep_cond_data_attr(array $field): string {
 function evk_rep_label_tooltip(array $field): string {
     $tip = trim((string) ($field['tooltip'] ?? ''));
     if ($tip === '') return '';
-    return ' <span class="evk-s-tip dashicons dashicons-editor-help" tabindex="0" role="img"'
-        . ' data-evk-tip="' . esc_attr($tip) . '" aria-label="' . esc_attr($tip) . '"></span>';
+    // Literalne „?" w kółku — bez zależności od fontu dashicons (ten bywa zawodny w metaboxie).
+    return ' <span class="evk-s-tip" tabindex="0" role="img"'
+        . ' data-evk-tip="' . esc_attr($tip) . '" aria-label="' . esc_attr($tip) . '">?</span>';
 }
 
 // Szara podpowiedź pod inputem (instrukcja pola).
