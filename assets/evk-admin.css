@@ -65,8 +65,11 @@
 .evk-admin textarea{border:1px solid #d1d5db;border-radius:6px;}
 
 /* Pola EVK (metabox/strony opcji) — gwarancja pełnej szerokości niezależnie od tego,
-   czy admin.css złapał dany ekran. Tylko bezpośrednie dzieci .evk-s-field (kontrolki
-   złożone — relacja/link/range — mają własny układ i nie są tu ruszane). */
+   czy admin.css złapał dany ekran. Najpierw sam kontener pola: bez tego „width:100%"
+   na selekcie liczy się od zwężonego (shrink-to-fit) rodzica. */
+.evk-admin .evk-s-field{width:100%;min-width:0;box-sizing:border-box;}
+/* Tylko bezpośrednie dzieci .evk-s-field (kontrolki złożone — relacja/link/range —
+   mają własny układ i nie są tu ruszane). */
 .evk-admin .evk-s-field > select,
 .evk-admin .evk-s-field > textarea,
 .evk-admin .evk-s-field > input[type=text],
@@ -75,7 +78,7 @@
 .evk-admin .evk-s-field > input[type=number],
 .evk-admin .evk-s-field > input[type=date],
 .evk-admin .evk-s-field > input[type=time],
-.evk-admin .evk-s-field > input[type=datetime-local]{width:100%;box-sizing:border-box;}
+.evk-admin .evk-s-field > input[type=datetime-local]{width:100%;min-width:100%;box-sizing:border-box;}
 
 .evk-admin .form-table th{color:#111827;padding-top:16px;}
 .evk-admin .form-table td{padding-top:14px;}

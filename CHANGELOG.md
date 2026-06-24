@@ -2,6 +2,18 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.33.1] — 2026-06-25
+
+### Naprawione
+
+- **Pola na stronach opcji nadal nie były pełnej szerokości** — `.evk-s-field`/kontrolki są
+  gdzieś elementem flex, a `flex-shrink` ściskał `width:100%` poniżej 100%. Dodano
+  `min-width:100%` (twarda podłoga) do select/text/textarea/data w `.evk-s-field`.
+  (`assets/evk-admin.css`)
+- **Nagłówek karty „Definicja pól"** — dodano warianty stylu dla starszego markupu WP
+  (`.hndle` bezpośrednio w `.postbox`, bez `.postbox-header`), żeby nagłówek był ostylowany
+  niezależnie od wersji WP. (`assets/builder.css`)
+
 ## [1.33.0] — 2026-06-25
 
 ### Dodane
