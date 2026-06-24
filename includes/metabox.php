@@ -462,7 +462,8 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $rep_title_src = (($field['title_tpl'] ?? '') !== '') ? $field['title_tpl'] : ($field['title_field'] ?? '');
         echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span 12;">';
         $rep_lbl = $field['label'] ?? $fkey;
-        if ($rep_lbl !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . evk_rep_label_tooltip($field) . '</label>';
+        $rep_tip = evk_rep_label_tooltip($field);
+        if ($rep_lbl !== '' || $rep_tip !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . $rep_tip . '</label>';
         echo evk_rep_field_instructions_html($field);
         evk_rep_render_repeater_widget($base, $field['sub_fields'] ?? [], $rows, $rep_title_src, (int) ($ctx['depth'] ?? -1) + 1, !empty($field['collapsed']), $field['add_label'] ?? '');
         echo '</div>';
@@ -488,8 +489,9 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
     $span = evk_rep_field_span($field);
     echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
     $lbl = $field['label'] ?? $fkey;
-    if ($lbl !== '') {
-        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . evk_rep_label_tooltip($field) . '</label>';
+    $tip = evk_rep_label_tooltip($field);
+    if ($lbl !== '' || $tip !== '') {
+        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . $tip . '</label>';
     }
     evk_rep_render_field_input($name, $field, $val, $c, $eid);
     echo evk_rep_field_instructions_html($field);

@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.30.2] — 2026-06-25
+
+### Naprawione
+
+- **Tooltip „?" nie pokazywał się przy polu bez etykiety.** Ikona była doklejana wewnątrz
+  bloku `<label class="evk-s-label">`, który renderuje się tylko gdy etykieta jest niepusta.
+  Teraz blok etykiety renderuje się również, gdy ustawiono sam tooltip (pokazuje wtedy samo
+  „?"). Dotyczy pól danych i repeaterów. (`includes/metabox.php`)
+
 ## [1.30.1] — 2026-06-25
 
 ### Naprawione
