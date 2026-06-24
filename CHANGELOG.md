@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.31.1] — 2026-06-25
+
+### Naprawione
+
+- **Tooltip „?" przy kontrolkach kompaktowych** (toggle, kolor, suwak) był wypychany na
+  prawą krawędź z dużą luką, bo pierwszy element wiersza miał `flex:1 1 auto` i rozciągał
+  się na pełną szerokość. Usunięto wymuszone rozciąganie — pola pełnoszerokościowe
+  (width:100%) i tak wypełniają wiersz, a kompaktowe zostają przy swojej szerokości,
+  więc „?" siedzi tuż obok pola. (`assets/admin.css`)
+
 ## [1.31.0] — 2026-06-25
 
 ### Dodane — pole „Użytkownik" (Faza ACF/MB, partia A)
