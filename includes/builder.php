@@ -177,6 +177,11 @@ function evk_group_fields_metabox(\WP_Post $post): void {
     $fields = $json ? (json_decode($json, true) ?? []) : [];
     ?>
     <div class="evk-b" style="padding:0;">
+        <div class="evk-b-toolbar">
+            <button type="button" class="evk-b-collapse-all" data-collapsed="0">
+                <span class="dashicons dashicons-arrow-up-alt2"></span> Zwiń wszystko
+            </button>
+        </div>
         <div class="evk-b-fields" id="evk-edit-fields">
             <?php
             $fi = 0;
@@ -933,8 +938,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     <option value="<?php echo esc_attr($sk); ?>" <?php selected($title_field, $sk); ?>><?php echo esc_html($sf['label'] ?? $sk); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <label class="evk-b-inline-check"><input type="checkbox" name="<?php echo esc_attr($base); ?>[collapsed]" value="1" <?php checked($field_collapsed); ?>> Zwinięte na start</label>
             </div>
+            <label class="evk-b-inline-check evk-b-collapsed-check"><input type="checkbox" name="<?php echo esc_attr($base); ?>[collapsed]" value="1" <?php checked($field_collapsed); ?>> Wiersze zwinięte na start</label>
             <div class="evk-b-title-tpl-row">
                 <label>…albo szablon z kluczy (ma pierwszeństwo)</label>
                 <input type="text" name="<?php echo esc_attr($base); ?>[title_tpl]" value="<?php echo esc_attr($title_tpl); ?>" placeholder="np. {tytul} | {cena_dania}">

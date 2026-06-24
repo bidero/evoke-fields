@@ -201,6 +201,16 @@
         if ($rep.length) syncTitleSelect($rep);
     });
 
+    // Zwiń / rozwiń wszystkie pola najwyższego poziomu w „Definicji pól".
+    $(document).on('click', '.evk-b-collapse-all', function () {
+        var collapse = $(this).attr('data-collapsed') !== '1';
+        $('#evk-edit-fields > .evk-b-field').toggleClass('is-collapsed', collapse);
+        $(this).attr('data-collapsed', collapse ? '1' : '0')
+            .html(collapse
+                ? '<span class="dashicons dashicons-arrow-down-alt2"></span> Rozwiń wszystko'
+                : '<span class="dashicons dashicons-arrow-up-alt2"></span> Zwiń wszystko');
+    });
+
     $(document).on('click', '.evk-b-field-top', function (e) {
         if ($(e.target).is('input, button, select, .dashicons-no-alt')) return;
         if ($(e.target).closest('.evk-b-col-switch, .evk-b-field-clone').length) return; // klik w przełącznik/klon nie zwija pola

@@ -2,6 +2,25 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.23.1] — 2026-06-24
+
+### Dodane
+
+- **Przycisk „Zwiń wszystko / Rozwiń wszystko"** nad listą pól w metaboksie „Definicja
+  pól" — zwija/rozwija wszystkie pola najwyższego poziomu jednym kliknięciem.
+  (`includes/builder.php`, `assets/builder.js`, `assets/builder.css`)
+
+### Naprawione
+
+- **Układ „Etykieta wiersza (z pola)"** w polu powtarzalnym — label i select stoją teraz
+  w pionie (jak wiersz szablonu), a checkbox „Wiersze zwinięte na start" przeniesiony do
+  osobnej linii. Wcześniej checkbox dryfował w prawo (`margin-left:auto`) i wyglądał
+  niechlujnie. (`includes/builder.php`, `assets/builder.css`)
+- **Nierówny odstęp pod tytułem metaboksów grupy pól** — rdzeniowa reguła WP
+  `#poststuff .inside{margin:6px 0 0}` (id+klasa) bije `.postbox .inside{margin:11px 0}`,
+  dając asymetryczny margines. Dodano regułę o równej specyficzności dla metaboksów
+  `#evk_group_*`, przywracającą symetryczny `margin:11px 0`. (`assets/builder.css`)
+
 ## [1.23.0] — 2026-06-24
 
 ### Dodane — Faza 5 cz. 1: logika warunkowa (UI w builderze)
