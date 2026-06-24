@@ -490,10 +490,13 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
     echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
     $lbl = $field['label'] ?? $fkey;
     $tip = evk_rep_label_tooltip($field);
-    if ($lbl !== '' || $tip !== '') {
-        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . $tip . '</label>';
+    if ($lbl !== '') {
+        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';
     }
+    // Tooltip „?" po prawej stronie pola (input skraca się, robiąc miejsce na ikonę).
+    if ($tip !== '') echo '<div class="evk-s-input-row">';
     evk_rep_render_field_input($name, $field, $val, $c, $eid);
+    if ($tip !== '') echo $tip . '</div>';
     echo evk_rep_field_instructions_html($field);
     echo '</div>';
 }

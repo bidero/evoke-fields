@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.30.3] — 2026-06-25
+
+### Zmienione
+
+- **Tooltip „?" przeniesiony na prawą stronę pola** (zamiast przy etykiecie) — input
+  i ikona stoją w wierszu flex, więc pole skraca się odrobinę, robiąc miejsce na „?".
+  Repeater zachowuje „?" przy etykiecie (to widżet, nie pojedynczy input).
+  (`includes/metabox.php`, `assets/admin.css`)
+
 ## [1.30.2] — 2026-06-25
 
 ### Naprawione
