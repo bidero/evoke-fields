@@ -19,18 +19,26 @@
 
 /* Rdzeń WP: #poststuff .inside{margin:6px 0 0} (id+class) bije .postbox .inside{margin:11px 0}
    → asymetryczny odstęp pod tytułem metaboxa. Równa specyficzność + późniejsze ładowanie = wygrywamy. */
-#evk_group_fields .inside,
 #evk_group_opts .inside,
 #evk_group_pts .inside,
 #evk_group_key .inside{margin:11px 0;}
 
+/* ── „Definicja pól" jako zaokrąglona karta z oddzielonym, wyższym nagłówkiem ── */
+#evk_group_fields.postbox{border:1px solid #d7dde7;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+#evk_group_fields > .postbox-header{border-bottom:1px solid #e5e7eb;background:#f8fafc;min-height:50px;}
+#evk_group_fields > .postbox-header .hndle,
+#evk_group_fields > .postbox-header > .hndle{padding:14px 16px;font-size:14px;font-weight:600;color:#111827;}
+#evk_group_fields > .inside{margin:0;padding:14px 16px;}
+
 #evk-b-groups{display:flex;flex-direction:column;gap:18px;margin:6px 0 0;}
 
 /* ── Pasek narzędzi „Definicja pól" ── */
-.evk-b-toolbar{display:flex;justify-content:flex-end;margin:0 0 12px;}
+.evk-b-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin:0 0 12px;}
 .evk-b-collapse-all{display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #d7dde7;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;}
 .evk-b-collapse-all:hover{background:#e2e8f0;}
 .evk-b-collapse-all .dashicons{font-size:16px;width:16px;height:16px;}
+.evk-b-always-collapsed{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#475569;cursor:pointer;user-select:none;}
+.evk-b-always-collapsed input{margin:0;}
 
 /* ── Karta grupy ── */
 .evk-b-group{background:#fff;border:1px solid #d7dde7;border-radius:12px;box-shadow:0 1px 3px rgba(15,23,42,.06);overflow:hidden;}

@@ -2,6 +2,28 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.33.0] — 2026-06-25
+
+### Dodane
+
+- **„Pola zawsze zwinięte"** — przełącznik w pasku narzędzi „Definicji pól", zapamiętywany
+  w `localStorage` (per przeglądarka). Gdy włączony, pola startują zwinięte przy każdym
+  wczytaniu edytora grup. (`includes/builder.php`, `assets/builder.js`, `assets/builder.css`)
+
+### Zmienione
+
+- **Metabox „Definicja pól" jako zaokrąglona karta** — ramka + `border-radius` jak reszta
+  kart EVK, nagłówek oddzielony (tło + linia) i nieco wyższy, mniejszy padding `.inside`.
+  (`assets/builder.css`)
+
+### Naprawione
+
+- **Pola `<select>`/tekst na stronach opcji nie miały 100% szerokości** — twarda reguła
+  `width:100%` dla bezpośrednich dzieci `.evk-s-field` w `evk-admin.css` (ładowany na każdym
+  ekranie wtyczki, wyższa specyficzność). (`assets/evk-admin.css`)
+- **`<select>` z tooltipem** — `flex:1 1 0` + `width:auto`, by szerokość wyznaczał wyłącznie
+  flex-grow, nie najdłuższa opcja. (`assets/admin.css`)
+
 ## [1.32.3] — 2026-06-25
 
 ### Naprawione

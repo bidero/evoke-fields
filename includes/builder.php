@@ -181,6 +181,9 @@ function evk_group_fields_metabox(\WP_Post $post): void {
             <button type="button" class="evk-b-collapse-all" data-collapsed="0">
                 <span class="dashicons dashicons-arrow-up-alt2"></span> Zwiń wszystko
             </button>
+            <label class="evk-b-always-collapsed" title="Pamiętane w tej przeglądarce">
+                <input type="checkbox" class="evk-b-always-collapsed-cb"> Pola zawsze zwinięte
+            </label>
         </div>
         <div class="evk-b-fields" id="evk-edit-fields">
             <?php

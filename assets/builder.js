@@ -277,6 +277,15 @@
                 : '<span class="dashicons dashicons-arrow-up-alt2"></span> Zwiń wszystko');
     });
 
+    // „Pola zawsze zwinięte" — preferencja per przeglądarka (localStorage).
+    var EVK_AC_KEY = 'evkAlwaysCollapsed';
+    function evkAlwaysCollapsed() { try { return localStorage.getItem(EVK_AC_KEY) === '1'; } catch (e) { return false; } }
+    $(document).on('change', '.evk-b-always-collapsed-cb', function () {
+        var on = this.checked;
+        try { localStorage.setItem(EVK_AC_KEY, on ? '1' : '0'); } catch (e) {}
+        $('#evk-edit-fields > .evk-b-field').toggleClass('is-collapsed', on);
+    });
+
     $(document).on('click', '.evk-b-field-top', function (e) {
         if ($(e.target).is('input, button, select, .dashicons-no-alt')) return;
         if ($(e.target).closest('.evk-b-col-switch, .evk-b-field-clone').length) return; // klik w przełącznik/klon nie zwija pola
@@ -401,6 +410,10 @@
         $('.evk-b-col-enable:checked').closest('.evk-b-field').addClass('evk-col-on');
         $('.evk-b-fields, .evk-b-subfields').each(function () { syncCondList($(this)); });
         $('.evk-b-cond-rule').each(function () { toggleCondValue($(this)); });
+        if (evkAlwaysCollapsed()) {
+            $('.evk-b-always-collapsed-cb').prop('checked', true);
+            $('#evk-edit-fields > .evk-b-field').addClass('is-collapsed');
+        }
     });
 
 })(jQuery);
