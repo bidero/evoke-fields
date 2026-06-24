@@ -140,7 +140,9 @@
                 action: 'evk_rel_search',
                 nonce: evkRel.nonce,
                 s: term,
-                post_types: $rel.attr('data-post-types') || 'post'
+                source: $rel.attr('data-source') || 'post',
+                post_types: $rel.attr('data-post-types') || 'post',
+                roles: $rel.attr('data-roles') || ''
             }).done(function (res) {
                 $results.empty();
                 if (!res || !res.success || !res.data || !res.data.length) {

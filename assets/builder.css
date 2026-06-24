@@ -128,6 +128,7 @@
 .evk-b-field.is-collapsed > .evk-b-field-tax,
 .evk-b-field.is-collapsed > .evk-b-field-gallery,
 .evk-b-field.is-collapsed > .evk-b-field-relationship,
+.evk-b-field.is-collapsed > .evk-b-field-user,
 .evk-b-field.is-collapsed > .evk-b-field-extra,
 .evk-b-field.is-collapsed > .evk-b-field-cond,
 .evk-b-field.is-collapsed > .evk-b-field-datefmt,
@@ -224,6 +225,8 @@
 /* ── Pole Relacja (relationship) ── */
 .evk-b-field-relationship{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
 .evk-b-field.is-relationship .evk-b-field-relationship{display:block;}
+.evk-b-field-user{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field.is-user .evk-b-field-user{display:block;}
 .evk-b-rel-pts{display:flex;flex-wrap:wrap;gap:8px;}
 .evk-b-rel-pts label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#374151;padding:5px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
 .evk-b-rel-pts label:hover{border-color:#93c5fd;background:#f8fbff;}

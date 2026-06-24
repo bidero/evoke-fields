@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.31.0] — 2026-06-25
+
+### Dodane — pole „Użytkownik" (Faza ACF/MB, partia A)
+
+- **Nowy typ pola „Użytkownik"** (`user`) — wybór jednego lub wielu użytkowników przez tę
+  samą wyszukiwarkę AJAX co relacja (`evk-rel`, tryb `data-source="user"`). Konfiguracja:
+  wielokrotny wybór + opcjonalny filtr ról. Zapis = tablica ID userów.
+- **Wyszukiwarka AJAX** rozszerzona o tryb użytkowników (`WP_User_Query` po login/email/
+  display_name, filtr `role__in`). (`includes/metabox.php`, `assets/admin.js`)
+- **Tagi Bricks:** `{evk_field_klucz}` = nazwa pierwszego, `__ids`, `__count`, `__email`,
+  `__url` (URL autora). Whitelist propów rozszerzona o `email`.
+- Kolumna admina = lista nazw użytkowników. (`includes/builder.php`, `includes/bricks.php`,
+  `includes/admin-columns.php`, `assets/builder.js`, `assets/builder.css`)
+
 ## [1.30.3] — 2026-06-25
 
 ### Zmienione

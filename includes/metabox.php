@@ -127,7 +127,27 @@ add_action('wp_ajax_evk_rel_search', function () {
     if (!check_ajax_referer('evk_rel_search', 'nonce', false)) wp_send_json_error('nonce');
     if (!current_user_can('edit_posts')) wp_send_json_error('caps');
 
-    $s   = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+    $s = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+
+    // Tryb użytkowników (pole „Użytkownik") — ta sama wyszukiwarka co relacja.
+    if (isset($_GET['source']) && sanitize_key($_GET['source']) === 'user') {
+        $roles = isset($_GET['roles']) ? array_filter(array_map('sanitize_key', explode(',', (string) $_GET['roles']))) : [];
+        $args  = [
+            'search'         => $s !== '' ? '*' . $s . '*' : '',
+            'search_columns' => ['user_login', 'user_email', 'display_name'],
+            'number'         => 20,
+            'orderby'        => 'display_name',
+            'order'          => 'ASC',
+        ];
+        if ($roles) $args['role__in'] = $roles;
+        $uq  = new WP_User_Query($args);
+        $out = [];
+        foreach ((array) $uq->get_results() as $u) {
+            $out[] = ['id' => $u->ID, 'title' => $u->display_name ?: $u->user_login, 'type' => $u->user_email];
+        }
+        wp_send_json_success($out);
+    }
+
     $raw = isset($_GET['post_types']) ? (string) $_GET['post_types'] : 'post';
     $pts = array_values(array_filter(array_map('sanitize_key', explode(',', $raw)), 'post_type_exists'));
     if (empty($pts)) $pts = ['post'];
@@ -342,6 +362,27 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo '</div>';
             break;
 
+        case 'user':
+            $uids = is_array($val)
+                ? array_values(array_filter(array_map('intval', $val)))
+                : ((int) $val > 0 ? [(int) $val] : []);
+            $u_multi = !empty($field['user_multiple']);
+            $u_roles = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
+            echo '<div class="evk-rel" data-name="' . esc_attr($name) . '" data-source="user" data-roles="' . esc_attr(implode(',', $u_roles)) . '" data-multiple="' . ($u_multi ? '1' : '0') . '">';
+            echo '<div class="evk-rel-selected">';
+            foreach ($uids as $uid) {
+                $u = get_userdata($uid);
+                if (!$u) continue;
+                evk_rep_render_rel_item($name, $uid, $u->display_name ?: $u->user_login);
+            }
+            echo '</div>';
+            echo '<div class="evk-rel-search-wrap"><input type="text" class="evk-rel-search" placeholder="Szukaj użytkowników…" autocomplete="off"><div class="evk-rel-results"></div></div>';
+            echo '<template class="evk-rel-tpl">';
+            evk_rep_render_rel_item($name, '__RID__', '', true);
+            echo '</template>';
+            echo '</div>';
+            break;
+
         case 'taxonomy':
             $tax_slug    = $field['taxonomy'] ?? '';
             $multiple    = !empty($field['multiple']);
@@ -407,7 +448,7 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
 function evk_rep_field_span(array $field): int {
     $w = (int) ($field['width'] ?? 0);
     if ($w) return max(1, min(12, (int) round($w / 100 * 12)));
-    return in_array($field['type'] ?? '', ['textarea', 'image', 'image_select', 'gallery', 'relationship', 'wysiwyg', 'taxonomy'], true) ? 12 : 6;
+    return in_array($field['type'] ?? '', ['textarea', 'image', 'image_select', 'gallery', 'relationship', 'user', 'wysiwyg', 'taxonomy'], true) ? 12 : 6;
 }
 
 // =========================================================================
@@ -749,6 +790,7 @@ function evk_rep_sanitize_value(string $type, $v) {
             }
             return empty($out) ? '' : $out;
         case 'relationship':
+        case 'user':
             if (is_array($v)) {
                 $ids = array_values(array_unique(array_filter(array_map('intval', $v))));
                 return empty($ids) ? '' : $ids;

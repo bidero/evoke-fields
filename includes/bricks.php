@@ -374,6 +374,20 @@ function evk_rep_format_value(array $field, $val, string $prop) {
         if ($prop === 'url')   return get_permalink($ids[0]) ?: '';
         return get_the_title($ids[0]); // domyślnie: tytuł pierwszego
     }
+    if ($type === 'user') {
+        $ids = is_array($val)
+            ? array_values(array_filter(array_map('intval', $val)))
+            : ((int) $val > 0 ? [(int) $val] : []);
+        if (empty($ids)) return '';
+        if ($prop === 'ids')   return implode(',', $ids);
+        if ($prop === 'count') return (string) count($ids);
+        if ($prop === 'id')    return (string) $ids[0];
+        $u = get_userdata($ids[0]);
+        if (!$u) return '';
+        if ($prop === 'email') return $u->user_email;
+        if ($prop === 'url')   return get_author_posts_url($ids[0]) ?: '';
+        return $u->display_name ?: $u->user_login; // domyślnie: nazwa pierwszego
+    }
     if ($type === 'link') {
         $lv     = is_array($val) ? $val : [];
         $url    = (string) ($lv['url'] ?? '');
@@ -807,6 +821,11 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
             $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',  'group' => 'EVK Repeater'];
             $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',    'group' => 'EVK Repeater'];
             $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (link 1.)',   'group' => 'EVK Repeater'];
+        } elseif ($type === 'user') {
+            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',   'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',     'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__email}', 'label' => $label . ' (e-mail 1.)',  'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (URL autora 1.)', 'group' => 'EVK Repeater'];
         } elseif ($type === 'link') {
             $tags[] = ['name' => '{evk_field_' . $key . '__title}',  'label' => $label . ' (etykieta)',     'group' => 'EVK Repeater'];
             $tags[] = ['name' => '{evk_field_' . $key . '__target}', 'label' => $label . ' (cel _blank)',   'group' => 'EVK Repeater'];
@@ -862,7 +881,7 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
 
 function evk_rep_parse_tag(string $raw): array {
     // Props + standardowe rozmiary obrazków. Lista zamknięta, by klucze z „__" nie były psute.
-    if (preg_match('/^(.*)__(ids|id|alt|label|slug|count|url|title|target|html|raw|timestamp|thumbnail|medium|medium_large|large|full|1536x1536|2048x2048)$/', $raw, $m)) return [$m[1], $m[2]];
+    if (preg_match('/^(.*)__(ids|id|alt|label|slug|count|url|email|title|target|html|raw|timestamp|thumbnail|medium|medium_large|large|full|1536x1536|2048x2048)$/', $raw, $m)) return [$m[1], $m[2]];
     return [$raw, ''];
 }
 

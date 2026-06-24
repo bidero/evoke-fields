@@ -317,7 +317,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'gallery'  => 'Galeria',
         'wysiwyg'  => 'Edytor WYSIWYG',
     ];
-    $relacje = ['taxonomy' => 'Taksonomia', 'relationship' => 'Relacja (posty)'];
+    $relacje = ['taxonomy' => 'Taksonomia', 'relationship' => 'Relacja (posty)', 'user' => 'Użytkownik'];
 
     if ($sub) return ['Pola danych' => $data, 'Relacje' => $relacje];
     return [
@@ -440,6 +440,13 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             : [];
         $def['rel_post_types'] = $rpts ?: ['post'];
         if (!empty($f['rel_multiple'])) $def['rel_multiple'] = true;
+    } elseif ($type === 'user') {
+        $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
+        $roles = isset($f['user_roles']) && is_array($f['user_roles'])
+            ? array_values(array_filter(array_map('sanitize_key', $f['user_roles'])))
+            : [];
+        if ($roles) $def['user_roles'] = $roles;
+        if (!empty($f['user_multiple'])) $def['user_multiple'] = true;
     } elseif ($type === 'image_select') {
         $def['width']        = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         $def['options']      = sanitize_textarea_field(evk_rep_normalize_options_text($f['options'] ?? ''));
@@ -588,6 +595,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $gallery_item_width  = (int)($field['gallery_item_width'] ?? 0);
     $rel_pts             = $field['rel_post_types'] ?? ['post'];
     $rel_multi           = !empty($field['rel_multiple']);
+    $user_multi          = !empty($field['user_multiple']);
+    $user_roles          = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
     $placeholder         = $field['placeholder'] ?? '';
     $required            = !empty($field['required']);
     $prefix              = $field['prefix'] ?? '';
@@ -829,6 +838,20 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             </div>
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[rel_multiple]" value="1" <?php checked($rel_multi); ?>> Wielokrotny wybór (wiele wpisów)
+            </label>
+        </div>
+
+        <div class="evk-b-field-user">
+            <div class="evk-b-section-title">Konfiguracja pola użytkownika</div>
+            <label class="evk-b-gallery-cats-label">Role do wyboru (puste = wszystkie)</label>
+            <div class="evk-b-rel-pts">
+                <?php foreach (get_editable_roles() as $role_key => $role): ?>
+                <label><input type="checkbox" name="<?php echo esc_attr($base); ?>[user_roles][]" value="<?php echo esc_attr($role_key); ?>" <?php checked(in_array($role_key, (array) $user_roles, true)); ?>>
+                    <?php echo esc_html(translate_user_role($role['name'])); ?> <code>(<?php echo esc_html($role_key); ?>)</code></label>
+                <?php endforeach; ?>
+            </div>
+            <label class="evk-b-inline-check" style="margin:10px 0 0;">
+                <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
             </label>
         </div>
 

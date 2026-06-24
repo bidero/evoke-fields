@@ -56,7 +56,7 @@
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE', link: 'LINK' };
+    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE', link: 'LINK', user: 'USER' };
 
     function applyType($field) {
         var t = $field.children('.evk-b-field-grid').find('.evk-b-type').first().val();
@@ -71,6 +71,7 @@
         $field.toggleClass('is-range',    t === 'range');
         $field.toggleClass('is-gallery',  t === 'gallery');
         $field.toggleClass('is-relationship', t === 'relationship');
+        $field.toggleClass('is-user', t === 'user');
         $field.attr('data-ftype', t); // steruje widocznością opcji pola (placeholder/affix/rows)
         $field.children('.evk-b-field-top').find('.evk-b-badge').first().text(BADGE[t] || '');
     }

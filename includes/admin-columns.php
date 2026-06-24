@@ -121,6 +121,12 @@ function evk_rep_column_value_html(array $field, $val): string {
         case 'datetime':
             $fmt = evk_rep_format_value($field, $val, '');
             return $fmt !== '' ? esc_html((string) $fmt) : '—';
+        case 'user':
+            $uids = is_array($val) ? array_values(array_filter(array_map('intval', $val))) : ((int) $val > 0 ? [(int) $val] : []);
+            if (empty($uids)) return '—';
+            $names = [];
+            foreach ($uids as $uid) { $u = get_userdata($uid); if ($u) $names[] = $u->display_name ?: $u->user_login; }
+            return $names ? esc_html(implode(', ', $names)) : '—';
         case 'link':
             $lv  = is_array($val) ? $val : [];
             $url = (string) ($lv['url'] ?? '');
