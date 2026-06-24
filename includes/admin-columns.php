@@ -284,6 +284,47 @@ add_filter('posts_search', function ($search, $wp_query) {
     );
 
     // Wstaw „OR <sub>" tuż przed ostatnim nawiasem zamykającym grupę wyszukiwania,
-    // żeby zachować precedencję ( AND ( (tytuł…) OR <sub> ) ).
-    return preg_replace('/\)\s*$/', ' OR ' . $sub . ')', $search, 1);
+    // żeby zachować precedencję ( AND ( (tytuł…) OR <sub> ) ). Callback — bo $sub może
+    // zawierać znaki specjalne replacementu ($N, \) gdy fraza to np. „$1".
+    return preg_replace_callback('/\)\s*$/', function () use ($sub) {
+        return ' OR ' . $sub . ')';
+    }, $search, 1);
 }, 10, 2);
+
+// =========================================================================
+// WYSZUKIWANIE (Faza 4b cz.2 — użytkownicy). Pole „Szukaj" na liście użytkowników
+// obejmuje wartości pól kolumnowych EVK (usermeta). Brak dedykowanego filtra search
+// jak przy postach → modyfikujemy query_where w pre_user_query. Celujemy w grupę
+// wyszukiwania (zawiera user_login), dolepiając „OR ID IN (SELECT …)".
+// =========================================================================
+
+add_action('pre_user_query', function ($query) {
+    if (!is_admin() || ($GLOBALS['pagenow'] ?? '') !== 'users.php') return;
+    $search = isset($query->query_vars['search']) ? (string) $query->query_vars['search'] : '';
+    if ($search === '') return;
+    $term = trim($search, '*'); // admin opakowuje frazę w gwiazdki-wieloznaczniki
+    if ($term === '') return;
+
+    $keys = array_values(array_unique(array_map(
+        function ($c) { return $c['key']; },
+        evk_rep_column_fields()['user']
+    )));
+    if (!$keys) return;
+
+    global $wpdb;
+    $like = '%' . $wpdb->esc_like($term) . '%';
+    $ph   = implode(',', array_fill(0, count($keys), '%s'));
+    $sub  = $wpdb->prepare(
+        "{$wpdb->users}.ID IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($ph) AND meta_value LIKE %s)",
+        array_merge($keys, [$like])
+    );
+
+    // Grupa wyszukiwania = jedyne „ AND (…)" zawierające user_login (bez zagnieżdżonych
+    // nawiasów). Nie trafia w grupę ról/capabilities. Callback — bezpieczny replacement.
+    $query->query_where = preg_replace_callback(
+        '/( AND \([^()]*\buser_login\b[^()]*)\)/',
+        function ($m) use ($sub) { return $m[1] . ' OR ' . $sub . ')'; },
+        $query->query_where,
+        1
+    );
+});

@@ -2,6 +2,22 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.27.0] — 2026-06-24
+
+### Dodane — Faza 4b cz. 2: wyszukiwanie po wartości kolumny (użytkownicy)
+
+- **Pole „Szukaj" na liście użytkowników obejmuje wartości pól kolumnowych EVK**
+  (`usermeta`). Brak dedykowanego filtra search jak przy postach, więc modyfikujemy
+  `query_where` w `pre_user_query`: do grupy wyszukiwania (tej z `user_login`) doklejamy
+  `OR ID IN (SELECT user_id FROM usermeta WHERE meta_key IN (…) AND meta_value LIKE …)`.
+  Ograniczone do ekranu `users.php`, `$wpdb->prepare`, podzapytanie zamiast JOIN.
+
+### Naprawione
+
+- **Wyszukiwanie wpisów (4b cz.1)** — fraza zawierająca znaki specjalne replacementu
+  regex (`$1`, `\`) mogła zepsuć doklejane podzapytanie. Zamiana `preg_replace`
+  na `preg_replace_callback`. (`includes/admin-columns.php`)
+
 ## [1.26.0] — 2026-06-24
 
 ### Dodane — Faza 4b cz. 1: wyszukiwanie po wartości kolumny (wpisy)
