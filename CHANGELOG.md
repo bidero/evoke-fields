@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.30.0] — 2026-06-24
+
+### Dodane — instrukcje pola + tooltip
+
+- **Instrukcja pola** — opcjonalna szara podpowiedź (`instructions`) renderowana **pod
+  inputem** w metaboxie, na stronach opcji i w wierszach repeatera. Per-pole, niezależna
+  od typu układu „Opis".
+- **Tooltip** — opcjonalny dymek (`tooltip`) pokazywany po najechaniu/zogniskowaniu ikony
+  „?" przy etykiecie pola. Dymek CSS na `::after` (z resetem `font-family`, bo dashicony
+  zajmują `::before` glifem); dostępny też z klawiatury (`tabindex`, `aria-label`).
+- Oba ustawiane w bloku „Opcje pola" w builderze; działają dla pól danych i pól
+  powtarzalnych (sub-pól). (`includes/builder.php`, `includes/metabox.php`,
+  `assets/admin.css`)
+
 ## [1.29.0] — 2026-06-24
 
 ### Dodane — pole Link

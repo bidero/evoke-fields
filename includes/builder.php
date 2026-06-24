@@ -500,6 +500,14 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if ($df !== '') $def['date_format'] = $df;
     }
 
+    // Instrukcja + tooltip — dla wszystkich pól danych ORAZ repeatera (nie layout).
+    if (!$is_layout) {
+        $ins = sanitize_text_field($f['instructions'] ?? '');
+        if ($ins !== '') $def['instructions'] = $ins;
+        $tip = sanitize_text_field($f['tooltip'] ?? '');
+        if ($tip !== '') $def['tooltip'] = $tip;
+    }
+
     // Wspólne opcje pól danych (top-level i sub): placeholder, wymagane, prefiks/sufiks, wiersze.
     if (!$is_layout && !$is_rep) {
         $ph = sanitize_text_field($f['placeholder'] ?? '');
@@ -581,6 +589,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $prefix              = $field['prefix'] ?? '';
     $suffix              = $field['suffix'] ?? '';
     $rows_opt            = (int)($field['rows'] ?? 0);
+    $instructions        = $field['instructions'] ?? '';
+    $tooltip             = $field['tooltip'] ?? '';
     $title_tpl           = $field['title_tpl'] ?? '';
     // Przełącznik
     $toggle_on           = $field['toggle_on']  ?? '1';
@@ -915,7 +925,15 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                         <input type="number" min="1" max="50" step="1" name="<?php echo esc_attr($base); ?>[rows]" value="<?php echo $rows_opt > 0 ? esc_attr((string) $rows_opt) : ''; ?>" placeholder="3">
                     </div>
                 </div>
-                <label class="evk-b-inline-check" style="margin:10px 0 0;">
+                <div class="evk-b-ctrl" style="margin-top:12px;">
+                    <label>Instrukcja (podpowiedź pod polem)</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[instructions]" value="<?php echo esc_attr($instructions); ?>" placeholder="np. Podaj numer w formacie 000-000-000">
+                </div>
+                <div class="evk-b-ctrl" style="margin-top:12px;">
+                    <label>Tooltip (dymek „?" przy etykiecie)</label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[tooltip]" value="<?php echo esc_attr($tooltip); ?>" placeholder="krótkie wyjaśnienie po najechaniu">
+                </div>
+                <label class="evk-b-inline-check" style="margin:12px 0 0;">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
                 </label>
             </div>

@@ -427,6 +427,21 @@ function evk_rep_cond_data_attr(array $field): string {
     return ' data-evk-cond="' . esc_attr($payload) . '"';
 }
 
+// Ikona „?" z dymkiem przy etykiecie (CSS tooltip na data-evk-tip).
+function evk_rep_label_tooltip(array $field): string {
+    $tip = trim((string) ($field['tooltip'] ?? ''));
+    if ($tip === '') return '';
+    return ' <span class="evk-s-tip dashicons dashicons-editor-help" tabindex="0" role="img"'
+        . ' data-evk-tip="' . esc_attr($tip) . '" aria-label="' . esc_attr($tip) . '"></span>';
+}
+
+// Szara podpowiedź pod inputem (instrukcja pola).
+function evk_rep_field_instructions_html(array $field): string {
+    $ins = trim((string) ($field['instructions'] ?? ''));
+    if ($ins === '') return '';
+    return '<p class="evk-s-instructions">' . esc_html($ins) . '</p>';
+}
+
 function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void {
     $type = $field['type'] ?? 'text';
     $mode = $ctx['mode'] ?? 'single';
@@ -446,7 +461,8 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $rep_title_src = (($field['title_tpl'] ?? '') !== '') ? $field['title_tpl'] : ($field['title_field'] ?? '');
         echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span 12;">';
         $rep_lbl = $field['label'] ?? $fkey;
-        if ($rep_lbl !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . '</label>';
+        if ($rep_lbl !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . evk_rep_label_tooltip($field) . '</label>';
+        echo evk_rep_field_instructions_html($field);
         evk_rep_render_repeater_widget($base, $field['sub_fields'] ?? [], $rows, $rep_title_src, (int) ($ctx['depth'] ?? -1) + 1, !empty($field['collapsed']), $field['add_label'] ?? '');
         echo '</div>';
         return;
@@ -472,9 +488,10 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
     echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
     $lbl = $field['label'] ?? $fkey;
     if ($lbl !== '') {
-        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';
+        echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . evk_rep_label_tooltip($field) . '</label>';
     }
     evk_rep_render_field_input($name, $field, $val, $c, $eid);
+    echo evk_rep_field_instructions_html($field);
     echo '</div>';
 }
 
