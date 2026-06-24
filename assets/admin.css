@@ -13,7 +13,8 @@
    user, link, suwak), skracając się o ikonę. Kontrolki kompaktowe (toggle, kolor) NIE
    rozciągają się, więc „?" siedzi tuż obok, a nie wypchnięte na prawą krawędź. */
 .evk-s-input-row{display:flex;align-items:center;gap:8px;}
-.evk-s-input-row > :first-child{flex:1 1 auto;min-width:0;}
+/* flex-basis 0 (nie auto) — inaczej <select> bierze szerokość najdłuższej opcji zamiast 100% */
+.evk-s-input-row > :first-child{flex:1 1 0;min-width:0;}
 .evk-s-input-row > .evk-rep-toggle,
 .evk-s-input-row > input[type=color]{flex:0 0 auto;}
 .evk-s-input-row .evk-s-tip{margin-left:0;}

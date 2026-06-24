@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.32.3] — 2026-06-25
+
+### Naprawione
+
+- **Pola `<select>` z tooltipem nie miały 100% szerokości** — przy `flex:1 1 auto` natywny
+  `<select>` przyjmuje szerokość najdłuższej opcji (quirk flexa), ignorując `width:100%`.
+  Zmieniono na `flex:1 1 0`, więc kontrolka rośnie od zera i wypełnia wiersz niezależnie od
+  treści. (`assets/admin.css`)
+
 ## [1.32.2] — 2026-06-25
 
 ### Zmienione
