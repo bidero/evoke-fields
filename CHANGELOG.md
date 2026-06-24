@@ -2,6 +2,13 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.32.2] — 2026-06-25
+
+### Zmienione
+
+- Większy odstęp nad polem „Klucz pola odwrotnego" w konfiguracji relacji dwukierunkowej
+  (8px → 18px) — oddziela je wyraźniej od przełącznika. (`includes/builder.php`)
+
 ## [1.32.1] — 2026-06-25
 
 ### Naprawione

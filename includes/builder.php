@@ -373,7 +373,7 @@ function evk_rep_bidir_config_html(string $base, bool $bidirectional, string $re
     <label class="evk-b-inline-check" style="margin:10px 0 0;">
         <input type="checkbox" name="<?php echo esc_attr($base); ?>[bidirectional]" value="1" <?php checked($bidirectional); ?>> Relacja dwukierunkowa
     </label>
-    <div class="evk-b-ctrl" style="margin-top:8px;">
+    <div class="evk-b-ctrl" style="margin-top:18px;">
         <label>Klucz pola odwrotnego (na powiązanym obiekcie)</label>
         <input type="text" name="<?php echo esc_attr($base); ?>[reverse_key]" value="<?php echo esc_attr($reverse_key); ?>" placeholder="np. trenerzy">
     </div>
