@@ -2,6 +2,53 @@
 (function ($) {
     'use strict';
 
+    // ── Modal potwierdzenia (zwraca Promise<boolean>) ────────────────
+    function evkConfirm(opts) {
+        opts = opts || {};
+        var danger = opts.danger !== false; // domyślnie wariant „usuń" (czerwony)
+        return new Promise(function (resolve) {
+            var $overlay = $(
+                '<div class="evk-modal-overlay">' +
+                  '<div class="evk-modal ' + (danger ? 'evk-modal--danger' : 'evk-modal--warn') + '" role="dialog" aria-modal="true">' +
+                    '<div class="evk-modal-head">' +
+                      '<span class="evk-modal-icon"><span class="dashicons ' + (danger ? 'dashicons-trash' : 'dashicons-warning') + '"></span></span>' +
+                      '<span class="evk-modal-title"></span>' +
+                    '</div>' +
+                    '<div class="evk-modal-msg"></div>' +
+                    '<div class="evk-modal-actions">' +
+                      '<button type="button" class="button evk-modal-cancel"></button>' +
+                      '<button type="button" class="button button-primary evk-modal-confirm' + (danger ? ' is-danger' : '') + '"></button>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>'
+            );
+            $overlay.find('.evk-modal-title').text(opts.title || 'Potwierdź');
+            $overlay.find('.evk-modal-msg').text(opts.message || '');
+            $overlay.find('.evk-modal-cancel').text(opts.cancelText || 'Anuluj');
+            $overlay.find('.evk-modal-confirm').text(opts.confirmText || 'Usuń');
+            $('body').append($overlay);
+
+            function close(result) {
+                $(document).off('keydown.evkmodal');
+                $overlay.remove();
+                resolve(result);
+            }
+            $overlay.find('.evk-modal-confirm').on('click', function () { close(true); }).trigger('focus');
+            $overlay.find('.evk-modal-cancel').on('click', function () { close(false); });
+            $overlay.on('click', function (e) { if (e.target === this) close(false); });
+            $(document).on('keydown.evkmodal', function (e) {
+                if (e.key === 'Escape') close(false);
+                else if (e.key === 'Enter') close(true);
+            });
+        });
+    }
+    window.evkConfirm = evkConfirm;
+
+    // ── Niezapisane zmiany (ostrzeżenie przy opuszczaniu strony) ──────
+    var evkDirty = false;
+    function evkMarkDirty() { evkDirty = true; }
+    window.evkMarkDirty = evkMarkDirty;
+
     function evkTranslit(str) {
         str = String(str).replace(/[łŁđĐøØßæÆœŒþ]/g, function (c) {
             return { 'ł': 'l', 'Ł': 'L', 'đ': 'd', 'Đ': 'D', 'ø': 'o', 'Ø': 'O', 'ß': 'ss', 'æ': 'ae', 'Æ': 'AE', 'œ': 'oe', 'Œ': 'OE', 'þ': 'th' }[c];
@@ -124,8 +171,16 @@
     });
 
     $(document).on('click', '.evk-b-group-remove', function () {
-        if (!window.confirm('Usunąć całą grupę? (zapis dopiero po „Zapisz schemat")')) return;
-        $(this).closest('.evk-b-group').remove();
+        var $g = $(this).closest('.evk-b-group');
+        evkConfirm({
+            title: 'Usunąć całą grupę?',
+            message: 'Grupa zniknie z edytora. Zmiana zostanie zapisana dopiero po zapisaniu schematu.',
+            confirmText: 'Usuń grupę'
+        }).then(function (ok) {
+            if (!ok) return;
+            $g.remove();
+            evkMarkDirty();
+        });
     });
 
     $(document).on('click', '.evk-b-field-add', function () {
@@ -154,12 +209,22 @@
     });
 
     $(document).on('click', '.evk-b-field-remove', function () {
-        var $f    = $(this).closest('.evk-b-field');
-        var $list = $f.parent();
-        var $rep  = $list.closest('.evk-b-field');
-        $f.remove();
-        if ($rep.length) syncTitleSelect($rep);
-        syncCondList($list);
+        var $f      = $(this).closest('.evk-b-field');
+        var isSub   = $f.closest('.evk-b-subfields').length > 0;
+        var lblVal  = ($f.children('.evk-b-field-top').find('.evk-b-fld-label').first().val() || '').trim();
+        evkConfirm({
+            title: isSub ? 'Usunąć pole powtarzalne?' : 'Usunąć pole?',
+            message: (lblVal ? '„' + lblVal + '” ' : 'To pole ') + 'zniknie z edytora. Zmiana zostanie zapisana dopiero po zapisaniu schematu.',
+            confirmText: 'Usuń pole'
+        }).then(function (ok) {
+            if (!ok) return;
+            var $list = $f.parent();
+            var $rep  = $list.closest('.evk-b-field');
+            $f.remove();
+            if ($rep.length) syncTitleSelect($rep);
+            syncCondList($list);
+            evkMarkDirty();
+        });
     });
 
     // Zwijanie / rozwijanie bloku każdego wygenerowanego pola po kliknięciu top-bara w interfejsie edycji schematu
@@ -301,19 +366,31 @@
         var $groups = $('#evk-b-groups');
         if (!$groups.data('evk-sortable')) {
             $groups.data('evk-sortable', true);
-            $groups.sortable({ handle: '.evk-b-ghandle', items: '> .evk-b-group', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true });
+            $groups.sortable({ handle: '.evk-b-ghandle', items: '> .evk-b-group', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true, update: evkMarkDirty });
         }
         $('.evk-b-fields').each(function () {
             if ($(this).data('evk-sortable')) return;
             $(this).data('evk-sortable', true);
-            $(this).sortable({ handle: '.evk-b-fhandle', items: '> .evk-b-field', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true });
+            $(this).sortable({ handle: '.evk-b-fhandle', items: '> .evk-b-field', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true, update: evkMarkDirty });
         });
         $('.evk-b-subfields').each(function () {
             if ($(this).data('evk-sortable')) return;
             $(this).data('evk-sortable', true);
-            $(this).sortable({ handle: '.evk-b-subhandle', items: '> .evk-b-field', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true });
+            $(this).sortable({ handle: '.evk-b-subhandle', items: '> .evk-b-field', placeholder: 'evk-b-placeholder', forcePlaceholderSize: true, update: evkMarkDirty });
         });
     }
+
+    // ── Śledzenie niezapisanych zmian ────────────────────────────────
+    $(document).on('input change', '#evk-edit-fields :input, #evk-b-groups :input', evkMarkDirty);
+    $(document).on('click', '.evk-b-field-add, .evk-b-subfield-add, .evk-b-field-clone, #evk-b-add-group', evkMarkDirty);
+    // Zapis formularza (Aktualizuj / Publikuj / Zapisz schemat) → już nie brudne.
+    $(document).on('submit', 'form#post', function () { evkDirty = false; });
+    $(window).on('beforeunload', function (e) {
+        if (!evkDirty) return;
+        e.preventDefault();
+        e.returnValue = 'Masz niezapisane zmiany w definicji pól.';
+        return e.returnValue;
+    });
 
     $(function () {
         initFields();

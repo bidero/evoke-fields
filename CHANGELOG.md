@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.25.0] — 2026-06-24
+
+### Dodane
+
+- **Modal potwierdzenia usunięcia** w builderze (pola, pola powtarzalne, grupy) — zamiast
+  natychmiastowego usuwania / natywnego `window.confirm`. Ładny dialog z ikoną, „Anuluj"
+  i czerwonym „Usuń"; obsługa Esc/Enter i klik w tło. (`assets/builder.js`, `assets/builder.css`)
+- **Ostrzeżenie o niezapisanych zmianach** — przy próbie opuszczenia edytora grupy z
+  niezapisanymi zmianami (edycja/dodanie/usunięcie/przesunięcie pól) przeglądarka pokazuje
+  natywne ostrzeżenie. Flaga czyszczona przy zapisie formularza. (`assets/builder.js`)
+
+### Zmienione
+
+- **Ikony kopiowania/usuwania pola** w „Definicji pól" — przeniesione na styl boksowanych
+  przycisków 30×30 jak w taksonomiach i stronach opcji; ikona usuwania zmieniona z „×"
+  (`dashicons-no-alt`) na kosz (`dashicons-trash`). (`includes/builder.php`, `assets/builder.css`)
+
 ## [1.24.0] — 2026-06-24
 
 ### Dodane — Faza 5 cz. 2: logika warunkowa (runtime w metaboxie)

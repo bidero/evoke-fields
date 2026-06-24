@@ -1,5 +1,22 @@
 /* ===== EVK Repeater — builder (układ Evoke ONE) ===== */
 
+/* ── Modal potwierdzenia / informacji ── */
+.evk-modal-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.5);padding:20px;}
+.evk-modal-overlay[hidden]{display:none;}
+.evk-modal{background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(15,23,42,.3);max-width:440px;width:100%;overflow:hidden;animation:evk-modal-in .15s ease;}
+@keyframes evk-modal-in{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;}}
+.evk-modal-head{display:flex;align-items:center;gap:10px;padding:18px 20px 0;}
+.evk-modal-icon{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;}
+.evk-modal-icon .dashicons{font-size:20px;width:20px;height:20px;}
+.evk-modal--danger .evk-modal-icon{background:#fef2f2;color:#dc2626;}
+.evk-modal--warn .evk-modal-icon{background:#fffbeb;color:#d97706;}
+.evk-modal-title{font-size:15px;font-weight:700;color:#111827;}
+.evk-modal-msg{padding:8px 20px 0;font-size:13px;line-height:1.6;color:#475569;}
+.evk-modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:18px 20px 20px;}
+.evk-modal-actions .button{min-width:90px;justify-content:center;text-align:center;}
+.evk-modal-confirm.is-danger{background:#dc2626;border-color:#dc2626;color:#fff;}
+.evk-modal-confirm.is-danger:hover{background:#b91c1c;border-color:#b91c1c;}
+
 /* Rdzeń WP: #poststuff .inside{margin:6px 0 0} (id+class) bije .postbox .inside{margin:11px 0}
    → asymetryczny odstęp pod tytułem metaboxa. Równa specyficzność + późniejsze ładowanie = wygrywamy. */
 #evk_group_fields .inside,
@@ -44,10 +61,11 @@
 .evk-b-field .evk-b-handle{flex:0 0 auto;cursor:move;color:#cbd5e1;}
 .evk-b-field .evk-b-handle:hover{color:#94a3b8;}
 .evk-b-fld-label{flex:1 1 auto;min-width:0;height:40px;font-size:14px;font-weight:600;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#111827;}
-.evk-b-field-clone{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#9ca3af;padding:6px;display:inline-flex;border-radius:7px;}
-.evk-b-field-clone:hover{color:#2563eb;background:#eff6ff;}
-.evk-b-field-remove{flex:0 0 auto;background:none;border:0;cursor:pointer;color:#9ca3af;padding:6px;display:inline-flex;border-radius:7px;}
-.evk-b-field-remove:hover{color:#dc2626;background:#fef2f2;}
+.evk-b-field-actions{flex:0 0 auto;display:flex;align-items:center;gap:4px;}
+.evk-b-field-clone,.evk-b-field-remove{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;color:#64748b;cursor:pointer;line-height:1;transition:background .15s,color .15s,border-color .15s;}
+.evk-b-field-clone:hover{background:#eef2f7;color:#1d4ed8;border-color:#cbd5e1;}
+.evk-b-field-remove:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.evk-b-field-clone .dashicons,.evk-b-field-remove .dashicons{font-size:16px;width:16px;height:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
 
 /* Badge separatora (ukryty gdy pusty) */
 .evk-b-badge{flex:0 0 auto;display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#2563eb;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;}

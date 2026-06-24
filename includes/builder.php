@@ -627,8 +627,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 </span>
             </label>
             <?php endif; ?>
-            <button type="button" class="evk-b-field-clone" title="Klonuj pole"><span class="dashicons dashicons-admin-page"></span></button>
-            <button type="button" class="evk-b-field-remove" title="Usuń"><span class="dashicons dashicons-no-alt"></span></button>
+            <div class="evk-b-field-actions">
+                <button type="button" class="evk-b-field-clone" title="Klonuj pole"><span class="dashicons dashicons-admin-page"></span></button>
+                <button type="button" class="evk-b-field-remove" title="Usuń pole"><span class="dashicons dashicons-trash"></span></button>
+            </div>
         </div>
 
         <div class="evk-b-field-grid">
