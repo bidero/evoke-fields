@@ -709,9 +709,17 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
             else        delete_metadata($meta_type, $object_id, $fkey);
             continue;
         }
+        // Relacja dwukierunkowa: zapamiętaj stary zestaw ID przed nadpisaniem.
+        $bidir   = evk_rep_bidir_is_field($field);
+        $old_ids = $bidir ? evk_rep_bidir_ids(get_metadata($meta_type, $object_id, $fkey, true)) : [];
+
         $v = evk_rep_sanitize_value($type, $single[$fkey] ?? '');
         if ($v === '' || $v === null) delete_metadata($meta_type, $object_id, $fkey);
         else                          update_metadata($meta_type, $object_id, $fkey, $v);
+
+        if ($bidir) {
+            evk_rep_sync_bidirectional($field, (int) $object_id, $old_ids, evk_rep_bidir_ids($v === '' ? [] : $v));
+        }
     }
 }
 

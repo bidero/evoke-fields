@@ -367,6 +367,20 @@ function evk_rep_cond_rule_html(string $base, $index, string $rf = '', string $r
     return ob_get_clean();
 }
 
+// Wspólny fragment konfiguracji „relacja dwukierunkowa" (Relacja / Taksonomia / Użytkownik).
+function evk_rep_bidir_config_html(string $base, bool $bidirectional, string $reverse_key): string {
+    ob_start(); ?>
+    <label class="evk-b-inline-check" style="margin:10px 0 0;">
+        <input type="checkbox" name="<?php echo esc_attr($base); ?>[bidirectional]" value="1" <?php checked($bidirectional); ?>> Relacja dwukierunkowa
+    </label>
+    <div class="evk-b-ctrl" style="margin-top:8px;">
+        <label>Klucz pola odwrotnego (na powiązanym obiekcie)</label>
+        <input type="text" name="<?php echo esc_attr($base); ?>[reverse_key]" value="<?php echo esc_attr($reverse_key); ?>" placeholder="np. trenerzy">
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
 function evk_rep_available_post_types(): array {
     $out = [];
     foreach (get_post_types(['show_ui' => true], 'objects') as $pt) {
@@ -511,6 +525,15 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if ($df !== '') $def['date_format'] = $df;
     }
 
+    // Relacja dwukierunkowa (Relacja / Taksonomia / Użytkownik).
+    if (in_array($type, ['relationship', 'taxonomy', 'user'], true) && !empty($f['bidirectional'])) {
+        $rk = sanitize_key(remove_accents((string) ($f['reverse_key'] ?? '')));
+        if ($rk !== '') {
+            $def['bidirectional'] = true;
+            $def['reverse_key']   = $rk;
+        }
+    }
+
     // Instrukcja + tooltip — dla wszystkich pól danych ORAZ repeatera (nie layout).
     if (!$is_layout) {
         $ins = sanitize_text_field($f['instructions'] ?? '');
@@ -597,6 +620,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $rel_multi           = !empty($field['rel_multiple']);
     $user_multi          = !empty($field['user_multiple']);
     $user_roles          = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
+    $bidirectional       = !empty($field['bidirectional']);
+    $reverse_key         = $field['reverse_key'] ?? '';
     $placeholder         = $field['placeholder'] ?? '';
     $required            = !empty($field['required']);
     $prefix              = $field['prefix'] ?? '';
@@ -824,6 +849,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     Wielokrotny wybór
                 </label>
             </div>
+            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-relationship">
@@ -839,6 +865,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[rel_multiple]" value="1" <?php checked($rel_multi); ?>> Wielokrotny wybór (wiele wpisów)
             </label>
+            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-user">
@@ -853,6 +880,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
             </label>
+            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-toggle">

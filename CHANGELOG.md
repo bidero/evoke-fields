@@ -2,6 +2,24 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.32.0] — 2026-06-25
+
+### Dodane — relacje dwukieronkowe (Faza ACF/MB, partia B, generyczna)
+
+- **Dwukierunkowość dla pól Relacja, Taksonomia i Użytkownik.** Na polu włączasz „Relacja
+  dwukierunkowa" + podajesz **klucz pola odwrotnego** (ręcznie). Przy zapisie obiektu EVK
+  automatycznie aktualizuje pole odwrotne na powiązanych obiektach:
+  - Relacja → posty, **Taksonomia → termy** (np. judo: grupy↔trenerzy jako taksonomie),
+    Użytkownik → użytkownicy. Meta drugiej strony wyznacza typ pola.
+  - Dodanie powiązania dopisuje ID po drugiej stronie; usunięcie — usuwa. Działa dla grup
+    pojedynczych na post/term/user (nie repeater, nie strony opcji).
+- **Ochrona przed pętlą:** zapis strony odwrotnej idzie bezpośrednio przez `update_metadata`
+  (nie odpala `save_post`/`edited_term`/`profile_update`) + statyczny flag.
+- **Sprzątanie przy usuwaniu:** `before_delete_post` / `pre_delete_term` / `delete_user`
+  usuwają ID kasowanego obiektu z pól odwrotnych powiązanych obiektów.
+  (`includes/bidirectional.php` [nowy], `includes/metabox.php`, `includes/builder.php`,
+  `evk-repeater.php`)
+
 ## [1.31.1] — 2026-06-25
 
 ### Naprawione
