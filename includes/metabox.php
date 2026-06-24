@@ -81,7 +81,7 @@ function evk_rep_gallery_categories(array $field): array {
     return [];
 }
 
-function evk_rep_render_gallery_item(string $name, $index, int $img, string $cat, array $cats, bool $tpl = false): void {
+function evk_rep_render_gallery_item(string $name, $index, int $img, string $cat, array $cats, bool $tpl = false, int $item_w = 0): void {
     $src = '';
     if (!$tpl && $img > 0) {
         $s   = wp_get_attachment_image_src($img, 'thumbnail');
@@ -89,7 +89,8 @@ function evk_rep_render_gallery_item(string $name, $index, int $img, string $cat
     }
     $idv = $tpl ? '__IMG__' : (string) $img;
     $base = esc_attr($name) . '[' . esc_attr((string) $index) . ']';
-    echo '<div class="evk-gallery-item" data-id="' . esc_attr($idv) . '">';
+    $style = $item_w > 0 ? ' style="width:' . $item_w . 'px"' : '';
+    echo '<div class="evk-gallery-item" data-id="' . esc_attr($idv) . '"' . $style . '>';
     echo '<input type="hidden" class="evk-gallery-id" name="' . $base . '[img]" value="' . esc_attr($idv) . '">';
     echo '<span class="evk-gallery-thumb"><img src="' . ($tpl ? '__SRC__' : esc_url($src)) . '" alt=""></span>';
     if (!empty($cats)) {
@@ -279,20 +280,21 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             break;
 
         case 'gallery':
-            $cats = evk_rep_gallery_categories($field);
-            $rows = is_array($val) ? array_values($val) : [];
+            $cats   = evk_rep_gallery_categories($field);
+            $item_w = (int) ($field['gallery_item_width'] ?? 0);
+            $rows   = is_array($val) ? array_values($val) : [];
             echo '<div class="evk-gallery' . (!empty($cats) ? ' has-cats' : '') . '">';
             echo '<div class="evk-gallery-items">';
             $gi = 0;
             foreach ($rows as $row) {
                 $img = (int) (is_array($row) ? ($row['img'] ?? 0) : $row);
                 if ($img <= 0) continue;
-                evk_rep_render_gallery_item($name, $gi, $img, (string) (is_array($row) ? ($row['cat'] ?? '') : ''), $cats);
+                evk_rep_render_gallery_item($name, $gi, $img, (string) (is_array($row) ? ($row['cat'] ?? '') : ''), $cats, false, $item_w);
                 $gi++;
             }
             echo '</div>';
             echo '<template class="evk-gallery-tpl">';
-            evk_rep_render_gallery_item($name, '__GIDX__', 0, '', $cats, true);
+            evk_rep_render_gallery_item($name, '__GIDX__', 0, '', $cats, true, $item_w);
             echo '</template>';
             echo '<button type="button" class="button evk-gallery-add"><span class="dashicons dashicons-images-alt2"></span> Dodaj obrazy</button>';
             echo '</div>';

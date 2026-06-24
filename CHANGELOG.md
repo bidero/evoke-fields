@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.25.1] — 2026-06-24
+
+### Dodane
+
+- **Szerokość kafelka galerii w edytorze** — nowa opcja `gallery_item_width` (px, 60–400)
+  w konfiguracji pola galeria. Ustawia szerokość `.evk-gallery-item` w metaboxie
+  (miniatura skaluje się, bo zachowuje `aspect-ratio 1/1`). Puste = domyślne 108px.
+  Stosowane też w szablonie nowego kafelka. (`includes/builder.php`, `includes/metabox.php`)
+
 ## [1.25.0] — 2026-06-24
 
 ### Dodane

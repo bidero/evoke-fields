@@ -455,6 +455,8 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         // $src === '' → prosta galeria: nie zapisujemy źródła ani kategorii
         $sort = sanitize_key($f['gallery_sort'] ?? '');
         if (in_array($sort, ['random', 'random_hour', 'random_day'], true)) $def['gallery_sort'] = $sort;
+        $iw = (int) ($f['gallery_item_width'] ?? 0);
+        if ($iw > 0) $def['gallery_item_width'] = max(60, min(400, $iw));
     } elseif ($type === 'range') {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         $def['min']   = is_numeric($f['min'] ?? '') ? (float) $f['min'] : 0;
@@ -562,6 +564,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $gallery_cat_source  = $field['gallery_cat_source'] ?? ($gallery_cats !== '' ? 'manual' : '');
     $gallery_cat_tax     = $field['gallery_cat_taxonomy'] ?? '';
     $gallery_sort        = $field['gallery_sort'] ?? '';
+    $gallery_item_width  = (int)($field['gallery_item_width'] ?? 0);
     $rel_pts             = $field['rel_post_types'] ?? ['post'];
     $rel_multi           = !empty($field['rel_multiple']);
     $placeholder         = $field['placeholder'] ?? '';
@@ -695,6 +698,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     <option value="random_hour" <?php selected($gallery_sort, 'random_hour'); ?>>Losowo — zmiana co godzinę</option>
                     <option value="random_day" <?php selected($gallery_sort, 'random_day'); ?>>Losowo — zmiana co dzień</option>
                 </select>
+            </div>
+            <div class="evk-b-ctrl" style="margin-bottom:12px;">
+                <label>Szerokość kafelka w edytorze (px)</label>
+                <input type="number" min="60" max="400" step="1" name="<?php echo esc_attr($base); ?>[gallery_item_width]" value="<?php echo $gallery_item_width > 0 ? esc_attr((string) $gallery_item_width) : ''; ?>" placeholder="108 (domyślnie)">
             </div>
             <div class="evk-b-ctrl">
                 <label>Źródło kategorii obrazów</label>
