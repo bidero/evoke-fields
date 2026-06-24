@@ -2,6 +2,36 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.0] — 2026-06-25
+
+### Dodane — pętle Query Loop dla pól Użytkownik i Taksonomia
+
+- **Pole „Użytkownik" jako źródło pętli Bricks** — `EVK Użytkownicy: {pole}` iteruje po
+  WYBRANYCH użytkownikach (zwraca `WP_User`, natywny kontekst usera + tagi pól usera EVK).
+- **Pole „Taksonomia" jako źródło pętli** — `EVK Termy (pole): {pole}` iteruje po WYBRANYCH
+  termach pola (zwraca `WP_Term`). Różne od istniejącego `EVK Termy: {taksonomia}` (wszystkie
+  termy). Działa też w grupach pojedynczych i jako „… Opcje" na stronach opcji.
+  (`includes/bricks.php`)
+
+### Naprawione
+
+- **Pola mogły nie pojawiać się w pickerze danych dynamicznych Bricks** — lista tagów
+  dedupowała GLOBALNIE po kluczu pola, więc pole z kluczem już użytym w innej grupie
+  (częste przy auto-kluczu `pole_N`) było po cichu pomijane. Dedup zawężony do obrębu
+  grupy. (`includes/bricks.php`)
+
+### Zmienione
+
+- **Tagi dynamiczne Bricks grupowane per grupa pól** (jak Meta Box) — zamiast jednej grupy
+  „EVK Repeater" każda grupa pól ma własną sekcję w pickerze: `EVK: {nazwa}` (oraz
+  `EVK Opcje: {nazwa}` dla stron opcji). Etykiety tagów uproszczone do nazwy pola (ze ścieżką
+  `›` dla pól w repeaterze); pola bez etykiety pokazują klucz zamiast pustego wpisu.
+  (`includes/bricks.php`)
+- **Ściągawka „Jak wyświetlić w Bricks" dla pola Użytkownik** — zwijany blok `<details>`
+  (jak w galerii), z tagami na żywo pod klucz pola: `{evk_field_…}`, `__email`, `__url`,
+  `__avatar`, `__ids`, `__count` oraz przykłady `__meta:telefon` / `__meta:stanowisko`.
+  (`includes/builder.php`)
+
 ## [1.34.0] — 2026-06-25
 
 ### Dodane — dostęp do profilu z pola „Użytkownik" (Bricks)

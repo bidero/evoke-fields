@@ -124,7 +124,7 @@ function evk_rep_loops(): array {
         $loops['evk_opt_' . $optPath] = ['label' => 'EVK Opcje: ' . $label, 'fields' => $rowFields];
     };
 
-    $walk_repeater = function(string $basePath, string $baseLabel, array $subFields, ?string $optBase = null) use (&$add_loop, &$walk_repeater, &$add_gallery, &$add_rel, &$add_gallery_flat) {
+    $walk_repeater = function(string $basePath, string $baseLabel, array $subFields, ?string $optBase = null) use (&$add_loop, &$walk_repeater, &$add_gallery, &$add_rel, &$add_gallery_flat, &$add_user, &$add_tax) {
         $optBase   = $optBase ?? $basePath;
         $rowFields = [];
         foreach (($subFields ?? []) as $k => $f) {
@@ -152,6 +152,10 @@ function evk_rep_loops(): array {
                 $add_gallery_flat($basePath, $optBase, $k, $f, $label, $flatRow); // płaska lista ze wszystkich wierszy
             } elseif ($t === 'relationship') {
                 $add_rel($sub, $label, $oSub);
+            } elseif ($t === 'user') {
+                $add_user($sub, $label, $oSub);
+            } elseif ($t === 'taxonomy') {
+                $add_tax($sub, $label, $oSub);
             }
         }
     };
@@ -182,6 +186,20 @@ function evk_rep_loops(): array {
         $optPath = $optPath ?? $path;
         $loops[$path]                 = ['label' => 'EVK Relacja: '       . $label, 'fields' => [], 'relationship' => true];
         $loops['evk_opt_' . $optPath] = ['label' => 'EVK Relacja Opcje: ' . $label, 'fields' => [], 'relationship' => true];
+    };
+
+    // Pole Użytkownik = pętla po wybranych użytkownikach (WP_User — kontekst usera w Bricks).
+    $add_user = function(string $path, string $label, ?string $optPath = null) use (&$loops) {
+        $optPath = $optPath ?? $path;
+        $loops[$path]                 = ['label' => 'EVK Użytkownicy: '       . $label, 'fields' => [], 'users' => true];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Użytkownicy Opcje: ' . $label, 'fields' => [], 'users' => true];
+    };
+
+    // Pole Taksonomia = pętla po WYBRANYCH termach pola (WP_Term — kontekst termu w Bricks).
+    $add_tax = function(string $path, string $label, ?string $optPath = null) use (&$loops) {
+        $optPath = $optPath ?? $path;
+        $loops[$path]                 = ['label' => 'EVK Termy (pole): '       . $label, 'fields' => [], 'tax_terms' => true];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Termy (pole) Opcje: ' . $label, 'fields' => [], 'tax_terms' => true];
     };
 
     // Galeria SPŁASZCZONA — wszystkie obrazy ze WSZYSTKICH wierszy repeatera w jednej
@@ -219,6 +237,10 @@ function evk_rep_loops(): array {
                     $add_gallery($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $f, $gk . '.' . $fk);
                 } elseif ($t === 'relationship') {
                     $add_rel($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
+                } elseif ($t === 'user') {
+                    $add_user($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
+                } elseif ($t === 'taxonomy') {
+                    $add_tax($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
                 }
             }
         }
@@ -728,6 +750,22 @@ add_filter('bricks/query/run', function ($results, $query_obj) {
         return $posts;
     }
 
+    // Pole Użytkownik → zwróć wybranych WP_User (kontekst usera natywny w Bricks).
+    if (!empty($loops[$raw_type]['users'])) {
+        $ids = array_values(array_filter(array_map('intval', $rows)));
+        $users = [];
+        foreach ($ids as $id) { $u = get_userdata($id); if ($u) $users[] = $u; }
+        return $users;
+    }
+
+    // Pole Taksonomia → zwróć wybrane WP_Term (kontekst termu natywny w Bricks).
+    if (!empty($loops[$raw_type]['tax_terms'])) {
+        $ids = array_values(array_filter(array_map('intval', $rows)));
+        $terms = [];
+        foreach ($ids as $id) { $tm = get_term($id); if ($tm instanceof WP_Term) $terms[] = $tm; }
+        return $terms;
+    }
+
     if (empty($rows) && evk_rep_is_builder()) {
         $rows = [ evk_rep_builder_placeholder_row($loops[$raw_type]['fields']) ];
     }
@@ -764,6 +802,8 @@ add_filter('bricks/query/loop_object', function ($loop_object, $loop_key, $query
     if (!isset($loops[$type])) return $loop_object;
     if (!empty($loops[$type]['relationship'])) return $loop_object; // WP_Post → natywny kontekst Bricks
     if (!empty($loops[$type]['terms']))        return $loop_object; // WP_Term → natywny kontekst termu
+    if (!empty($loops[$type]['users']))        return $loop_object; // WP_User → natywny kontekst usera
+    if (!empty($loops[$type]['tax_terms']))    return $loop_object; // WP_Term → natywny kontekst termu
 
     $post_id = !empty($query_obj->post_id) ? (int) $query_obj->post_id : 0;
     $post_id = evk_rep_filter_pid($post_id);
@@ -816,74 +856,80 @@ add_action('bricks/query/after_loop', function ($query_obj = null) {
 add_filter('bricks/dynamic_tags_list', function ($tags) {
     $seen = [];
 
-    $add = function ($key, $label, $type) use (&$tags, &$seen) {
-        if (isset($seen[$key])) return;
-        $seen[$key] = true;
-        $tags[] = ['name' => '{evk_field_' . $key . '}', 'label' => $label, 'group' => 'EVK Repeater'];
+    // $g = nazwa grupy w pickerze Bricks (per grupa pól, jak Meta Box). Dedup w obrębie grupy
+    // (po „$g::$key"), żeby ten sam klucz w różnych grupach NIE ukrywał pól nawzajem.
+    $add = function ($key, $label, $type, $g) use (&$tags, &$seen) {
+        $sk = $g . '::' . $key;
+        if (isset($seen[$sk])) return;
+        $seen[$sk] = true;
+        $tags[] = ['name' => '{evk_field_' . $key . '}', 'label' => $label, 'group' => $g];
         if ($type === 'image') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__id}',  'label' => $label . ' (ID)',  'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__alt}', 'label' => $label . ' (alt)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
         } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
-            $tags[] = ['name' => '{evk_field_' . $key . '__label}', 'label' => $label . ' (etykieta)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
         } elseif ($type === 'taxonomy') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__id}',   'label' => $label . ' (ID termu)',   'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__slug}', 'label' => $label . ' (slug termu)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__id}',   'label' => $label . ' (ID termu)',   'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__slug}', 'label' => $label . ' (slug termu)', 'group' => $g];
         } elseif ($type === 'gallery') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)', 'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',   'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)', 'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',   'group' => $g];
         } elseif ($type === 'relationship') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',  'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',    'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (link 1.)',   'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',  'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',    'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (link 1.)',   'group' => $g];
         } elseif ($type === 'user') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',    'label' => $label . ' (lista ID)',      'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}',  'label' => $label . ' (liczba)',        'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__email}',  'label' => $label . ' (e-mail 1.)',     'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__url}',    'label' => $label . ' (URL autora 1.)', 'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__avatar}', 'label' => $label . ' (URL awatara 1.)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',    'label' => $label . ' (lista ID)',      'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__count}',  'label' => $label . ' (liczba)',        'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__email}',  'label' => $label . ' (e-mail 1.)',     'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__url}',    'label' => $label . ' (URL autora 1.)', 'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__avatar}', 'label' => $label . ' (URL awatara 1.)', 'group' => $g];
         } elseif ($type === 'link') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__title}',  'label' => $label . ' (etykieta)',     'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__target}', 'label' => $label . ' (cel _blank)',   'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__html}',   'label' => $label . ' (gotowy <a>)',   'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__title}',  'label' => $label . ' (etykieta)',     'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__target}', 'label' => $label . ' (cel _blank)',   'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__html}',   'label' => $label . ' (gotowy <a>)',   'group' => $g];
         } elseif (in_array($type, ['date', 'time', 'datetime'], true)) {
-            $tags[] = ['name' => '{evk_field_' . $key . '__raw}',       'label' => $label . ' (ISO)',     'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__timestamp}', 'label' => $label . ' (timestamp)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__raw}',       'label' => $label . ' (ISO)',     'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__timestamp}', 'label' => $label . ' (timestamp)', 'group' => $g];
         }
     };
 
-    $add_opt = function ($group_key, $key, $label, $type) use (&$tags, &$seen) {
+    $add_opt = function ($group_key, $key, $label, $type, $g) use (&$tags, &$seen) {
         $opt_key = 'evk_opt_' . $group_key . '_' . $key;
         if (isset($seen[$opt_key])) return;
         $seen[$opt_key] = true;
-        $tags[] = ['name' => '{' . $opt_key . '}', 'label' => $label . ' (Opcja globalna)', 'group' => 'EVK Opcje (Settings)'];
+        $tags[] = ['name' => '{' . $opt_key . '}', 'label' => $label, 'group' => $g];
         if ($type === 'image') {
-            $tags[] = ['name' => '{' . $opt_key . '__id}',  'label' => $label . ' (ID Opcji)',  'group' => 'EVK Opcje (Settings)'];
-            $tags[] = ['name' => '{' . $opt_key . '__alt}', 'label' => $label . ' (Alt Opcji)', 'group' => 'EVK Opcje (Settings)'];
+            $tags[] = ['name' => '{' . $opt_key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
+            $tags[] = ['name' => '{' . $opt_key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
         } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
-            $tags[] = ['name' => '{' . $opt_key . '__label}', 'label' => $label . ' (Etykieta Opcji)', 'group' => 'EVK Opcje (Settings)'];
+            $tags[] = ['name' => '{' . $opt_key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
         }
     };
 
     foreach (evk_rep_groups() as $gk => $group) {
         $glabel = $group['label'] ?? $gk;
+        $gname  = 'EVK: ' . $glabel;            // grupa pickera per grupa pól (jak Meta Box)
+        $oname  = 'EVK Opcje: ' . $glabel;
 
-        $walk = function(string $baseLabel, array $fields) use (&$add, &$walk) {
+        $walk = function(string $path, array $fields, string $g) use (&$add, &$walk) {
             foreach (($fields ?? []) as $fk => $f) {
                 $t = $f['type'] ?? '';
                 if (evk_rep_is_layout($t)) continue;
-                if ($t === 'repeater') { $walk($baseLabel . ' › ' . ($f['label'] ?? $fk), $f['sub_fields'] ?? []); continue; }
-                $add($fk, $baseLabel . ' — ' . ($f['label'] ?? $fk), $t);
+                $full = ($path !== '' ? $path . ' › ' : '') . (($f['label'] ?? '') !== '' ? $f['label'] : $fk);
+                if ($t === 'repeater') { $walk($full, $f['sub_fields'] ?? [], $g); continue; }
+                $add($fk, $full, $t, $g);
             }
         };
 
         if (evk_rep_is_repeater($group)) {
-            $walk($glabel, $group['fields'] ?? []);
+            $walk('', $group['fields'] ?? [], $gname);
         } else {
-            $walk($glabel, $group['fields'] ?? []);
+            $walk('', $group['fields'] ?? [], $gname);
             foreach (($group['fields'] ?? []) as $fk => $f) {
                 $t = $f['type'] ?? '';
                 if (evk_rep_is_layout($t) || $t === 'repeater') continue;
-                $add_opt($gk, $fk, $glabel . ' — ' . ($f['label'] ?? $fk), $t);
+                $add_opt($gk, $fk, ($f['label'] ?? $fk), $t, $oname);
             }
         }
     }

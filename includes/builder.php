@@ -884,11 +884,32 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
             </label>
             <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
-            <p class="description" style="margin:10px 0 0;">
-                Bricks: <code>{evk_field_klucz}</code> = nazwa, <code>__email</code>, <code>__url</code>,
-                <code>__avatar</code> (URL awatara) oraz <code>__meta:klucz</code> — dowolna meta
-                wybranego użytkownika (np. <code>__meta:telefon</code>, <code>__meta:stanowisko</code>).
-            </p>
+            <?php $u_cheat = ($key !== '' ? $key : 'klucz'); ?>
+            <details class="evk-b-cheat">
+                <summary class="evk-b-cheat-title"><span class="dashicons dashicons-lightbulb"></span> Jak wyświetlić w Bricks<span class="dashicons dashicons-arrow-down-alt2 evk-b-cheat-chevron"></span></summary>
+                <div class="evk-b-cheat-body">
+                    <div class="evk-b-cheat-row"><strong>Dane wybranego użytkownika:</strong></div>
+                    <ul class="evk-b-cheat-tags">
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($u_cheat); ?>}</code> — nazwa (display name)</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__email}">{evk_field_<?php echo esc_html($u_cheat); ?>__email}</code> — e-mail (np. przycisk <code>mailto:</code>)</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__url}">{evk_field_<?php echo esc_html($u_cheat); ?>__url}</code> — URL archiwum autora</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__avatar}">{evk_field_<?php echo esc_html($u_cheat); ?>__avatar}</code> — URL awatara → bind do elementu <em>Image</em></li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__ids}">{evk_field_<?php echo esc_html($u_cheat); ?>__ids}</code> — lista ID (przy wielokrotnym wyborze, np. pętla)</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__count}">{evk_field_<?php echo esc_html($u_cheat); ?>__count}</code> — liczba wybranych</li>
+                    </ul>
+                    <div class="evk-b-cheat-row"><strong>Dowolne pole profilu (meta):</strong></div>
+                    <ul class="evk-b-cheat-tags">
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__meta:telefon}">{evk_field_<?php echo esc_html($u_cheat); ?>__meta:telefon}</code> — meta „telefon"</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__meta:stanowisko}">{evk_field_<?php echo esc_html($u_cheat); ?>__meta:stanowisko}</code> — meta „stanowisko"</li>
+                    </ul>
+                    <p class="description" style="margin:6px 0 0;">
+                        <code>__meta:klucz</code> czyta <strong>dowolną</strong> meta wybranego użytkownika — zamień
+                        <code>telefon</code>/<code>stanowisko</code> na swój klucz (działa z polami EVK dodanymi
+                        na profilu użytkownika). Przy wielokrotnym wyborze proste tagi zwracają pierwszego usera;
+                        do listy użyj <code>__ids</code> w pętli.
+                    </p>
+                </div>
+            </details>
         </div>
 
         <div class="evk-b-field-toggle">
