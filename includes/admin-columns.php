@@ -116,6 +116,11 @@ function evk_rep_column_value_html(array $field, $val): string {
         case 'image_select':
             $label = evk_rep_format_value($field, $val, 'label');
             return esc_html((string) $label);
+        case 'date':
+        case 'time':
+        case 'datetime':
+            $fmt = evk_rep_format_value($field, $val, '');
+            return $fmt !== '' ? esc_html((string) $fmt) : '—';
         case 'url':
             return '<a href="' . esc_url((string) $val) . '" target="_blank" rel="noopener">' . esc_html((string) $val) . '</a>';
         case 'wysiwyg':

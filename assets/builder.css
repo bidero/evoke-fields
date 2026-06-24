@@ -130,8 +130,15 @@
 .evk-b-field.is-collapsed > .evk-b-field-relationship,
 .evk-b-field.is-collapsed > .evk-b-field-extra,
 .evk-b-field.is-collapsed > .evk-b-field-cond,
+.evk-b-field.is-collapsed > .evk-b-field-datefmt,
 .evk-b-field.is-collapsed > .evk-b-field-column,
 .evk-b-field.is-collapsed > .evk-b-subfields-wrap{display:none !important;}
+
+/* ── Format wyświetlania (data/czas) — widoczny tylko dla date/time/datetime ── */
+.evk-b-field-datefmt{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field[data-ftype="date"] > .evk-b-field-datefmt,
+.evk-b-field[data-ftype="time"] > .evk-b-field-datefmt,
+.evk-b-field[data-ftype="datetime"] > .evk-b-field-datefmt{display:block;}
 /* Grupa-repeater: kolumny nie mają sensu — twardo ukryj */
 .evk-cols-hidden .evk-b-col-switch,
 .evk-cols-hidden .evk-b-field-column{display:none !important;}
@@ -177,7 +184,9 @@
 .evk-b-field[data-ftype="number"] .evk-b-opt-affix,
 .evk-b-field[data-ftype="email"] .evk-b-opt-affix,
 .evk-b-field[data-ftype="url"] .evk-b-opt-affix,
-.evk-b-field[data-ftype="date"] .evk-b-opt-affix{display:flex;}
+.evk-b-field[data-ftype="date"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="time"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="datetime"] .evk-b-opt-affix{display:flex;}
 .evk-b-field[data-ftype="textarea"] .evk-b-opt-rows{display:flex;}
 
 /* Szablon tytułu wiersza repeatera */

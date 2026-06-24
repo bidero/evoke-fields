@@ -309,6 +309,8 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'toggle'   => 'Przełącznik (toggle)',
         'color'    => 'Kolor',
         'date'     => 'Data',
+        'time'     => 'Czas (godzina)',
+        'datetime' => 'Data i godzina',
         'image'    => 'Obraz',
         'image_select' => 'Image Select',
         'gallery'  => 'Galeria',
@@ -491,6 +493,12 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         }
     }
 
+    // Format wyświetlania daty/czasu (zapis zawsze ISO; to tylko output).
+    if (in_array($type, ['date', 'time', 'datetime'], true)) {
+        $df = sanitize_text_field($f['date_format'] ?? '');
+        if ($df !== '') $def['date_format'] = $df;
+    }
+
     // Wspólne opcje pól danych (top-level i sub): placeholder, wymagane, prefiks/sufiks, wiersze.
     if (!$is_layout && !$is_rep) {
         $ph = sanitize_text_field($f['placeholder'] ?? '');
@@ -586,6 +594,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $heading_size        = $field['heading_size']      ?? 'h3';
     $heading_separator   = !empty($field['heading_separator']);
     $heading_sub         = $field['heading_sub']       ?? '';
+    // Data / czas
+    $date_format         = $field['date_format']       ?? '';
     // Logika warunkowa
     $conditions          = is_array($field['conditions'] ?? null) ? $field['conditions'] : [];
     $cond_relation       = (($conditions['relation'] ?? 'all') === 'any') ? 'any' : 'all';
@@ -867,6 +877,20 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[heading_separator]" value="1" <?php checked($heading_separator); ?>>
                 Separator (linia pod nagłówkiem)
             </label>
+        </div>
+
+        <div class="evk-b-field-datefmt">
+            <div class="evk-b-section-title">Format wyświetlania</div>
+            <div class="evk-b-ctrl">
+                <label>Format daty/czasu (PHP)</label>
+                <input type="text" name="<?php echo esc_attr($base); ?>[date_format]" value="<?php echo esc_attr($date_format); ?>" placeholder="puste = ustawienie witryny">
+            </div>
+            <p class="description" style="margin:8px 0 0;">
+                W bazie zapis ISO (<code>Y-m-d</code> / <code>H:i</code> / <code>Y-m-d H:i</code>) — niezależny od formatu.
+                Tu ustawiasz tylko <strong>wyświetlanie</strong> (front/Bricks/kolumna). Przykłady:
+                <code>d.m.Y</code>, <code>j F Y</code>, <code>H:i</code>, <code>d.m.Y H:i</code>.
+                W danych dynamicznych Bricks dostępne też <code>:raw</code> (ISO) i <code>:timestamp</code>.
+            </p>
         </div>
 
         <details class="evk-b-field-extra">

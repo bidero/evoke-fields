@@ -2,6 +2,29 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.28.0] — 2026-06-24
+
+### Dodane — klaster daty
+
+- **Nowe typy pól: „Czas (godzina)"** (`time`, zapis `H:i`) i **„Data i godzina"**
+  (`datetime`, zapis `Y-m-d H:i`). Natywne inputy `time` / `datetime-local`.
+- **Format wyświetlania daty/czasu** — nowa opcja `date_format` (string PHP, np. `d.m.Y`,
+  `j F Y`, `H:i`, `d.m.Y H:i`) widoczna w konfiguracji pól date/time/datetime. **Zapis
+  pozostaje ISO** (niezależny od formatu — stabilne sortowanie, logika warunkowa, kolumny);
+  format steruje tylko **wyświetlaniem** na froncie/Bricks i w kolumnie admina. Puste =
+  ustawienie witryny (`date_format`/`time_format`).
+- W danych dynamicznych Bricks dla pól daty dostępne props: domyślnie sformatowana data,
+  **`:raw`** (wartość ISO z bazy) i **`:timestamp`** (unix). Formatowanie przez `date_i18n`.
+- Time/datetime dostępne też w polach załącznika (modal mediów).
+  (`includes/builder.php`, `includes/metabox.php`, `includes/bricks.php`,
+  `includes/admin-columns.php`, `assets/builder.css`)
+
+### Rationale
+
+Rozdzielenie zapisu (ISO) od wyświetlania (format) celowo unika problemu znanego z Meta Box,
+gdzie format zapisu = format wyświetlania — tam zmiana formatu rozjeżdża istniejące wpisy
+i psuje sortowanie/porównania.
+
 ## [1.27.0] — 2026-06-24
 
 ### Dodane — Faza 4b cz. 2: wyszukiwanie po wartości kolumny (użytkownicy)

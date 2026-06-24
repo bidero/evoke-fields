@@ -304,8 +304,27 @@ function evk_rep_find_field_anywhere(string $key): ?array {
     return $found;
 }
 
+// Format wyświetlania dla pól daty/czasu. Pusty `date_format` = ustawienie witryny.
+function evk_rep_date_display_format(array $field): string {
+    $fmt = trim((string) ($field['date_format'] ?? ''));
+    if ($fmt !== '') return $fmt;
+    $type = $field['type'] ?? 'date';
+    if ($type === 'time')     return (string) get_option('time_format', 'H:i');
+    if ($type === 'datetime') return trim(get_option('date_format', 'Y-m-d') . ' ' . get_option('time_format', 'H:i'));
+    return (string) get_option('date_format', 'Y-m-d');
+}
+
 function evk_rep_format_value(array $field, $val, string $prop) {
     $type = $field['type'] ?? 'text';
+    if (in_array($type, ['date', 'time', 'datetime'], true)) {
+        $s = is_scalar($val) ? trim((string) $val) : '';
+        if ($s === '') return '';
+        if ($prop === 'raw') return $s;            // wartość ISO z bazy
+        $ts = strtotime($s);
+        if ($ts === false) return $s;
+        if ($prop === 'timestamp') return (string) $ts;
+        return date_i18n(evk_rep_date_display_format($field), $ts); // domyślnie: sformatowana
+    }
     if ($type === 'taxonomy') {
         $ids = is_array($val) ? $val : ($val ? [$val] : []);
         $ids = array_values(array_filter(array_map('intval', $ids)));

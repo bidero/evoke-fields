@@ -207,6 +207,16 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo evk_rep_wrap_affix('<input type="date" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $req . '>', $field);
             break;
 
+        case 'time':
+            echo evk_rep_wrap_affix('<input type="time" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $req . '>', $field);
+            break;
+
+        case 'datetime':
+            // Magazyn = 'Y-m-d H:i'; input datetime-local oczekuje 'Y-m-dTH:i'.
+            $dt_val = str_replace(' ', 'T', (string) $val);
+            echo evk_rep_wrap_affix('<input type="datetime-local" name="' . esc_attr($name) . '" value="' . esc_attr($dt_val) . '"' . $req . '>', $field);
+            break;
+
         case 'toggle':
             $on_val  = $field['toggle_on']  ?? '1';
             $off_val = $field['toggle_off'] ?? '0';
@@ -713,6 +723,8 @@ function evk_rep_sanitize_value(string $type, $v) {
         case 'checkbox': return (!empty($v) && $v !== '0') ? '1' : '';
         case 'color':    return sanitize_hex_color((string) $v) ?: '';
         case 'date':     return sanitize_text_field((string) $v);
+        case 'time':     return sanitize_text_field((string) $v);
+        case 'datetime': return sanitize_text_field(str_replace('T', ' ', (string) $v)); // 'Y-m-dTH:i' → 'Y-m-d H:i'
         case 'taxonomy':
             if (is_array($v)) {
                 $ids = array_values(array_unique(array_filter(array_map('intval', $v))));
@@ -787,7 +799,7 @@ add_action('save_post', function ($post_id) {
 // =========================================================================
 
 function evk_rep_media_simple_types(): array {
-    return ['text', 'textarea', 'number', 'range', 'email', 'url', 'select', 'radio', 'button_group', 'checkbox', 'color', 'date'];
+    return ['text', 'textarea', 'number', 'range', 'email', 'url', 'select', 'radio', 'button_group', 'checkbox', 'color', 'date', 'time', 'datetime'];
 }
 
 function evk_rep_attachment_field_html(int $post_id, string $fk, array $f, $val): string {
@@ -819,6 +831,10 @@ function evk_rep_attachment_field_html(int $post_id, string $fk, array $f, $val)
             return '<input type="color" name="' . esc_attr($name) . '" value="' . esc_attr($val !== '' ? (string) $val : '#000000') . '">';
         case 'date':
             return '<input type="date" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '">';
+        case 'time':
+            return '<input type="time" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '">';
+        case 'datetime':
+            return '<input type="datetime-local" name="' . esc_attr($name) . '" value="' . esc_attr(str_replace(' ', 'T', (string) $val)) . '">';
         default:
             return '<input type="text" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '" class="widefat">';
     }
