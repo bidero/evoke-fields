@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.34.0] — 2026-06-25
+
+### Dodane — dostęp do profilu z pola „Użytkownik" (Bricks)
+
+- **`{evk_field_klucz__meta:metaklucz}`** — czyta dowolną meta wybranego obiektu: użytkownika
+  (`get_user_meta`), a generycznie też Relacji (`get_post_meta`) i Taksonomii (`get_term_meta`).
+  Np. `__meta:telefon`, `__meta:stanowisko`. Parser rozpoznaje dynamiczny klucz po `__meta:`.
+- **`{evk_field_klucz__avatar}`** — URL awatara wybranego użytkownika. Działa też w elemencie
+  **Image** (kontekst image zwraca `[url]`, bo „id" pola user nie jest ID załącznika).
+- Hint w konfiguracji pola Użytkownik + rejestracja `__avatar` w liście tagów Bricks.
+  (`includes/bricks.php`, `includes/builder.php`)
+
+### Zmienione
+
+- **Strony admina EVK na pełną szerokość panelu** (jak natywne ekrany WP) — zdjęty sztywny
+  limit `max-width:1280px` na `.wrap` (→ `none`). (`assets/evk-admin.css`)
+
 ## [1.33.4] — 2026-06-25
 
 ### Zmienione

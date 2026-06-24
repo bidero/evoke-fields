@@ -884,6 +884,11 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
             </label>
             <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
+            <p class="description" style="margin:10px 0 0;">
+                Bricks: <code>{evk_field_klucz}</code> = nazwa, <code>__email</code>, <code>__url</code>,
+                <code>__avatar</code> (URL awatara) oraz <code>__meta:klucz</code> — dowolna meta
+                wybranego użytkownika (np. <code>__meta:telefon</code>, <code>__meta:stanowisko</code>).
+            </p>
         </div>
 
         <div class="evk-b-field-toggle">

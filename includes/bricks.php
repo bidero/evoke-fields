@@ -325,6 +325,19 @@ function evk_rep_format_value(array $field, $val, string $prop) {
         if ($prop === 'timestamp') return (string) $ts;
         return date_i18n(evk_rep_date_display_format($field), $ts); // domyślnie: sformatowana
     }
+    // __meta:klucz — meta powiązanego obiektu (1. z listy): user/relationship/taxonomy.
+    if (strpos($prop, 'meta:') === 0 && in_array($type, ['user', 'relationship', 'taxonomy'], true)) {
+        $metakey = sanitize_key(substr($prop, 5));
+        $ids = is_array($val)
+            ? array_values(array_filter(array_map('intval', $val)))
+            : ((int) $val > 0 ? [(int) $val] : []);
+        if ($metakey === '' || empty($ids)) return '';
+        $first = $ids[0];
+        $mv = ($type === 'user')     ? get_user_meta($first, $metakey, true)
+            : (($type === 'taxonomy') ? get_term_meta($first, $metakey, true)
+            :                            get_post_meta($first, $metakey, true));
+        return is_scalar($mv) ? (string) $mv : '';
+    }
     if ($type === 'taxonomy') {
         $ids = is_array($val) ? $val : ($val ? [$val] : []);
         $ids = array_values(array_filter(array_map('intval', $ids)));
@@ -384,8 +397,9 @@ function evk_rep_format_value(array $field, $val, string $prop) {
         if ($prop === 'id')    return (string) $ids[0];
         $u = get_userdata($ids[0]);
         if (!$u) return '';
-        if ($prop === 'email') return $u->user_email;
-        if ($prop === 'url')   return get_author_posts_url($ids[0]) ?: '';
+        if ($prop === 'email')  return $u->user_email;
+        if ($prop === 'url')    return get_author_posts_url($ids[0]) ?: '';
+        if ($prop === 'avatar') return get_avatar_url($ids[0]) ?: '';
         return $u->display_name ?: $u->user_login; // domyślnie: nazwa pierwszego
     }
     if ($type === 'link') {
@@ -822,10 +836,11 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
             $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',    'group' => 'EVK Repeater'];
             $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (link 1.)',   'group' => 'EVK Repeater'];
         } elseif ($type === 'user') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',   'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',     'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__email}', 'label' => $label . ' (e-mail 1.)',  'group' => 'EVK Repeater'];
-            $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (URL autora 1.)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',    'label' => $label . ' (lista ID)',      'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__count}',  'label' => $label . ' (liczba)',        'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__email}',  'label' => $label . ' (e-mail 1.)',     'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__url}',    'label' => $label . ' (URL autora 1.)', 'group' => 'EVK Repeater'];
+            $tags[] = ['name' => '{evk_field_' . $key . '__avatar}', 'label' => $label . ' (URL awatara 1.)', 'group' => 'EVK Repeater'];
         } elseif ($type === 'link') {
             $tags[] = ['name' => '{evk_field_' . $key . '__title}',  'label' => $label . ' (etykieta)',     'group' => 'EVK Repeater'];
             $tags[] = ['name' => '{evk_field_' . $key . '__target}', 'label' => $label . ' (cel _blank)',   'group' => 'EVK Repeater'];
@@ -880,8 +895,10 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
 // =========================================================================
 
 function evk_rep_parse_tag(string $raw): array {
+    // __meta:klucz — meta powiązanego obiektu (user/relationship/taxonomy). Klucz dynamiczny.
+    if (preg_match('/^(.+)__meta:([A-Za-z0-9_\-]+)$/', $raw, $m)) return [$m[1], 'meta:' . $m[2]];
     // Props + standardowe rozmiary obrazków. Lista zamknięta, by klucze z „__" nie były psute.
-    if (preg_match('/^(.*)__(ids|id|alt|label|slug|count|url|email|title|target|html|raw|timestamp|thumbnail|medium|medium_large|large|full|1536x1536|2048x2048)$/', $raw, $m)) return [$m[1], $m[2]];
+    if (preg_match('/^(.*)__(ids|id|alt|label|slug|count|url|email|avatar|title|target|html|raw|timestamp|thumbnail|medium|medium_large|large|full|1536x1536|2048x2048)$/', $raw, $m)) return [$m[1], $m[2]];
     return [$raw, ''];
 }
 
@@ -917,6 +934,13 @@ function evk_rep_render_content($content, $post = null, $context = 'text') {
  * Wzorzec z forum Bricks: $value = !empty($value) ? [$value] : [];
  */
 function evk_rep_image_tag_value(string $key, string $prop, int $ctx_pid, bool $is_option) {
+    // Awatar usera / meta zwracające URL — w elemencie Image oddajemy gotowy [url],
+    // bo „id" pola user/relacji to NIE jest ID załącznika.
+    if ($prop === 'avatar' || strpos($prop, 'meta:') === 0) {
+        $v = $is_option ? evk_rep_resolve_option($key, $prop) : evk_rep_resolve($key, $prop, $ctx_pid);
+        $v = is_scalar($v) ? (string) $v : '';
+        return $v !== '' ? [$v] : [];
+    }
     $id = $is_option
         ? (int) evk_rep_resolve_option($key, 'id')
         : (int) evk_rep_resolve($key, 'id', $ctx_pid);
