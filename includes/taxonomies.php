@@ -126,7 +126,7 @@ function evk_render_taxonomies_page() {
                                 <label><?php esc_html_e( 'Slug taksonomii', 'evk-repeater' ); ?></label><br>
                                 <input type="text" class="taxonomy-slug" name="taxonomies[<?php echo esc_attr( $index ); ?>][slug]" placeholder="taxonomy-slug" value="<?php echo esc_attr( $taxonomy['slug'] ); ?>" />
                             </div>
-                            <div class="field-group">
+                            <div class="field-group evk-tax-pt-field">
                                 <label><?php esc_html_e( 'Powiązane typy treści', 'evk-repeater' ); ?></label><br>
                                 <div class="evk-sp-tab-groups evk-tax-pt-grid">
                                     <?php foreach ( $registered_post_types as $post_type ) : ?>
@@ -239,7 +239,7 @@ function evk_render_taxonomies_page() {
                             <label><?php esc_html_e( 'Slug taksonomii', 'evk-repeater' ); ?></label><br>
                             <input type="text" class="taxonomy-slug" name="taxonomies[${newIndex}][slug]" placeholder="taxonomy-slug" />
                         </div>
-                        <div class="field-group">
+                        <div class="field-group evk-tax-pt-field">
                             <label><?php esc_html_e( 'Powiązane typy treści', 'evk-repeater' ); ?></label><br>
                             <div class="evk-sp-tab-groups evk-tax-pt-grid">
                                 <?php foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) : ?>

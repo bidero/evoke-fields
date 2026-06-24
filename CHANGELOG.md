@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.23.3] — 2026-06-24
+
+### Zmienione
+
+- **„Powiązane typy treści"** w taksonomiach zajmuje teraz **całą szerokość wiersza**
+  (`grid-column: 1 / -1`), więc chipy układają się poziomo zamiast tłoczyć w wąskiej
+  kolumnie siatki. (`includes/taxonomies.php`, `assets/evk-admin.css`)
+
 ## [1.23.2] — 2026-06-24
 
 ### Zmienione

@@ -301,6 +301,8 @@ h1.evk-settings-tabs.nav-tab-wrapper {
 
 /* Powiązane typy treści (taksonomie) — chipy w boksie (poza .evk-sp-tab brak ramki) */
 .evk-tax-pt-grid { border: 1px solid #d7dde7; border-radius: 8px; background: #f8fafc; }
+/* Pełna szerokość w siatce wiersza → chipy układają się poziomo, a nie w wąskiej kolumnie */
+.evk-admin .evk-row-body .evk-tax-pt-field { grid-column: 1 / -1; }
 
 /* Przycisk "Dodaj zakładkę" */
 .evk-sp-add-tab {
