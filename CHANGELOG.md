@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.1] — 2026-06-25
+
+### Zmienione
+
+- **Ładniejsze chipy wyboru ról / typów treści** (`.evk-b-rel-pts` — pole Użytkownik
+  „Role do wyboru" oraz Relacja „Typy treści") — pigułki z `accent-color`, zaokrąglone,
+  spójne z chipami taksonomii. (`assets/builder.css`)
+
 ## [1.35.0] — 2026-06-25
 
 ### Dodane — pętle Query Loop dla pól Użytkownik i Taksonomia

@@ -239,10 +239,11 @@
 .evk-b-field-user{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
 .evk-b-field.is-user .evk-b-field-user{display:block;}
 .evk-b-rel-pts{display:flex;flex-wrap:wrap;gap:8px;}
-.evk-b-rel-pts label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#374151;padding:5px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
-.evk-b-rel-pts label:hover{border-color:#93c5fd;background:#f8fbff;}
-.evk-b-rel-pts label:has(input:checked){border-color:#2563eb;background:#eff6ff;color:#1e3a8a;font-weight:600;}
-.evk-b-rel-pts code{font-size:10px;color:#6b7280;}
+.evk-b-rel-pts label{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:#374151;padding:6px 13px;border:1px solid #d7dde7;border-radius:20px;background:#fff;cursor:pointer;user-select:none;transition:border-color .15s,background .15s,color .15s;}
+.evk-b-rel-pts label:hover{border-color:#93c5fd;background:#eff6ff;color:#1e40af;}
+.evk-b-rel-pts label:has(input:checked){border-color:#93c5fd;background:#dbeafe;color:#1e40af;font-weight:600;}
+.evk-b-rel-pts input[type=checkbox]{margin:0;flex-shrink:0;accent-color:#2563eb;cursor:pointer;}
+.evk-b-rel-pts code{font-size:10px;color:#94a3b8;}
 .evk-b-field-tax .evk-b-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin:0 0 12px;}
 .evk-b-field-tax .evk-b-ctrl-grid{display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;}
 
