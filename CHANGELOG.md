@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.24.0] — 2026-06-24
+
+### Dodane — Faza 5 cz. 2: logika warunkowa (runtime w metaboxie)
+
+- **Pola pokazują/ukrywają się na żywo** wg reguł zdefiniowanych w builderze (część 1).
+  Wrapper pola dostaje `data-evk-cond` z regułami; JS w `admin.js` przelicza widoczność
+  przy każdej zmianie pola i przy starcie. Ukryte pole = klasa `.evk-cond-hidden`
+  (`display:none`). Wartość nie jest kasowana (pole tylko znika z widoku).
+- **Operatory:** `==`, `!=`, `zawiera`, `puste`, `niepuste`; tryb `wszystkie` (AND) /
+  `dowolny` (OR). Odczyt wartości obsługuje toggle, checkbox, radio, button group,
+  select i pola tekstowe.
+- **Zasięg per kontekst:** pole źródłowe szukane jest wśród rodzeństwa w tym samym
+  `.evk-s` — w wierszu repeatera warunki odnoszą się do pól tego samego wiersza, w grupie
+  pojedynczej do pól grupy. Nowo dodane wiersze repeatera są od razu przeliczane.
+- Działa na wszystkich ekranach danych (wpis, term, profil, strony opcji — wszędzie tam
+  ładuje się `admin.js`). (`includes/metabox.php`, `assets/admin.js`, `assets/admin.css`)
+
 ## [1.23.3] — 2026-06-24
 
 ### Zmienione

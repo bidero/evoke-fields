@@ -394,6 +394,15 @@ function evk_rep_token(int $depth): string {
     return $depth <= 0 ? '__INDEX__' : '__IDX' . $depth . '__';
 }
 
+// Atrybut z logiką warunkową dla wrappera pola (runtime show/hide w JS).
+function evk_rep_cond_data_attr(array $field): string {
+    $c = $field['conditions'] ?? null;
+    if (!is_array($c) || empty($c['rules']) || !is_array($c['rules'])) return '';
+    $payload = wp_json_encode(['relation' => $c['relation'] ?? 'all', 'rules' => array_values($c['rules'])]);
+    if (!is_string($payload)) return '';
+    return ' data-evk-cond="' . esc_attr($payload) . '"';
+}
+
 function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void {
     $type = $field['type'] ?? 'text';
     $mode = $ctx['mode'] ?? 'single';
@@ -411,7 +420,7 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         }
         $rows = is_array($rows) ? array_values($rows) : [];
         $rep_title_src = (($field['title_tpl'] ?? '') !== '') ? $field['title_tpl'] : ($field['title_field'] ?? '');
-        echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '" style="grid-column:span 12;">';
+        echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span 12;">';
         $rep_lbl = $field['label'] ?? $fkey;
         if ($rep_lbl !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . '</label>';
         evk_rep_render_repeater_widget($base, $field['sub_fields'] ?? [], $rows, $rep_title_src, (int) ($ctx['depth'] ?? -1) + 1, !empty($field['collapsed']), $field['add_label'] ?? '');
@@ -436,7 +445,7 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $c    = 'row';
     }
     $span = evk_rep_field_span($field);
-    echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '" style="grid-column:span ' . $span . ';">';
+    echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
     $lbl = $field['label'] ?? $fkey;
     if ($lbl !== '') {
         echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';

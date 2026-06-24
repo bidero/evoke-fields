@@ -51,6 +51,7 @@
         syncRowTitle($row);
         initSortable();
         initWysiwyg($row);
+        evkEvalAll($row);
     });
 
     // ── Repeater: usuń wiersz ──
@@ -280,5 +281,81 @@
     $(function () {
         $('.evk-rep-toggle-input').each(function () { syncToggleLabel($(this)); });
     });
+
+    /* ── Logika warunkowa — runtime pokaż/ukryj ── */
+    // Odczyt bieżącej wartości pola źródłowego z jego wrappera .evk-s-field.
+    function evkReadFieldValue($wrap) {
+        if ($wrap.is('.evk-rep-field--repeater')) return '';
+        var $tog = $wrap.find('.evk-rep-toggle-input').first();
+        if ($tog.length) {
+            if ($tog.prop('checked')) return $tog.val();
+            var $hid = $wrap.find('input[type=hidden]').first();
+            return $hid.length ? $hid.val() : '';
+        }
+        var $radios = $wrap.find('input[type=radio]');
+        if ($radios.length) {
+            var $ck = $radios.filter(':checked').first();
+            return $ck.length ? $ck.val() : '';
+        }
+        var $cb = $wrap.find('input[type=checkbox]').first();
+        if ($cb.length) {
+            return $cb.prop('checked') ? ($cb.val() || '1') : '';
+        }
+        var $sel = $wrap.find('select').first();
+        if ($sel.length) {
+            var sv = $sel.val();
+            return sv == null ? '' : ($.isArray(sv) ? sv.join(',') : sv);
+        }
+        var $inp = $wrap.find('input, textarea').first();
+        return $inp.length ? ($inp.val() || '') : '';
+    }
+
+    function evkEvalRule(val, op, target) {
+        val    = String(val == null ? '' : val);
+        target = String(target == null ? '' : target);
+        switch (op) {
+            case '==':        return val === target;
+            case '!=':        return val !== target;
+            case 'contains':  return val.indexOf(target) !== -1;
+            case 'empty':     return val === '';
+            case 'not_empty': return val !== '';
+        }
+        return true;
+    }
+
+    function evkEvalConditions($field) {
+        var raw = $field.attr('data-evk-cond');
+        if (!raw) return;
+        var cond;
+        try { cond = JSON.parse(raw); } catch (e) { return; }
+        if (!cond || !cond.rules || !cond.rules.length) return;
+        var $scope = $field.closest('.evk-s');
+        if (!$scope.length) return;
+        var results = $.map(cond.rules, function (r) {
+            // Pole źródłowe = rodzeństwo w TYM samym .evk-s (nie zagnieżdżone w głębszym repeaterze).
+            var $src = $scope.find('.evk-s-field[data-key="' + r.field + '"]').filter(function () {
+                return $(this).closest('.evk-s')[0] === $scope[0];
+            }).first();
+            if (!$src.length || $src[0] === $field[0]) return false;
+            return evkEvalRule(evkReadFieldValue($src), r.op, r.value);
+        });
+        var show = cond.relation === 'any'
+            ? results.indexOf(true) !== -1
+            : results.indexOf(false) === -1;
+        $field.toggleClass('evk-cond-hidden', !show);
+    }
+
+    function evkEvalAll($scope) {
+        ($scope && $scope.length ? $scope : $(document)).find('.evk-s-field[data-evk-cond]').each(function () {
+            evkEvalConditions($(this));
+        });
+    }
+    window.evkEvalAll = evkEvalAll;
+
+    // Każda zmiana pola → przelicz wszystkie warunki (tanio, obsługuje zagnieżdżenia).
+    $(document).on('change input', '.evk-s input, .evk-s select, .evk-s textarea', function () {
+        evkEvalAll();
+    });
+    $(function () { evkEvalAll(); });
 
 })(jQuery);

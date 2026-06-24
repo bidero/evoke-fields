@@ -2,6 +2,8 @@
 
 /* wspólny wygląd pola (single + wiersz) */
 .evk-rep-field,.evk-s-field{display:flex;flex-direction:column;min-width:0;}
+/* Logika warunkowa — pole ukryte runtime */
+.evk-s-field.evk-cond-hidden{display:none!important;}
 .evk-rep-field > label,.evk-s-label{font-weight:600;font-size:12px;margin-bottom:5px;color:#111827;}
 .evk-rep-field input[type=text],.evk-rep-field input[type=url],.evk-rep-field input[type=email],
 .evk-rep-field input[type=number],.evk-rep-field input[type=date],.evk-rep-field textarea,.evk-rep-field select,
