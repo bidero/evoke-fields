@@ -286,6 +286,15 @@
         $('#evk-edit-fields > .evk-b-field').toggleClass('is-collapsed', on);
     });
 
+    // „Seamless nagłówek" — wygląd metaboxa „Definicja pól" (localStorage).
+    var EVK_SEAMLESS_KEY = 'evkSeamlessHeader';
+    function evkSeamless() { try { return localStorage.getItem(EVK_SEAMLESS_KEY) === '1'; } catch (e) { return false; } }
+    $(document).on('change', '.evk-b-seamless-cb', function () {
+        var on = this.checked;
+        try { localStorage.setItem(EVK_SEAMLESS_KEY, on ? '1' : '0'); } catch (e) {}
+        $('#evk_group_fields').toggleClass('evk-gf-seamless', on);
+    });
+
     $(document).on('click', '.evk-b-field-top', function (e) {
         if ($(e.target).is('input, button, select, .dashicons-no-alt')) return;
         if ($(e.target).closest('.evk-b-col-switch, .evk-b-field-clone').length) return; // klik w przełącznik/klon nie zwija pola
@@ -413,6 +422,10 @@
         if (evkAlwaysCollapsed()) {
             $('.evk-b-always-collapsed-cb').prop('checked', true);
             $('#evk-edit-fields > .evk-b-field').addClass('is-collapsed');
+        }
+        if (evkSeamless()) {
+            $('.evk-b-seamless-cb').prop('checked', true);
+            $('#evk_group_fields').addClass('evk-gf-seamless');
         }
     });
 

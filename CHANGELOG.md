@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.33.2] — 2026-06-25
+
+### Zmienione
+
+- **Wygląd „seamless" metaboxa „Definicja pól" to teraz przełącznik** (a nie styl na stałe)
+  — checkbox „Seamless nagłówek" w pasku narzędzi, zapamiętywany w `localStorage`. Włączony
+  → zaokrąglona karta z oddzielonym, wyższym nagłówkiem (klasa `evk-gf-seamless`); wyłączony
+  → standardowy metabox. (`includes/builder.php`, `assets/builder.js`, `assets/builder.css`)
+
 ## [1.33.1] — 2026-06-25
 
 ### Naprawione

@@ -184,6 +184,9 @@ function evk_group_fields_metabox(\WP_Post $post): void {
             <label class="evk-b-always-collapsed" title="Pamiętane w tej przeglądarce">
                 <input type="checkbox" class="evk-b-always-collapsed-cb"> Pola zawsze zwinięte
             </label>
+            <label class="evk-b-always-collapsed" title="Zaokrąglona karta z oddzielonym nagłówkiem (pamiętane w przeglądarce)">
+                <input type="checkbox" class="evk-b-seamless-cb"> Seamless nagłówek
+            </label>
         </div>
         <div class="evk-b-fields" id="evk-edit-fields">
             <?php
