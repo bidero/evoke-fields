@@ -141,6 +141,10 @@ function evk_rep_settings_page_card($pindex, string $slug, array $page, array $g
                         Menu nadrzędne (slug)
                         <input type="text" name="<?php echo esc_attr($base); ?>[parent]" value="<?php echo esc_attr($page['parent'] ?? ''); ?>" placeholder="puste = osobne menu główne">
                     </label>
+                    <label class="evk-sp-meta-check">
+                        <input type="checkbox" name="<?php echo esc_attr($base); ?>[hide_title]" value="1" <?php checked(!empty($page['hide_title'])); ?>>
+                        Ukryj tytuł strony (nagłówek H1)
+                    </label>
                 </div>
             </div>
 
@@ -203,6 +207,7 @@ add_action('admin_init', function () {
             'icon'       => sanitize_text_field($p['icon'] ?? '') ?: 'dashicons-admin-generic',
             'capability' => sanitize_text_field($p['capability'] ?? '') ?: 'manage_options',
             'parent'     => sanitize_text_field($p['parent'] ?? ''),
+            'hide_title' => !empty($p['hide_title']) ? 1 : 0,
             'tabs'       => $tabs,
         ];
     }
@@ -242,7 +247,7 @@ function evk_rep_render_settings_page(string $slug): void {
     $url    = admin_url('admin.php');
     ?>
     <div class="wrap evk-settings-wrap">
-        <h1><?php echo esc_html($page['label'] ?? $slug); ?></h1>
+        <h1<?php echo !empty($page['hide_title']) ? ' class="screen-reader-text"' : ''; ?>><?php echo esc_html($page['label'] ?? $slug); ?></h1>
         <?php if (!empty($_GET['updated'])): ?><div class="notice notice-success is-dismissible"><p>Zapisano zmiany.</p></div><?php endif; ?>
 
         <?php if ($count > 1): ?>

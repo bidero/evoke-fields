@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.2] — 2026-06-25
+
+### Dodane
+
+- **Opcja „Ukryj tytuł strony" na stronach opcji** — checkbox w konfiguracji strony
+  (builder Settings). Gdy zaznaczona, nagłówek `<h1>` strony opcji jest ukryty wizualnie
+  (`class="screen-reader-text"` — zostaje dla dostępności i kotwicy powiadomień WP).
+  Zapis jako `hide_title`. (`includes/settings.php`)
+
 ## [1.35.1] — 2026-06-25
 
 ### Zmienione
