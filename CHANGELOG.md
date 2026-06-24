@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.23.2] — 2026-06-24
+
+### Zmienione
+
+- **„Powiązane typy treści" w taksonomiach** — zamiast `<select multiple>` (mało czytelny,
+  wymaga Ctrl+klik) teraz siatka **chipów-checkboxów**, taka sama jak wybór grup pól na
+  stronach opcji (klasy `.evk-sp-tab-groups` / `.evk-sp-group-pick`). Zmiana w wierszu
+  istniejącym i w szablonie nowego wiersza (JS). Zapis bez zmian — brak zaznaczeń nadal
+  domyślnie `post`. (`includes/taxonomies.php`, `assets/evk-admin.css`)
+
 ## [1.23.1] — 2026-06-24
 
 ### Dodane

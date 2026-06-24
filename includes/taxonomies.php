@@ -128,13 +128,14 @@ function evk_render_taxonomies_page() {
                             </div>
                             <div class="field-group">
                                 <label><?php esc_html_e( 'Powiązane typy treści', 'evk-repeater' ); ?></label><br>
-                                <select name="taxonomies[<?php echo esc_attr( $index ); ?>][post_types][]" multiple>
+                                <div class="evk-sp-tab-groups evk-tax-pt-grid">
                                     <?php foreach ( $registered_post_types as $post_type ) : ?>
-                                        <option value="<?php echo esc_attr( $post_type->name ); ?>" <?php echo in_array( $post_type->name, $taxonomy['post_types'] ) ? 'selected' : ''; ?>>
+                                        <label class="evk-sp-group-pick">
+                                            <input type="checkbox" name="taxonomies[<?php echo esc_attr( $index ); ?>][post_types][]" value="<?php echo esc_attr( $post_type->name ); ?>" <?php checked( in_array( $post_type->name, $taxonomy['post_types'], true ) ); ?>>
                                             <?php echo esc_html( $post_type->label ); ?>
-                                        </option>
+                                        </label>
                                     <?php endforeach; ?>
-                                </select>
+                                </div>
                             </div>
                             <div class="field-group">
                                 <label><?php esc_html_e( 'Hierarchiczna', 'evk-repeater' ); ?></label><br>
@@ -240,13 +241,14 @@ function evk_render_taxonomies_page() {
                         </div>
                         <div class="field-group">
                             <label><?php esc_html_e( 'Powiązane typy treści', 'evk-repeater' ); ?></label><br>
-                            <select name="taxonomies[${newIndex}][post_types][]" multiple>
-                                <?php
-                                foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) :
-                                    ?>
-                                    <option value="<?php echo esc_attr( $post_type->name ); ?>"><?php echo esc_html( $post_type->label ); ?></option>
+                            <div class="evk-sp-tab-groups evk-tax-pt-grid">
+                                <?php foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) : ?>
+                                    <label class="evk-sp-group-pick">
+                                        <input type="checkbox" name="taxonomies[${newIndex}][post_types][]" value="<?php echo esc_attr( $post_type->name ); ?>">
+                                        <?php echo esc_html( $post_type->label ); ?>
+                                    </label>
                                 <?php endforeach; ?>
-                            </select>
+                            </div>
                         </div>
                         <div class="field-group">
                             <label><?php esc_html_e( 'Hierarchiczna', 'evk-repeater' ); ?></label><br>

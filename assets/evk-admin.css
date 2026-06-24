@@ -299,6 +299,9 @@ h1.evk-settings-tabs.nav-tab-wrapper {
 .evk-sp-nogroups { color: #9ca3af; font-size: 13px; font-style: italic; }
 .evk-sp-nogroups a { color: #6b7280; }
 
+/* Powiązane typy treści (taksonomie) — chipy w boksie (poza .evk-sp-tab brak ramki) */
+.evk-tax-pt-grid { border: 1px solid #d7dde7; border-radius: 8px; background: #f8fafc; }
+
 /* Przycisk "Dodaj zakładkę" */
 .evk-sp-add-tab {
     display: inline-flex !important;
