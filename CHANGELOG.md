@@ -2,6 +2,15 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.3] — 2026-06-25
+
+### Naprawione
+
+- **Rozjechany checkbox „Ukryj tytuł strony"** — w siatce `.evk-sp-meta` dziedziczył styl
+  text-inputa (height 38px, width 100%, ramka) i układ kolumnowy, przez co renderował się
+  jako wielki box. Dodano override: wiersz [checkbox] [tekst], mały natywny checkbox
+  (`accent-color`). (`assets/evk-admin.css`)
+
 ## [1.35.2] — 2026-06-25
 
 ### Dodane
