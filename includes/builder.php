@@ -194,6 +194,7 @@ function evk_group_fields_metabox(\WP_Post $post): void {
 
     <script type="text/html" id="evk-b-field-tpl"><?php evk_rep_builder_field_row('evk_fields[__FINDEX__]'); ?></script>
     <script type="text/html" id="evk-b-subfield-tpl"><?php evk_rep_builder_field_row('__SUBBASE__', [], true); ?></script>
+    <script type="text/html" id="evk-b-cond-tpl"><?php echo evk_rep_cond_rule_html('__CONDBASE__', '__CINDEX__'); ?></script>
     <script>
     (function($) {
         $(document).on('click', '#evk-edit-fields ~ .evk-b-field-add', function() {
@@ -327,6 +328,35 @@ function evk_rep_field_types(bool $sub = false): array {
 
 function evk_rep_width_options(): array {
     return [0 => 'Auto', 25 => '25%', 33 => '33%', 50 => '50%', 66 => '66%', 75 => '75%', 100 => '100%'];
+}
+
+// Logika warunkowa — operatory reguł.
+function evk_rep_cond_ops(): array {
+    return [
+        '=='        => 'jest równe',
+        '!='        => 'różne od',
+        'contains'  => 'zawiera',
+        'empty'     => 'puste',
+        'not_empty' => 'niepuste',
+    ];
+}
+
+// Render pojedynczego wiersza reguły warunkowej (używany dla istniejących reguł i szablonu).
+function evk_rep_cond_rule_html(string $base, $index, string $rf = '', string $rop = '==', string $rval = ''): string {
+    $name = $base . '[conditions][rules][' . $index . ']';
+    ob_start(); ?>
+    <div class="evk-b-cond-rule">
+        <select name="<?php echo esc_attr($name); ?>[field]" class="evk-b-cond-field" data-selected="<?php echo esc_attr($rf); ?>"></select>
+        <select name="<?php echo esc_attr($name); ?>[op]" class="evk-b-cond-op">
+            <?php foreach (evk_rep_cond_ops() as $ok => $ol): ?>
+            <option value="<?php echo esc_attr($ok); ?>" <?php selected($rop, $ok); ?>><?php echo esc_html($ol); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <input type="text" name="<?php echo esc_attr($name); ?>[value]" value="<?php echo esc_attr($rval); ?>" class="evk-b-cond-value" placeholder="wartość">
+        <button type="button" class="evk-b-cond-remove" title="Usuń warunek"><span class="dashicons dashicons-no-alt"></span></button>
+    </div>
+    <?php
+    return ob_get_clean();
 }
 
 function evk_rep_available_post_types(): array {
@@ -477,6 +507,27 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             $def['column_position'] = (int) $f['column_position'];
         }
     }
+
+    // Logika warunkowa — dotyczy każdego typu pola (pokaż/ukryj wg innych pól).
+    $cond = $f['conditions'] ?? null;
+    if (is_array($cond)) {
+        $rel    = (($cond['relation'] ?? 'all') === 'any') ? 'any' : 'all';
+        $valid_ops = array_keys(evk_rep_cond_ops());
+        $rules  = [];
+        foreach ((array) ($cond['rules'] ?? []) as $r) {
+            if (!is_array($r)) continue;
+            $rf = sanitize_key(remove_accents((string) ($r['field'] ?? '')));
+            if ($rf === '') continue;
+            $op   = in_array($r['op'] ?? '', $valid_ops, true) ? $r['op'] : '==';
+            $rule = ['field' => $rf, 'op' => $op];
+            if ($op !== 'empty' && $op !== 'not_empty') {
+                $rule['value'] = sanitize_text_field($r['value'] ?? '');
+            }
+            $rules[] = $rule;
+        }
+        if ($rules) $def['conditions'] = ['relation' => $rel, 'rules' => $rules];
+    }
+
     return $def;
 }
 
@@ -527,6 +578,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $heading_size        = $field['heading_size']      ?? 'h3';
     $heading_separator   = !empty($field['heading_separator']);
     $heading_sub         = $field['heading_sub']       ?? '';
+    // Logika warunkowa
+    $conditions          = is_array($field['conditions'] ?? null) ? $field['conditions'] : [];
+    $cond_relation       = (($conditions['relation'] ?? 'all') === 'any') ? 'any' : 'all';
+    $cond_rules          = is_array($conditions['rules'] ?? null) ? $conditions['rules'] : [];
 
     $has_opts = in_array($type, ['select', 'radio', 'button_group', 'image_select'], true);
     $layout   = !$sub && evk_rep_is_layout($type);
@@ -824,6 +879,27 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <label class="evk-b-inline-check" style="margin:10px 0 0;">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
                 </label>
+            </div>
+        </details>
+
+        <details class="evk-b-field-cond">
+            <summary class="evk-b-section-title evk-b-cond-summary">Logika warunkowa<span class="dashicons dashicons-arrow-down-alt2 evk-b-cond-chevron"></span></summary>
+            <div class="evk-b-cond-body">
+                <div class="evk-b-cond-head">
+                    Pokaż to pole, gdy
+                    <select name="<?php echo esc_attr($base); ?>[conditions][relation]" class="evk-b-cond-relation">
+                        <option value="all" <?php selected($cond_relation, 'all'); ?>>wszystkie</option>
+                        <option value="any" <?php selected($cond_relation, 'any'); ?>>dowolny</option>
+                    </select>
+                    z warunków spełnione:
+                </div>
+                <div class="evk-b-cond-rules">
+                    <?php $ci = 0; foreach ($cond_rules as $r): if (!is_array($r)) continue;
+                        echo evk_rep_cond_rule_html($base, $ci, (string) ($r['field'] ?? ''), (string) ($r['op'] ?? '=='), (string) ($r['value'] ?? ''));
+                        $ci++; endforeach; ?>
+                </div>
+                <button type="button" class="evk-b-cond-add"><span class="dashicons dashicons-plus-alt2"></span> Dodaj warunek</button>
+                <p class="description evk-b-cond-empty-hint" style="margin:8px 0 0;">Brak warunków = pole zawsze widoczne.</p>
             </div>
         </details>
 

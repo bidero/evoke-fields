@@ -53,6 +53,68 @@
         $sel.val(found ? cur : '');
     }
 
+    // ── Logika warunkowa ──────────────────────────────────────────────
+    // Lista pól-rodzeństwa (ten sam poziom: grupa lub ten sam repeater) do selecta „pole".
+    function syncCondFields($field) {
+        var $cond = $field.children('.evk-b-field-cond');
+        if (!$cond.length) return;
+        var opts = [];
+        $field.parent().children('.evk-b-field').each(function () {
+            if (this === $field[0]) return;
+            var $sib  = $(this);
+            var key   = ($sib.children('.evk-b-field-grid').find('.evk-b-key').first().val() || '').trim();
+            if (!key) return;
+            var label = ($sib.children('.evk-b-field-top').find('.evk-b-fld-label').first().val() || '').trim() || key;
+            opts.push({ key: key, label: label });
+        });
+        $cond.find('.evk-b-cond-field').each(function () {
+            var $sel = $(this);
+            var cur  = $sel.val() || $sel.attr('data-selected') || '';
+            $sel.empty().append($('<option>').val('').text('— wybierz pole —'));
+            var has = false;
+            opts.forEach(function (o) {
+                $sel.append($('<option>').val(o.key).text(o.label + ' (' + o.key + ')'));
+                if (o.key === cur) has = true;
+            });
+            if (cur && !has) $sel.append($('<option>').val(cur).text(cur + ' (?)'));
+            $sel.val(cur);
+            $sel.attr('data-selected', cur); // utrwal — przetrwa klonowanie pola
+        });
+    }
+    function syncCondList($list) {
+        $list.children('.evk-b-field').each(function () { syncCondFields($(this)); });
+    }
+    function toggleCondValue($rule) {
+        var op = $rule.find('.evk-b-cond-op').val();
+        $rule.find('.evk-b-cond-value').toggle(op !== 'empty' && op !== 'not_empty');
+    }
+
+    $(document).on('click', '.evk-b-cond-add', function () {
+        var $field = $(this).closest('.evk-b-field');
+        var base   = $field.attr('data-base');
+        var uniq   = Date.now() + '' + (Math.random() * 1e3 | 0);
+        var html   = $('#evk-b-cond-tpl').html()
+            .split('__CONDBASE__').join(base)
+            .split('__CINDEX__').join(uniq);
+        var $row   = $(html);
+        $(this).closest('.evk-b-cond-body').find('.evk-b-cond-rules').first().append($row);
+        syncCondFields($field);
+        toggleCondValue($row);
+    });
+    $(document).on('click', '.evk-b-cond-remove', function () {
+        $(this).closest('.evk-b-cond-rule').remove();
+    });
+    $(document).on('change', '.evk-b-cond-op', function () {
+        toggleCondValue($(this).closest('.evk-b-cond-rule'));
+    });
+    $(document).on('change', '.evk-b-cond-field', function () {
+        $(this).attr('data-selected', this.value);
+    });
+    // Zmiana klucza/etykiety pola → odśwież listę pól w warunkach rodzeństwa.
+    $(document).on('input', '.evk-b-key, .evk-b-fld-label', function () {
+        syncCondList($(this).closest('.evk-b-field').parent());
+    });
+
     $(document).on('click', '#evk-b-add-group', function () {
         var html = $('#evk-b-group-tpl').html().split('__GINDEX__').join(Date.now());
         var $g = $(html);
@@ -75,6 +137,7 @@
         var $f = $(html);
         $g.find('.evk-b-fields').first().append($f);
         applyType($f);
+        syncCondList($f.parent());
         initSortable();
     });
 
@@ -86,14 +149,17 @@
         $field.children('.evk-b-subfields-wrap').children('.evk-b-subfields').append($sf);
         applyType($sf);
         syncTitleSelect($field);
+        syncCondList($sf.parent());
         initSortable();
     });
 
     $(document).on('click', '.evk-b-field-remove', function () {
-        var $f   = $(this).closest('.evk-b-field');
-        var $rep = $f.parent().closest('.evk-b-field');
+        var $f    = $(this).closest('.evk-b-field');
+        var $list = $f.parent();
+        var $rep  = $list.closest('.evk-b-field');
         $f.remove();
         if ($rep.length) syncTitleSelect($rep);
+        syncCondList($list);
     });
 
     // Zwijanie / rozwijanie bloku każdego wygenerowanego pola po kliknięciu top-bara w interfejsie edycji schematu
@@ -129,6 +195,7 @@
 
         $field.after($clone);
         applyType($clone);
+        syncCondList($clone.parent());
 
         var $rep = $clone.closest('.evk-b-subfields').closest('.evk-b-field');
         if ($rep.length) syncTitleSelect($rep);
@@ -244,6 +311,8 @@
         toggleGroupSettings();
         $('.evk-b-field.is-repeater').each(function () { syncTitleSelect($(this)); });
         $('.evk-b-col-enable:checked').closest('.evk-b-field').addClass('evk-col-on');
+        $('.evk-b-fields, .evk-b-subfields').each(function () { syncCondList($(this)); });
+        $('.evk-b-cond-rule').each(function () { toggleCondValue($(this)); });
     });
 
 })(jQuery);

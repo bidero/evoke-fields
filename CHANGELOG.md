@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.23.0] — 2026-06-24
+
+### Dodane — Faza 5 cz. 1: logika warunkowa (UI w builderze)
+
+- **Blok „Logika warunkowa"** w każdej karcie pola — zwijany `<details>`, domyślnie
+  zwinięty (spójny z „Opcje pola"). Pozwala zdefiniować, kiedy pole ma być widoczne.
+- **Reguły** w formie wierszy: `[pole ▾] [operator ▾] [wartość]` + przycisk usuwania.
+  Operatory: `jest równe`, `różne od`, `zawiera`, `puste`, `niepuste` (dla dwóch ostatnich
+  pole wartości znika). Tryb relacji: **wszystkie** (AND) / **dowolny** (OR).
+- **Lista „pole"** to rodzeństwo na tym samym poziomie (pola grupy albo pola powtarzalne
+  tego repeatera), budowana na żywo w JS — odświeża się przy zmianie klucza/etykiety oraz
+  dodaniu/usunięciu/klonowaniu pól. Zapisany wybór przeżywa klonowanie (`data-selected`).
+- **Schemat:** zapis do `conditions` = `{relation: all|any, rules: [{field, op, value}]}`
+  (puste/niepuste bez `value`). Brak reguł = pole zawsze widoczne.
+- Działa dla pól danych i powtarzalnych. **Runtime** (faktyczne pokaż/ukryj w metaboxie)
+  przyjdzie w części 2. (`includes/builder.php`, `assets/builder.js`, `assets/builder.css`)
+
 ## [1.22.2] — 2026-06-24
 
 ### Zmienione
