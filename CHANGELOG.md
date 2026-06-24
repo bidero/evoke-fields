@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.33.4] — 2026-06-25
+
+### Zmienione
+
+- **Cofnięto przełącznik „Seamless (bez tła)"** — usuwanie białego tła wokół pól nie podobało
+  się na froncie. Białe (jasne) tło wraca; **nagłówek-karta „Definicja pól" zostaje na stałe**.
+  (`includes/builder.php`, `assets/builder.css`, `assets/builder.js`)
+
 ## [1.33.3] — 2026-06-25
 
 ### Zmienione
