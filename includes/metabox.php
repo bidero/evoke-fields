@@ -767,9 +767,12 @@ function evk_rep_render_group_object(string $meta_type, int $object_id, string $
  */
 function evk_rep_save_group_object(string $meta_type, int $object_id, string $key, array $group): void {
     if (evk_rep_is_repeater($group)) {
+        $old_rows = get_metadata($meta_type, $object_id, $key, true);
         $clean = evk_rep_sanitize_rows($group['fields'] ?? [], isset($_POST[$key]) ? wp_unslash($_POST[$key]) : []);
         if ($clean) update_metadata($meta_type, $object_id, $key, $clean);
         else        delete_metadata($meta_type, $object_id, $key);
+        // Sync relacji dwukierunkowych z wierszy (unia ID po wszystkich wierszach).
+        evk_rep_sync_bidirectional_rows((int) $object_id, $group['fields'] ?? [], $old_rows, $clean);
         return;
     }
     $single = isset($_POST['evk_single']) && is_array($_POST['evk_single']) ? wp_unslash($_POST['evk_single']) : [];
@@ -777,9 +780,11 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
         $type = $field['type'] ?? 'text';
         if (evk_rep_is_layout($type)) continue;
         if ($type === 'repeater') {
+            $old_rows = get_metadata($meta_type, $object_id, $fkey, true);
             $clean = evk_rep_sanitize_rows($field['sub_fields'] ?? [], $single[$fkey] ?? []);
             if ($clean) update_metadata($meta_type, $object_id, $fkey, $clean);
             else        delete_metadata($meta_type, $object_id, $fkey);
+            evk_rep_sync_bidirectional_rows((int) $object_id, $field['sub_fields'] ?? [], $old_rows, $clean);
             continue;
         }
         // Relacja dwukierunkowa: zapamiętaj stary zestaw ID przed nadpisaniem.

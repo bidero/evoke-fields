@@ -2,6 +2,24 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.8] — 2026-06-25
+
+### Dodane
+
+- **Relacje dwukierunkowe z repeatera** — pola Relacja / Taksonomia / Użytkownik
+  umieszczone wewnątrz repeatera (także repeatera zagnieżdżonego) synchronizują teraz
+  pole odwrotne. Przy zapisie liczona jest **unia powiązanych ID po wszystkich wierszach**
+  (to samo powiązanie w kilku wierszach liczy się raz), a usunięcie obiektu czyści też
+  relacje zapisane w wierszach. (`includes/bidirectional.php`, `includes/metabox.php`)
+
+### Naprawione
+
+- **Klucz pola odwrotnego nie zapisywał się** (Taksonomia, Relacja) — konfiguracja
+  „Relacja dwukierunkowa" była renderowana w trzech blokach typów z tą samą nazwą inputu,
+  więc puste, ukryte duplikaty `reverse_key` nadpisywały wypełnioną wartość przy zapisie.
+  Teraz blok renderuje się raz, wspólny dla taksonomii/relacji/użytkownika.
+  (`includes/builder.php`, `assets/builder.css`)
+
 ## [1.35.7] — 2026-06-25
 
 ### Dodane

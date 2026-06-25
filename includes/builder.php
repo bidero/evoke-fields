@@ -896,7 +896,6 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     Wielokrotny wybór
                 </label>
             </div>
-            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-relationship">
@@ -919,7 +918,6 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     <option value="select" <?php selected($rel_style, 'select'); ?>>Lista rozwijana (Post Object)</option>
                 </select>
             </div>
-            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-user">
@@ -934,7 +932,6 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
             </label>
-            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
             <?php $u_cheat = ($key !== '' ? $key : 'klucz'); ?>
             <details class="evk-b-cheat">
                 <summary class="evk-b-cheat-title"><span class="dashicons dashicons-lightbulb"></span> Jak wyświetlić w Bricks<span class="dashicons dashicons-arrow-down-alt2 evk-b-cheat-chevron"></span></summary>
@@ -961,6 +958,11 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     </p>
                 </div>
             </details>
+        </div>
+
+        <div class="evk-b-field-bidir">
+            <div class="evk-b-section-title">Relacja dwukierunkowa</div>
+            <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
         <div class="evk-b-field-toggle">
