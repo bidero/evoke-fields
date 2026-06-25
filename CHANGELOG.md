@@ -2,6 +2,18 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.10] — 2026-06-25
+
+### Naprawione
+
+- **Dropdown wyszukiwarki relacji ucinany przez ramkę repeatera** — wiersz repeatera miał
+  `overflow:hidden`, więc lista wyników pola Relacja (pigułki + wyszukiwarka) była ucinana
+  przy dole wiersza. Zdjęto `overflow:hidden`; zaokrąglenie rogów przeniesiono na nagłówek
+  wiersza (działa też dla repeaterów zagnieżdżonych). (`assets/admin.css`)
+- **Ikona przycisku „Dodaj obrazy" (pole galeria) poniżej linii tekstu** — glif dashicon
+  nie był centrowany we własnym boksie. Wyrównano tak jak w przycisku „Dodaj wiersz".
+  (`assets/admin.css`)
+
 ## [1.35.9] — 2026-06-25
 
 ### Naprawione
