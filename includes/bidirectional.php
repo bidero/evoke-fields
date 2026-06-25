@@ -7,7 +7,8 @@ if (!defined('ABSPATH')) exit;
  * Pole z `bidirectional` + `reverse_key` synchronizuje przy zapisie pole odwrotne na
  * powiązanych obiektach. Typ pola wyznacza meta type drugiej strony:
  *   relationship → post | taxonomy → term | user → user.
- * Tylko pola top-level w grupach pojedynczych (post/term/user); nie repeater, nie opcje.
+ * Obsługiwane: pola top-level w grupach pojedynczych ORAZ pola wewnątrz repeatera
+ * (też zagnieżdżonego) — wtedy liczona jest unia ID po wszystkich wierszach. Nie: opcje.
  */
 
 function evk_rep_bidir_target_meta_type(string $field_type): ?string {

@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.9] — 2026-06-25
+
+### Naprawione
+
+- **Klucz pola odwrotnego był odrzucany bez zaznaczenia checkboxa** — zapis `reverse_key`
+  był dodatkowo gate'owany checkboxem „Relacja dwukierunkowa", więc samo wpisanie klucza
+  nie zapisywało go. Usunięto checkbox: **sam wpisany klucz pola odwrotnego włącza relację
+  dwukierunkową** (pusty klucz = jednokierunkowa). (`includes/builder.php`)
+
+### Zmienione
+
+- Zaktualizowano nagłówek-dokumentację `includes/bidirectional.php` (relacje dwukierunkowe
+  działają też z repeatera od 1.35.8).
+
 ## [1.35.8] — 2026-06-25
 
 ### Dodane

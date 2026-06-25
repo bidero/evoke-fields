@@ -373,12 +373,10 @@ function evk_rep_cond_rule_html(string $base, $index, string $rf = '', string $r
 // Wspólny fragment konfiguracji „relacja dwukierunkowa" (Relacja / Taksonomia / Użytkownik).
 function evk_rep_bidir_config_html(string $base, bool $bidirectional, string $reverse_key): string {
     ob_start(); ?>
-    <label class="evk-b-inline-check" style="margin:10px 0 0;">
-        <input type="checkbox" name="<?php echo esc_attr($base); ?>[bidirectional]" value="1" <?php checked($bidirectional); ?>> Relacja dwukierunkowa
-    </label>
-    <div class="evk-b-ctrl" style="margin-top:18px;">
+    <div class="evk-b-ctrl" style="margin-top:6px;">
         <label>Klucz pola odwrotnego (na powiązanym obiekcie)</label>
         <input type="text" name="<?php echo esc_attr($base); ?>[reverse_key]" value="<?php echo esc_attr($reverse_key); ?>" placeholder="np. trenerzy">
+        <p class="description" style="margin:6px 0 0;">Wpisz klucz, aby włączyć relację dwukierunkową — po zapisie ID tego wpisu trafi do meta o tym kluczu na powiązanym obiekcie. Puste = relacja jednokierunkowa.</p>
     </div>
     <?php
     return ob_get_clean();
@@ -550,8 +548,9 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if ($df !== '') $def['date_format'] = $df;
     }
 
-    // Relacja dwukierunkowa (Relacja / Taksonomia / Użytkownik).
-    if (in_array($type, ['relationship', 'taxonomy', 'user'], true) && !empty($f['bidirectional'])) {
+    // Relacja dwukierunkowa (Relacja / Taksonomia / Użytkownik) — sam klucz odwrotny
+    // włącza synchronizację (bez osobnego checkboxa). Pusty klucz = jednokierunkowa.
+    if (in_array($type, ['relationship', 'taxonomy', 'user'], true)) {
         $rk = sanitize_key(remove_accents((string) ($f['reverse_key'] ?? '')));
         if ($rk !== '') {
             $def['bidirectional'] = true;
