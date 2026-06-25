@@ -412,13 +412,21 @@ function evk_rep_sanitize_dimension($value, int $default, int $min = 1, int $max
  * Zwraca klucz unikalny w obrębie już zebranych pól danego poziomu.
  * Bez tego dwa pola o tym samym kluczu (np. niewypełniony klucz → wyprowadzony
  * z identycznej etykiety, albo kolizja z fallbackiem pole_N) nadpisywałyby się
- * nawzajem i jedno „znikało" przy zapisie. Dokleja sufiks _2, _3, …
+ * nawzajem i jedno „znikało" przy zapisie.
+ * Jeśli klucz kończy się na _<liczba>, inkrementujemy tę liczbę (pole_1 → pole_2),
+ * w przeciwnym razie doklejamy sufiks (nazwa → nazwa_2).
  */
 function evk_rep_unique_field_key(string $key, array $existing): string {
     if (!isset($existing[$key])) return $key;
-    $i = 2;
-    while (isset($existing[$key . '_' . $i])) $i++;
-    return $key . '_' . $i;
+    if (preg_match('/^(.*)_(\d+)$/', $key, $m)) {
+        $base = $m[1];
+        $i    = (int) $m[2] + 1;
+    } else {
+        $base = $key;
+        $i    = 2;
+    }
+    while (isset($existing[$base . '_' . $i])) $i++;
+    return $base . '_' . $i;
 }
 
 function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, array $allowed_sub_types, array $allowed_widths, int &$auto): ?array {
@@ -470,6 +478,7 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             : [];
         $def['rel_post_types'] = $rpts ?: ['post'];
         if (!empty($f['rel_multiple'])) $def['rel_multiple'] = true;
+        if (($f['rel_style'] ?? '') === 'select') $def['rel_style'] = 'select';
     } elseif ($type === 'user') {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         $roles = isset($f['user_roles']) && is_array($f['user_roles'])
@@ -581,6 +590,10 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if ($vpat !== '') $def['val_pattern'] = $vpat;
         $vmsg = sanitize_text_field($f['val_message'] ?? '');
         if ($vmsg !== '') $def['val_message'] = $vmsg;
+
+        // Wartość domyślna (wstawiana gdy pole nie ma jeszcze zapisanej wartości).
+        $dv = sanitize_text_field($f['default'] ?? '');
+        if ($dv !== '') $def['default'] = $dv;
     }
 
     // Kolumna w panelu admina — tylko pola top-level danych (nie sub, nie layout, nie repeater).
@@ -646,6 +659,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $gallery_item_width  = (int)($field['gallery_item_width'] ?? 0);
     $rel_pts             = $field['rel_post_types'] ?? ['post'];
     $rel_multi           = !empty($field['rel_multiple']);
+    $rel_style           = $field['rel_style'] ?? 'pills';
     $user_multi          = !empty($field['user_multiple']);
     $user_roles          = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
     $bidirectional       = !empty($field['bidirectional']);
@@ -661,6 +675,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $val_min             = $field['val_min'] ?? '';
     $val_max             = $field['val_max'] ?? '';
     $val_message         = $field['val_message'] ?? '';
+    $default_val         = $field['default'] ?? '';
     $title_tpl           = $field['title_tpl'] ?? '';
     // Przełącznik
     $toggle_on           = $field['toggle_on']  ?? '1';
@@ -897,6 +912,13 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[rel_multiple]" value="1" <?php checked($rel_multi); ?>> Wielokrotny wybór (wiele wpisów)
             </label>
+            <div class="evk-b-ctrl" style="margin-top:12px;">
+                <label>Styl wyboru</label>
+                <select name="<?php echo esc_attr($base); ?>[rel_style]">
+                    <option value="pills" <?php selected($rel_style, 'pills'); ?>>Pigułki + wyszukiwarka (Relationship)</option>
+                    <option value="select" <?php selected($rel_style, 'select'); ?>>Lista rozwijana (Post Object)</option>
+                </select>
+            </div>
             <?php echo evk_rep_bidir_config_html($base, $bidirectional, $reverse_key); ?>
         </div>
 
@@ -1037,6 +1059,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                         <label>Wiersze (textarea)</label>
                         <input type="number" min="1" max="50" step="1" name="<?php echo esc_attr($base); ?>[rows]" value="<?php echo $rows_opt > 0 ? esc_attr((string) $rows_opt) : ''; ?>" placeholder="3">
                     </div>
+                </div>
+                <div class="evk-b-ctrl" style="margin-top:12px;">
+                    <label>Wartość domyślna <span class="evk-b-valhint">(pola tekstowe / liczbowe / wyboru)</span></label>
+                    <input type="text" name="<?php echo esc_attr($base); ?>[default]" value="<?php echo esc_attr($default_val); ?>" placeholder="wstawiana w nowych wpisach / nowych wierszach">
                 </div>
                 <div class="evk-b-ctrl" style="margin-top:12px;">
                     <label>Instrukcja (podpowiedź pod polem)</label>

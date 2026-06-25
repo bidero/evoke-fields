@@ -2,6 +2,27 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.7] — 2026-06-25
+
+### Dodane
+
+- **Wartości domyślne pól** — w „Opcje pola" nowe pole „Wartość domyślna"; wstawiana,
+  gdy pole nie ma jeszcze zapisanej wartości (nowy wpis, nowy wiersz repeatera).
+  Dla typów skalarnych/wyboru (tekst, liczba, e-mail, URL, kolor, data/czas, lista,
+  radio, grupa przycisków). Świadome wyczyszczenie pola jest „lepkie" (zapis pustki
+  zamiast kasowania), więc default nie wraca po ponownym otwarciu.
+  (`includes/builder.php`, `includes/metabox.php`)
+- **Post Object — styl wyboru dla pola Relacja** — w „Konfiguracji relacji" przełącznik
+  „Styl wyboru": „Pigułki + wyszukiwarka" (dotychczasowy) lub „Lista rozwijana
+  (Post Object)" — kompaktowy `<select>` (jedno- lub wielokrotny). Ten sam zapis (ID
+  wpisów) i te same tagi Bricks. (`includes/builder.php`, `includes/metabox.php`)
+
+### Zmienione
+
+- **Ciągła numeracja auto-kluczy przy kolizji** — przy zajętym kluczu zakończonym
+  liczbą inkrementujemy ją (`pole_1` → `pole_2`) zamiast doklejać kolejny sufiks
+  (`pole_1_2`). Klucze pozostają unikalne i czytelne. (`includes/builder.php`)
+
 ## [1.35.6] — 2026-06-25
 
 ### Naprawione

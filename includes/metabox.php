@@ -186,6 +186,14 @@ function evk_rep_wrap_affix(string $input, array $field): string {
 }
 
 /**
+ * Czy typ pola obsługuje wartość domyślną (proste typy skalarne / wyboru).
+ * Pomijamy typy złożone (relacja, użytkownik, obraz, galeria, link, repeater…).
+ */
+function evk_rep_default_capable(string $type): bool {
+    return in_array($type, ['text', 'textarea', 'number', 'email', 'url', 'color', 'date', 'time', 'datetime', 'select', 'radio', 'button_group'], true);
+}
+
+/**
  * Atrybuty walidacji HTML5 (poza „required") dla danego typu pola.
  * Min/Max: dla pól liczbowych = wartość (min/max), dla tekstowych = długość (minlength/maxlength).
  * Wzorzec regex: tylko pola tekstowe jednowierszowe (textarea nie wspiera pattern).
@@ -382,6 +390,26 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
                 : ((int) $val > 0 ? [(int) $val] : []);
             $rpts     = !empty($field['rel_post_types']) && is_array($field['rel_post_types']) ? $field['rel_post_types'] : ['post'];
             $multiple = !empty($field['rel_multiple']);
+            // Post Object — prosta lista rozwijana zamiast pigułek + wyszukiwarki.
+            if (($field['rel_style'] ?? '') === 'select') {
+                $opts = get_posts([
+                    'post_type'   => $rpts,
+                    'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
+                    'numberposts' => 300,
+                    'orderby'     => 'title',
+                    'order'       => 'ASC',
+                    'suppress_filters' => false,
+                ]);
+                $sel_name = $multiple ? $name . '[]' : $name;
+                echo '<select class="evk-rep-postobject" name="' . esc_attr($sel_name) . '"' . ($multiple ? ' multiple size="6"' : '') . '>';
+                if (!$multiple) echo '<option value="">— wybierz —</option>';
+                foreach ($opts as $p) {
+                    $pid = (int) $p->ID;
+                    echo '<option value="' . esc_attr((string) $pid) . '" ' . selected(in_array($pid, $ids, true), true, false) . '>' . esc_html(get_the_title($p) ?: '(bez tytułu)') . '</option>';
+                }
+                echo '</select>';
+                break;
+            }
             echo '<div class="evk-rel" data-name="' . esc_attr($name) . '" data-post-types="' . esc_attr(implode(',', $rpts)) . '" data-multiple="' . ($multiple ? '1' : '0') . '">';
             echo '<div class="evk-rel-selected">';
             foreach ($ids as $pid) {
@@ -545,18 +573,29 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         return;
     }
 
+    $has_default = evk_rep_default_capable($type) && ($field['default'] ?? '') !== '';
     if ($mode === 'single') {
-        $val  = get_metadata($ctx['meta_type'] ?? 'post', (int) ($ctx['object_id'] ?? $ctx['post_id'] ?? 0), $fkey, true);
+        $mt   = $ctx['meta_type'] ?? 'post';
+        $oid  = (int) ($ctx['object_id'] ?? $ctx['post_id'] ?? 0);
+        $val  = get_metadata($mt, $oid, $fkey, true);
+        // Wartość domyślna tylko gdy meta nieobecne (nowy wpis), nie gdy wyczyszczone.
+        if ($has_default && ($val === '' || $val === null)) {
+            $all = get_metadata($mt, $oid, $fkey, false);
+            if (!is_array($all) || count($all) === 0) $val = $field['default'];
+        }
         $name = 'evk_single[' . $fkey . ']';
         $eid  = 'evk_ed_' . ($ctx['uid'] ?? 'g') . '_' . $fkey;
         $c    = 'single';
     } elseif ($mode === 'option') {
-        $val  = $ctx['values'][$fkey] ?? '';
+        $val  = array_key_exists($fkey, (array) ($ctx['values'] ?? [])) ? $ctx['values'][$fkey]
+              : ($has_default ? $field['default'] : '');
         $name = $ctx['name_base'] . '[' . $fkey . ']';
         $eid  = 'evk_ed_' . ($ctx['uid'] ?? 'o') . '_' . $fkey;
         $c    = 'single';
     } else {
-        $val  = $ctx['values'][$fkey] ?? '';
+        // Tryb wiersza repeatera — nowy wiersz (brak klucza w values) dostaje default.
+        $val  = array_key_exists($fkey, (array) ($ctx['values'] ?? [])) ? $ctx['values'][$fkey]
+              : ($has_default ? $field['default'] : '');
         $name = $ctx['name_base'] . '[' . $ctx['index'] . '][' . $fkey . ']';
         $eid  = '';
         $c    = 'row';
@@ -748,8 +787,17 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
         $old_ids = $bidir ? evk_rep_bidir_ids(get_metadata($meta_type, $object_id, $fkey, true)) : [];
 
         $v = evk_rep_sanitize_value($type, $single[$fkey] ?? '');
-        if ($v === '' || $v === null) delete_metadata($meta_type, $object_id, $fkey);
-        else                          update_metadata($meta_type, $object_id, $fkey, $v);
+        if ($v === '' || $v === null) {
+            // Pole z wartością domyślną: zapisz pustkę zamiast kasować, żeby świadome
+            // wyczyszczenie nie przywracało defaultu przy ponownym otwarciu.
+            if (evk_rep_default_capable($type) && ($field['default'] ?? '') !== '') {
+                update_metadata($meta_type, $object_id, $fkey, '');
+            } else {
+                delete_metadata($meta_type, $object_id, $fkey);
+            }
+        } else {
+            update_metadata($meta_type, $object_id, $fkey, $v);
+        }
 
         if ($bidir) {
             evk_rep_sync_bidirectional($field, (int) $object_id, $old_ids, evk_rep_bidir_ids($v === '' ? [] : $v));
