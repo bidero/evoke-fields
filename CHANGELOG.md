@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.5] — 2026-06-25
+
+### Dodane
+
+- **Walidacja pól poza „wymagane"** — w bloku „Opcje pola" buildera nowa sekcja „Walidacja":
+  - **Minimum/Maksimum** — dla pól liczbowych = zakres wartości, dla tekstowych = liczba znaków.
+  - **Wzorzec (regex)** — działa na polach tekstowych jednowierszowych (`text`, `email`, `url`).
+  - **Komunikat błędu (własny)** — pokazywany przez przeglądarkę przy błędzie wzorca.
+- Walidacja egzekwowana po stronie przeglądarki natywnymi atrybutami HTML5
+  (`min`/`max`, `minlength`/`maxlength`, `pattern`, `title`). Klucze definicji `val_*`,
+  by nie kolidować z konfiguracją suwaka (`min`/`max`/`step`).
+  (`includes/builder.php`, `includes/metabox.php`)
+
 ## [1.35.4] — 2026-06-25
 
 ### Zmienione

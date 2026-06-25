@@ -185,19 +185,53 @@ function evk_rep_wrap_affix(string $input, array $field): string {
     return $h . '</span>';
 }
 
+/**
+ * Atrybuty walidacji HTML5 (poza „required") dla danego typu pola.
+ * Min/Max: dla pól liczbowych = wartość (min/max), dla tekstowych = długość (minlength/maxlength).
+ * Wzorzec regex: tylko pola tekstowe jednowierszowe (textarea nie wspiera pattern).
+ * Własny komunikat → title (dymek przeglądarki przy błędzie wzorca).
+ */
+function evk_rep_validation_attrs(string $type, array $field): string {
+    $has_min = isset($field['val_min']) && $field['val_min'] !== '';
+    $has_max = isset($field['val_max']) && $field['val_max'] !== '';
+    $pattern = trim((string) ($field['val_pattern'] ?? ''));
+    $message = trim((string) ($field['val_message'] ?? ''));
+    $numeric = in_array($type, ['number', 'range'], true);
+    $a = '';
+
+    if ($has_min) {
+        $a .= $numeric
+            ? ' min="' . esc_attr((string) (float) $field['val_min']) . '"'
+            : ' minlength="' . esc_attr((string) (int) $field['val_min']) . '"';
+    }
+    if ($has_max) {
+        $a .= $numeric
+            ? ' max="' . esc_attr((string) (float) $field['val_max']) . '"'
+            : ' maxlength="' . esc_attr((string) (int) $field['val_max']) . '"';
+    }
+    if ($pattern !== '' && in_array($type, ['text', 'email', 'url'], true)) {
+        $a .= ' pattern="' . esc_attr($pattern) . '"';
+    }
+    if ($message !== '') {
+        $a .= ' title="' . esc_attr($message) . '"';
+    }
+    return $a;
+}
+
 function evk_rep_render_field_input(string $name, array $field, $val, string $context = 'single', string $editor_id = ''): void {
     $type = $field['type'] ?? 'text';
     $ph   = (isset($field['placeholder']) && $field['placeholder'] !== '') ? ' placeholder="' . esc_attr($field['placeholder']) . '"' : '';
     $req  = !empty($field['required']) ? ' required' : '';
+    $va   = evk_rep_validation_attrs($type, $field);
 
     switch ($type) {
         case 'textarea':
             $rows = (int) ($field['rows'] ?? 0); if ($rows < 1) $rows = 3;
-            echo '<textarea name="' . esc_attr($name) . '" rows="' . esc_attr((string) $rows) . '"' . $ph . $req . '>' . esc_textarea((string) $val) . '</textarea>';
+            echo '<textarea name="' . esc_attr($name) . '" rows="' . esc_attr((string) $rows) . '"' . $ph . $req . $va . '>' . esc_textarea((string) $val) . '</textarea>';
             break;
 
         case 'number':
-            echo evk_rep_wrap_affix('<input type="number" step="any" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . '>', $field);
+            echo evk_rep_wrap_affix('<input type="number" step="any" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . $va . '>', $field);
             break;
 
         case 'range':
@@ -212,11 +246,11 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             break;
 
         case 'email':
-            echo evk_rep_wrap_affix('<input type="email" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . '>', $field);
+            echo evk_rep_wrap_affix('<input type="email" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . $va . '>', $field);
             break;
 
         case 'url':
-            echo evk_rep_wrap_affix('<input type="url" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . '>', $field);
+            echo evk_rep_wrap_affix('<input type="url" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . $va . '>', $field);
             break;
 
         case 'link':
@@ -441,7 +475,7 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
 
         case 'text':
         default:
-            echo evk_rep_wrap_affix('<input type="text" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . '>', $field);
+            echo evk_rep_wrap_affix('<input type="text" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '"' . $ph . $req . $va . '>', $field);
     }
 }
 

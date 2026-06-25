@@ -556,6 +556,18 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if ($sx !== '') $def['suffix'] = $sx;
         $rw = (int) ($f['rows'] ?? 0);
         if ($rw > 0) $def['rows'] = min(50, $rw);
+
+        // Walidacja (poza „wymagane"): min/max, wzorzec regex, własny komunikat.
+        if (isset($f['val_min']) && $f['val_min'] !== '' && is_numeric($f['val_min'])) {
+            $def['val_min'] = (float) $f['val_min'];
+        }
+        if (isset($f['val_max']) && $f['val_max'] !== '' && is_numeric($f['val_max'])) {
+            $def['val_max'] = (float) $f['val_max'];
+        }
+        $vpat = trim((string) ($f['val_pattern'] ?? ''));
+        if ($vpat !== '') $def['val_pattern'] = $vpat;
+        $vmsg = sanitize_text_field($f['val_message'] ?? '');
+        if ($vmsg !== '') $def['val_message'] = $vmsg;
     }
 
     // Kolumna w panelu admina — tylko pola top-level danych (nie sub, nie layout, nie repeater).
@@ -632,6 +644,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $rows_opt            = (int)($field['rows'] ?? 0);
     $instructions        = $field['instructions'] ?? '';
     $tooltip             = $field['tooltip'] ?? '';
+    $val_pattern         = $field['val_pattern'] ?? '';
+    $val_min             = $field['val_min'] ?? '';
+    $val_max             = $field['val_max'] ?? '';
+    $val_message         = $field['val_message'] ?? '';
     $title_tpl           = $field['title_tpl'] ?? '';
     // Przełącznik
     $toggle_on           = $field['toggle_on']  ?? '1';
@@ -1020,6 +1036,29 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <label class="evk-b-inline-check" style="margin:12px 0 0;">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
                 </label>
+
+                <div class="evk-b-validation" style="margin-top:14px;border-top:1px solid #e2e4e7;padding-top:12px;">
+                    <div class="evk-b-section-title" style="margin-bottom:8px;">Walidacja</div>
+                    <div class="evk-b-inline-grid">
+                        <div class="evk-b-ctrl evk-b-opt-valmin">
+                            <label>Minimum <span class="evk-b-valhint">(dł. znaków / wartość)</span></label>
+                            <input type="number" step="any" name="<?php echo esc_attr($base); ?>[val_min]" value="<?php echo esc_attr((string) $val_min); ?>" placeholder="brak">
+                        </div>
+                        <div class="evk-b-ctrl evk-b-opt-valmax">
+                            <label>Maksimum <span class="evk-b-valhint">(dł. znaków / wartość)</span></label>
+                            <input type="number" step="any" name="<?php echo esc_attr($base); ?>[val_max]" value="<?php echo esc_attr((string) $val_max); ?>" placeholder="brak">
+                        </div>
+                    </div>
+                    <div class="evk-b-ctrl" style="margin-top:12px;">
+                        <label>Wzorzec (wyrażenie regularne)</label>
+                        <input type="text" name="<?php echo esc_attr($base); ?>[val_pattern]" value="<?php echo esc_attr($val_pattern); ?>" placeholder="np. [0-9]{3}-[0-9]{3}-[0-9]{3}">
+                    </div>
+                    <div class="evk-b-ctrl" style="margin-top:12px;">
+                        <label>Komunikat błędu (własny)</label>
+                        <input type="text" name="<?php echo esc_attr($base); ?>[val_message]" value="<?php echo esc_attr($val_message); ?>" placeholder="np. Podaj numer w formacie 000-000-000">
+                    </div>
+                    <p class="description" style="margin:8px 0 0;">Min/Max dla pól tekstowych = liczba znaków, dla pól liczbowych = wartość. Wzorzec działa na polach tekstowych. Walidacja po stronie przeglądarki.</p>
+                </div>
             </div>
         </details>
 
