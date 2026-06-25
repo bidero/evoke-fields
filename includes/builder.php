@@ -282,7 +282,7 @@ add_action('save_post_evk_field_group', function ($post_id) {
         if (!is_array($f)) continue;
         $def = evk_rep_builder_parse_field($f, false, $allowed_types, $allowed_sub_types, $allowed_widths, $auto);
         if ($def === null) continue;
-        $fkey = $def['_key'];
+        $fkey = evk_rep_unique_field_key($def['_key'], $clean);
         unset($def['_key']);
         $clean[$fkey] = $def;
     }
@@ -408,6 +408,19 @@ function evk_rep_sanitize_dimension($value, int $default, int $min = 1, int $max
     return max($min, min($max, $value));
 }
 
+/**
+ * Zwraca klucz unikalny w obrębie już zebranych pól danego poziomu.
+ * Bez tego dwa pola o tym samym kluczu (np. niewypełniony klucz → wyprowadzony
+ * z identycznej etykiety, albo kolizja z fallbackiem pole_N) nadpisywałyby się
+ * nawzajem i jedno „znikało" przy zapisie. Dokleja sufiks _2, _3, …
+ */
+function evk_rep_unique_field_key(string $key, array $existing): string {
+    if (!isset($existing[$key])) return $key;
+    $i = 2;
+    while (isset($existing[$key . '_' . $i])) $i++;
+    return $key . '_' . $i;
+}
+
 function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, array $allowed_sub_types, array $allowed_widths, int &$auto): ?array {
     $types     = $sub ? $allowed_sub_types : $allowed_types;
     $type      = in_array($f['type'] ?? '', $types, true) ? $f['type'] : 'text';
@@ -434,7 +447,7 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             if (!is_array($sf)) continue;
             $parsed = evk_rep_builder_parse_field($sf, true, $allowed_types, $allowed_sub_types, $allowed_widths, $sauto);
             if ($parsed === null) continue;
-            $sk = $parsed['_key'];
+            $sk = evk_rep_unique_field_key($parsed['_key'], $subs);
             unset($parsed['_key']);
             $subs[$sk] = $parsed;
         }

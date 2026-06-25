@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.6] — 2026-06-25
+
+### Naprawione
+
+- **Pola znikające przy kolizji klucza** — gdy pole miało niewypełniony klucz, był on
+  wyprowadzany z etykiety (lub z fallbacku `pole_N`); jeśli trafił na klucz już zajęty
+  na tym poziomie, pole nadpisywało istniejące i **znikało po cichu przy zapisie**.
+  Najczęściej dotykało to pól wewnętrznego repeatera (tam klucze zwykle zostają puste).
+  Dodano gwarancję unikalności klucza (sufiks `_2`, `_3`, …) zamiast nadpisywania —
+  dla pól top-level i sub-pól repeatera. (`includes/builder.php`)
+
 ## [1.35.5] — 2026-06-25
 
 ### Dodane
