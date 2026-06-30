@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.35.11] — 2026-06-25
+
+### Naprawione
+
+- **Lightbox obrazu galerii/obrazu zniekształcał i wymuszał 800×600** — w kontekście
+  elementu Image EVK oddawało URL obrazu zamiast ID załącznika, więc Bricks nie znał
+  wymiarów i PhotoSwipe wpadał w domyślne 800×600, gubiąc proporcje. Teraz tag obrazu
+  w kontekście Image zwraca **ID załącznika** (jak natywny featured image) — Bricks
+  generuje srcset i karmi lightbox poprawnymi wymiarami; rozmiar wyświetlania ustawia
+  element Image (Size). Awatar użytkownika i `__meta:` pozostają URL-em. (`includes/bricks.php`)
+
 ## [1.35.10] — 2026-06-25
 
 ### Naprawione

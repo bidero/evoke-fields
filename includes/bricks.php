@@ -991,9 +991,11 @@ function evk_rep_image_tag_value(string $key, string $prop, int $ctx_pid, bool $
         ? (int) evk_rep_resolve_option($key, 'id')
         : (int) evk_rep_resolve($key, 'id', $ctx_pid);
     if ($id <= 0) return [];
-    $size = ($prop !== '' && !in_array($prop, ['url', 'id', 'alt'], true)) ? $prop : 'large';
-    $url  = wp_get_attachment_image_url($id, $size) ?: wp_get_attachment_image_url($id, 'full');
-    return $url ? [$url] : [];
+    // Oddajemy ID załącznika (jak natywny featured image), a NIE URL — dzięki temu Bricks
+    // generuje srcset i poprawnie karmi lightbox (data-pswp-width/height) z faktycznych
+    // wymiarów. Sam URL nie ma wymiarów → PhotoSwipe wpada w domyślne 800×600 i zniekształca.
+    // Rozmiar wyświetlania ustawia się wtedy w samym elemencie Image (Size).
+    return [$id];
 }
 
 function evk_rep_render_tag($tag, $post = null, $context = 'text') {
