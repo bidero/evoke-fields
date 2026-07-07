@@ -524,47 +524,7 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
     return '';
 }
 
-/**
- * URL wygenerowanego przez WordPress podglądu JPG dla załącznika PDF.
- * WP tworzy podgląd automatycznie przy uploadzie (wymaga Imagick + Ghostscript).
- * Dla starszych PDF-ów bez podglądu próbuje wygenerować metadane raz (guard transientem),
- * żeby nie ponawiać w kółko przy braku wsparcia serwera. Zwraca '' dla nie-PDF / braku podglądu.
- */
-function evk_rep_pdf_preview_url(int $fid, string $size = 'large'): string {
-    if ($fid <= 0 || get_post_mime_type($fid) !== 'application/pdf') return '';
-
-    // Kaskada: żądany rozmiar, potem coraz mniejsze — mały PDF może nie mieć 'large'.
-    // 'full' pomijamy, bo WP oddaje wtedy sam plik .pdf, nie JPG.
-    $try = function (int $id) use ($size): string {
-        foreach (array_unique([$size, 'large', 'medium', 'thumbnail']) as $s) {
-            if ($s === 'full') continue;
-            $u = wp_get_attachment_image_url($id, $s);
-            if ($u && !preg_match('/\.pdf($|\?)/i', $u)) return $u;
-        }
-        return '';
-    };
-
-    $url = $try($fid);
-    if ($url !== '') return $url;
-
-    // Brak wygenerowanego podglądu — jednorazowa próba generacji (guard, by nie zapętlać).
-    $flag = 'evk_pdf_prev_fail_' . $fid;
-    $file = get_attached_file($fid);
-    if ($file && file_exists($file) && !get_transient($flag)) {
-        if (!function_exists('wp_generate_attachment_metadata')) {
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-        $meta = @wp_generate_attachment_metadata($fid, $file);
-        if (is_array($meta) && !empty($meta['sizes'])) {
-            wp_update_attachment_metadata($fid, $meta);
-            $url = $try($fid);
-            if ($url !== '') return $url;
-        }
-        // Nie udało się (brak Imagick/Ghostscript) — nie próbuj ponownie przez godzinę.
-        set_transient($flag, 1, HOUR_IN_SECONDS);
-    }
-    return '';
-}
+// Podgląd PDF→JPG: evk_rep_pdf_preview_url() / evk_rep_pdf_preview_id() są w includes/pdf-preview.php.
 
 function evk_rep_builder_placeholder(array $field, string $key, string $prop) {
     $type  = $field['type'] ?? 'text';
@@ -1056,9 +1016,12 @@ function evk_rep_image_tag_value(string $key, string $prop, int $ctx_pid, bool $
         ? (int) evk_rep_resolve_option($key, 'id')
         : (int) evk_rep_resolve($key, 'id', $ctx_pid);
     if ($id <= 0) return [];
-    // Pole „plik" → tag podglądu PDF w elemencie Image: wymuś generację JPG (dla starszych
-    // PDF-ów bez podglądu), by wp_get_attachment_image miało co wyrenderować. Oddajemy ID.
-    if ($prop === 'preview') evk_rep_pdf_preview_url($id);
+    // Pole „plik" → tag podglądu PDF w elemencie Image: oddaj ID załącznika-podglądu JPG
+    // (generuje w razie potrzeby), bo samo ID PDF-a nie ma natywnych rozmiarów do srcset.
+    if ($prop === 'preview') {
+        $pv = evk_rep_pdf_preview_id($id);
+        return $pv > 0 ? [$pv] : [];
+    }
     // Oddajemy ID załącznika (jak natywny featured image), a NIE URL — dzięki temu Bricks
     // generuje srcset i poprawnie karmi lightbox (data-pswp-width/height) z faktycznych
     // wymiarów. Sam URL nie ma wymiarów → PhotoSwipe wpada w domyślne 800×600 i zniekształca.

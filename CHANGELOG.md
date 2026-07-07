@@ -2,6 +2,31 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.38.1] — 2026-07-07
+
+### Zmienione
+
+- **Podglądowe JPG PDF-ów ukryte w Bibliotece mediów** — załącznik-podgląd nadal istnieje
+  (element Image w Bricks potrzebuje ID do srcset), ale jest oznaczany metą
+  `_evk_pdf_companion` i odfiltrowany z widoku siatki, listy oraz okna wyboru mediów, więc
+  nie zaśmieca biblioteki i nie da się go przypadkiem wybrać. Podglądy z buildu 1.38.0
+  dostają znacznik automatycznie przy pierwszym użyciu (self-heal). (`includes/pdf-preview.php`)
+
+## [1.38.0] — 2026-07-07
+
+### Zmienione
+
+- **Podgląd PDF działa teraz na hostingach współdzielonych** — zamiast polegać na natywnej
+  generacji podglądów PDF w WordPressie (która na wielu hostingach nie działa mimo obecnego
+  Imagick+Ghostscript, bez dostępu do `policy.xml` / restartu PHP), wtyczka po wgraniu PDF
+  tworzy **osobny załącznik JPG** (Imagick: 1. strona, 300 DPI, bestfit 1200×1200 z
+  zachowaniem proporcji) i wiąże go z PDF-em przez meta `_evk_auto_pdf_thumb_id`.
+  Tag `{evk_field_klucz__preview}` oddaje URL tego JPG, a w elemencie **Image** w Bricks —
+  ID załącznika-podglądu (pełny srcset). Dla PDF-ów wgranych wcześniej podgląd generuje się
+  jednorazowo przy pierwszym użyciu (guard transientem). Podgląd jest kasowany razem z PDF-em.
+  Wymaga wyłącznie działającego Imagick z obsługą PDF — bez zmian w WP core.
+  (nowy `includes/pdf-preview.php`, `includes/bricks.php`, `evk-repeater.php`)
+
 ## [1.37.0] — 2026-07-07
 
 ### Dodane
