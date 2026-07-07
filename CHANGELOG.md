@@ -2,6 +2,26 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.37.0] — 2026-07-07
+
+### Dodane
+
+- **Podgląd JPG dla pól „Plik" z PDF** — nowy wariant tagu dynamicznego
+  `{evk_field_klucz__preview}` (oraz `{evk_opt_..._klucz__preview}`) zwraca URL
+  podglądu JPG wygenerowanego przez WordPress dla załącznika PDF. WP tworzy podgląd
+  automatycznie przy uploadzie (wymaga **Imagick + Ghostscript** na serwerze); dla
+  starszych PDF-ów bez podglądu wtyczka próbuje wygenerować go jednorazowo
+  (guard transientem, by nie ponawiać przy braku wsparcia). Dla plików nie-PDF tag
+  zwraca pusty string. Działa też bezpośrednio w elemencie **Image** w Bricks
+  (oddaje ID załącznika → srcset z JPG-a). (`includes/bricks.php`)
+
+### Naprawione
+
+- **Tagi `__filename` i `__path` pola „Plik" nie działały** — `evk_rep_parse_tag()` ma
+  zamkniętą białą listę propsów, w której brakowało tych kluczy, więc tag rozwiązywał się
+  do domyślnego URL zamiast nazwy pliku / ścieżki. Dodano `filename`, `path`, `preview`
+  do whitelisty. (`includes/bricks.php`)
+
 ## [1.36.0] — 2026-07-07
 
 ### Dodane
