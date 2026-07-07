@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.36.0] — 2026-07-07
+
+### Dodane
+
+- **Nowy typ pola „Plik"** — wybór dowolnego pliku z biblioteki mediów (dowolny typ MIME).
+  Przechowuje **ID załącznika** (odporne na zmiany adresu), a na froncie/w Bricks domyślnie
+  zwraca **URL pliku**. Dostępne warianty tagu dynamicznego: `__id` (ID załącznika),
+  `__filename` (nazwa pliku); w PHP dodatkowo `path` (ścieżka serwerowa) i `title`.
+  Działa jako pole pojedyncze, w Settings Pages oraz jako subpole repeatera. Kolumna listy
+  w adminie pokazuje klikalny link do pliku.
+  (`includes/builder.php`, `includes/metabox.php`, `includes/admin-columns.php`,
+  `includes/bricks.php`, `assets/admin.js`, `assets/admin.css`)
+
 ## [1.35.11] — 2026-06-25
 
 ### Naprawione

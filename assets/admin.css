@@ -50,6 +50,9 @@
 
 .evk-rep-image{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .evk-rep-image-preview img{max-width:60px;height:auto;border-radius:6px;display:block;}
+.evk-rep-file{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.evk-rep-file-preview{display:inline-flex;align-items:center;gap:4px;color:#374151;overflow-wrap:anywhere;}
+.evk-rep-file-preview .dashicons{color:#6b7280;}
 
 /* ── Galeria ── */
 .evk-gallery-items{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;}

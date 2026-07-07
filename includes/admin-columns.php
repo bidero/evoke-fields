@@ -100,6 +100,12 @@ function evk_rep_column_value_html(array $field, $val): string {
         case 'image':
             $img = wp_get_attachment_image((int) $val, [40, 40]);
             return $img ?: '—';
+        case 'file':
+            $fid  = (int) $val;
+            $furl = $fid > 0 ? wp_get_attachment_url($fid) : '';
+            if (!$furl) return '—';
+            $fname = basename(get_attached_file($fid) ?: $furl);
+            return '<a href="' . esc_url($furl) . '" target="_blank" rel="noopener">' . esc_html($fname) . '</a>';
         case 'color':
             $c = sanitize_hex_color((string) $val);
             return $c

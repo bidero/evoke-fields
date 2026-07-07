@@ -89,6 +89,32 @@
         $(this).hide();
     });
 
+    // ── File picker (dowolny typ pliku) ──
+    $(document).on('click', '.evk-rep-file-pick', function (e) {
+        e.preventDefault();
+        var $field = $(this).closest('.evk-rep-file');
+        var frame = wp.media({ title: 'Wybierz plik', button: { text: 'Użyj' }, multiple: false });
+        frame.on('select', function () {
+            var att = frame.state().get('selection').first().toJSON();
+            $field.find('.evk-rep-file-id').val(att.id);
+            var name = att.filename || att.url;
+            $field.find('.evk-rep-file-preview').html(
+                '<span class="dashicons dashicons-media-default"></span> ' +
+                '<a href="' + att.url + '" target="_blank" rel="noopener"></a>'
+            ).find('a').text(name);
+            $field.find('.evk-rep-file-clear').show();
+        });
+        frame.open();
+    });
+
+    $(document).on('click', '.evk-rep-file-clear', function (e) {
+        e.preventDefault();
+        var $field = $(this).closest('.evk-rep-file');
+        $field.find('.evk-rep-file-id').val('');
+        $field.find('.evk-rep-file-preview').empty();
+        $(this).hide();
+    });
+
     // ── Galeria: dodaj obrazy (multi) ──
     var evkGalSeq = 0;
     $(document).on('click', '.evk-gallery-add', function (e) {

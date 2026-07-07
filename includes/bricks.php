@@ -377,6 +377,14 @@ function evk_rep_format_value(array $field, $val, string $prop) {
         $size = ($prop !== '' && $prop !== 'url') ? $prop : 'full';
         return wp_get_attachment_image_url((int) $val, $size) ?: '';
     }
+    if ($type === 'file' && $val) {
+        $fid = (int) $val;
+        if ($prop === 'id')       return $fid;
+        if ($prop === 'filename') return basename(get_attached_file($fid) ?: (string) wp_get_attachment_url($fid));
+        if ($prop === 'path')     return get_attached_file($fid) ?: '';
+        if ($prop === 'title')    return get_the_title($fid);
+        return wp_get_attachment_url($fid) ?: ''; // domyślnie: URL pliku
+    }
     if (in_array($type, ['select', 'radio', 'button_group'], true) && $prop === 'label') {
         $opts = evk_rep_parse_options($field['options'] ?? '');
         return $opts[$val] ?? $val;
@@ -522,6 +530,11 @@ function evk_rep_builder_placeholder(array $field, string $key, string $prop) {
         if ($prop === 'id')  return 0;
         if ($prop === 'alt') return $label;
         return includes_url('images/media/default.png');
+    }
+    if ($type === 'file') {
+        if ($prop === 'id') return 0;
+        if ($prop === 'filename') return $label . '.pdf';
+        return '#';
     }
     if (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true) && $prop === 'label') return $label;
     if ($type === 'checkbox') return '1';
@@ -866,6 +879,9 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
         if ($type === 'image') {
             $tags[] = ['name' => '{evk_field_' . $key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
             $tags[] = ['name' => '{evk_field_' . $key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
+        } elseif ($type === 'file') {
+            $tags[] = ['name' => '{evk_field_' . $key . '__id}',       'label' => $label . ' (ID)',           'group' => $g];
+            $tags[] = ['name' => '{evk_field_' . $key . '__filename}', 'label' => $label . ' (nazwa pliku)',  'group' => $g];
         } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
             $tags[] = ['name' => '{evk_field_' . $key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
         } elseif ($type === 'taxonomy') {
@@ -902,6 +918,9 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
         if ($type === 'image') {
             $tags[] = ['name' => '{' . $opt_key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
             $tags[] = ['name' => '{' . $opt_key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
+        } elseif ($type === 'file') {
+            $tags[] = ['name' => '{' . $opt_key . '__id}',       'label' => $label . ' (ID)',          'group' => $g];
+            $tags[] = ['name' => '{' . $opt_key . '__filename}', 'label' => $label . ' (nazwa pliku)', 'group' => $g];
         } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
             $tags[] = ['name' => '{' . $opt_key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
         }

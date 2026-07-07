@@ -318,6 +318,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'image'    => 'Obraz',
         'image_select' => 'Image Select',
         'gallery'  => 'Galeria',
+        'file'     => 'Plik',
         'wysiwyg'  => 'Edytor WYSIWYG',
     ];
     $relacje = ['taxonomy' => 'Taksonomia', 'relationship' => 'Relacja (posty)', 'user' => 'Użytkownik'];

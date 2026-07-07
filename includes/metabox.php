@@ -363,6 +363,24 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo '</div>';
             break;
 
+        case 'file':
+            $fid  = (int) $val;
+            $has  = $fid > 0;
+            $furl = $has ? wp_get_attachment_url($fid) : '';
+            $fname = $has ? basename(get_attached_file($fid) ?: $furl) : '';
+            echo '<div class="evk-rep-file">';
+            echo '<input type="hidden" class="evk-rep-file-id" name="' . esc_attr($name) . '" value="' . esc_attr((string) ($has ? $fid : '')) . '">';
+            echo '<span class="evk-rep-file-preview">';
+            if ($has) {
+                echo '<span class="dashicons dashicons-media-default"></span> ';
+                echo '<a href="' . esc_url($furl) . '" target="_blank" rel="noopener">' . esc_html($fname) . '</a>';
+            }
+            echo '</span>';
+            echo '<button type="button" class="button evk-rep-file-pick">Wybierz plik</button>';
+            echo '<button type="button" class="button-link evk-rep-file-clear" style="' . ($has ? '' : 'display:none;') . '">Usuń</button>';
+            echo '</div>';
+            break;
+
         case 'gallery':
             $cats   = evk_rep_gallery_categories($field);
             $item_w = (int) ($field['gallery_item_width'] ?? 0);
@@ -871,6 +889,7 @@ function evk_rep_sanitize_value(string $type, $v) {
         case 'number':   return $v === '' ? '' : (is_numeric($v) ? $v + 0 : sanitize_text_field((string) $v));
         case 'range':    return $v === '' ? '' : (is_numeric($v) ? $v + 0 : sanitize_text_field((string) $v));
         case 'image':    return $v ? (int) $v : '';
+        case 'file':     return $v ? (int) $v : '';
         case 'gallery':
             if (!is_array($v)) return '';
             $out = [];
