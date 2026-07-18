@@ -50,7 +50,7 @@ function evk_rep_column_find(string $object_type, string $key): ?array {
 }
 
 function evk_rep_column_is_numeric(array $field): bool {
-    return in_array($field['type'] ?? '', ['number', 'range'], true);
+    return in_array($field['type'] ?? '', ['number', 'range', 'calc'], true);
 }
 
 /** Wstawia kolumny evk_col_* do listy kolumn (wg pozycji; null = na końcu). */

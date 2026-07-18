@@ -97,9 +97,12 @@ function evk_rep_term_save($term_id): void {
     if (!current_user_can('edit_term', $term_id)) return;
     $term = get_term($term_id);
     if (!$term || is_wp_error($term)) return;
+    $saved = [];
     foreach (evk_rep_groups_for_taxonomy($term->taxonomy) as $key => $group) {
         evk_rep_save_group_object('term', (int) $term_id, (string) $key, $group);
+        $saved[] = (string) $key;
     }
+    if ($saved) evk_rep_calc_finish_saves('term', (int) $term_id, $saved);
 }
 
 // =========================================================================
@@ -126,7 +129,10 @@ function evk_rep_user_fields($user): void {
 function evk_rep_user_save($user_id): void {
     if (!isset($_POST['evk_rep_user_nonce']) || !wp_verify_nonce($_POST['evk_rep_user_nonce'], 'evk_rep_user_save')) return;
     if (!current_user_can('edit_user', $user_id)) return;
+    $saved = [];
     foreach (evk_rep_groups_for_object('user') as $key => $group) {
         evk_rep_save_group_object('user', (int) $user_id, (string) $key, $group);
+        $saved[] = (string) $key;
     }
+    if ($saved) evk_rep_calc_finish_saves('user', (int) $user_id, $saved);
 }

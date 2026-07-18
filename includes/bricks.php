@@ -542,6 +542,7 @@ function evk_rep_builder_placeholder(array $field, string $key, string $prop) {
     }
     if (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true) && $prop === 'label') return $label;
     if ($type === 'checkbox') return '1';
+    if ($type === 'calc') return '123';
     return '[' . $label . ']';
 }
 

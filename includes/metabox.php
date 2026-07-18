@@ -363,6 +363,20 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             echo '</div>';
             break;
 
+        case 'calc':
+            // Wartość liczy serwer przy zapisie; input ma name TYLKO po to, żeby
+            // podgląd na żywo (admin.js) widział wynik wierszowych calc w agregatach —
+            // zapis i tak ignoruje POST dla calc. data-evk-base = name bez [klucza].
+            $calc_base = preg_replace('/\[[^\[\]]*\]$/', '', $name);
+            echo evk_rep_wrap_affix(
+                '<input type="text" class="evk-rep-calc" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '" readonly'
+                . ' data-evk-formula="' . esc_attr((string) ($field['formula'] ?? '')) . '"'
+                . ' data-evk-decimals="' . esc_attr(isset($field['decimals']) ? (string) (int) $field['decimals'] : '') . '"'
+                . ' data-evk-base="' . esc_attr((string) $calc_base) . '">',
+                $field
+            );
+            break;
+
         case 'file':
             $fid  = (int) $val;
             $has  = $fid > 0;
@@ -797,6 +811,7 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
     foreach (($group['fields'] ?? []) as $fkey => $field) {
         $type = $field['type'] ?? 'text';
         if (evk_rep_is_layout($type)) continue;
+        if ($type === 'calc') continue; // POST ignorowany; liczy evk_rep_calc_finish_saves() po zapisie wszystkich grup
         if ($type === 'repeater') {
             $old_rows = get_metadata($meta_type, $object_id, $fkey, true);
             $clean = evk_rep_sanitize_rows($field['sub_fields'] ?? [], $single[$fkey] ?? []);
@@ -953,6 +968,7 @@ function evk_rep_sanitize_rows(array $fields, $raw): array {
                 if (!empty($sub)) $crow[$fk] = $sub;
                 continue;
             }
+            if ($t === 'calc') { $crow[$fk] = ''; continue; } // POST ignorowany; liczy pass niżej
             $crow[$fk] = evk_rep_sanitize_value($t, $row[$fk] ?? '');
         }
         $nonempty = false;
@@ -962,7 +978,9 @@ function evk_rep_sanitize_rows(array $fields, $raw): array {
         }
         if ($nonempty) $clean[] = $crow;
     }
-    return $clean;
+    // Subpola calc: licz dopiero na wierszach, które przeszły filtr pustych —
+    // wynik (np. 0) nie może sztucznie utrzymywać pustego wiersza przy życiu.
+    return evk_rep_calc_apply_rows($fields, $clean);
 }
 
 function evk_rep_sanitize_group_values(array $fields, $raw): array {
@@ -973,23 +991,30 @@ function evk_rep_sanitize_group_values(array $fields, $raw): array {
         if (evk_rep_is_layout($t)) continue;
         if ($t === 'repeater') {
             $out[$fk] = evk_rep_sanitize_rows($f['sub_fields'] ?? [], $raw[$fk] ?? []);
+        } elseif ($t === 'calc') {
+            $out[$fk] = ''; // POST ignorowany; liczy pass niżej
         } else {
             $out[$fk] = evk_rep_sanitize_value($t, $raw[$fk] ?? '');
         }
     }
-    return $out;
+    // Pola calc grupy (wiersze repeaterów są już policzone w evk_rep_sanitize_rows).
+    return evk_rep_calc_apply_group_values($fields, $out);
 }
 
 add_action('save_post', function ($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $post_id)) return;
 
+    $saved = [];
     foreach (evk_rep_groups() as $key => $group) {
         if (($group['object_type'] ?? 'post') !== 'post') continue; // media → attachment_fields_to_save
         $nonce = $_POST['evk_rep_nonce_' . $key] ?? '';
         if (!wp_verify_nonce($nonce, 'evk_rep_save_' . $key)) continue;
         evk_rep_save_group_object('post', $post_id, $key, $group);
+        $saved[] = $key;
     }
+    // Pola calc: po zapisaniu WSZYSTKICH grup (agregaty mogą czytać repeatery z innych grup).
+    if ($saved) evk_rep_calc_finish_saves('post', $post_id, $saved);
 });
 
 // =========================================================================

@@ -386,4 +386,204 @@
     });
     $(function () { evkEvalAll(); });
 
+    /* ── Pole obliczeniowe (calc) — podgląd wyniku na żywo ──
+       Lustro parsera z includes/calc.php (te same reguły: + - * / (), {klucz},
+       SUM/COUNT/AVG/MIN/MAX(repeater.subpole), przecinek dziesiętny OK).
+       To tylko PODGLĄD — wartość kanoniczną liczy serwer przy zapisie. */
+
+    function evkCalcNum(v) {
+        if (v == null) return 0;
+        var n = parseFloat(String(v).replace(',', '.'));
+        return isFinite(n) ? n : 0;
+    }
+
+    function evkCalcTokens(f) {
+        var out = [], i = 0, m;
+        var reAgg = /^(SUM|COUNT|AVG|MIN|MAX)\s*\(\s*([a-zA-Z0-9_]+)(?:\.([a-zA-Z0-9_]+))?\s*\)/i;
+        var reNum = /^\d+(?:[\.,]\d+)?/;
+        while (i < f.length) {
+            var c = f[i];
+            if (c === ' ' || c === '\t') { i++; continue; }
+            if ('+-*/()'.indexOf(c) !== -1) { out.push(['op', c]); i++; continue; }
+            if (c === '{') {
+                var e = f.indexOf('}', i);
+                if (e === -1) return null;
+                var key = f.slice(i + 1, e).trim();
+                if (!/^[a-zA-Z0-9_]+$/.test(key)) return null;
+                out.push(['field', key.toLowerCase()]);
+                i = e + 1;
+                continue;
+            }
+            var rest = f.slice(i);
+            if ((m = rest.match(reAgg))) { out.push(['agg', m[1].toUpperCase(), m[2].toLowerCase(), (m[3] || '').toLowerCase()]); i += m[0].length; continue; }
+            if ((m = rest.match(reNum))) { out.push(['num', parseFloat(m[0].replace(',', '.'))]); i += m[0].length; continue; }
+            return null;
+        }
+        return out;
+    }
+
+    // Parser zejść rekurencyjnych: expr → term → factor. null = błąd.
+    function evkCalcEval(formula, fieldCb, aggCb) {
+        formula = $.trim(formula || '');
+        if (!formula) return null;
+        var t = evkCalcTokens(formula);
+        if (!t || !t.length) return null;
+        var pos = { i: 0 };
+        var v = evkCalcExpr(t, pos, fieldCb, aggCb);
+        return (v === null || pos.i !== t.length) ? null : v;
+    }
+    function evkCalcExpr(t, p, fcb, acb) {
+        var v = evkCalcTerm(t, p, fcb, acb);
+        if (v === null) return null;
+        while (p.i < t.length && t[p.i][0] === 'op' && (t[p.i][1] === '+' || t[p.i][1] === '-')) {
+            var op = t[p.i][1]; p.i++;
+            var r = evkCalcTerm(t, p, fcb, acb);
+            if (r === null) return null;
+            v = op === '+' ? v + r : v - r;
+        }
+        return v;
+    }
+    function evkCalcTerm(t, p, fcb, acb) {
+        var v = evkCalcFactor(t, p, fcb, acb);
+        if (v === null) return null;
+        while (p.i < t.length && t[p.i][0] === 'op' && (t[p.i][1] === '*' || t[p.i][1] === '/')) {
+            var op = t[p.i][1]; p.i++;
+            var r = evkCalcFactor(t, p, fcb, acb);
+            if (r === null) return null;
+            if (op === '/') {
+                if (Math.abs(r) < 1e-12) return null;
+                v = v / r;
+            } else v = v * r;
+        }
+        return v;
+    }
+    function evkCalcFactor(t, p, fcb, acb) {
+        if (p.i >= t.length) return null;
+        var tok = t[p.i];
+        if (tok[0] === 'op' && tok[1] === '-') { p.i++; var n = evkCalcFactor(t, p, fcb, acb); return n === null ? null : -n; }
+        if (tok[0] === 'num')   { p.i++; return tok[1]; }
+        if (tok[0] === 'field') { p.i++; return fcb(tok[1]); }
+        if (tok[0] === 'agg')   { p.i++; return acb(tok[1], tok[2], tok[3]); }
+        if (tok[0] === 'op' && tok[1] === '(') {
+            p.i++;
+            var v = evkCalcExpr(t, p, fcb, acb);
+            if (v === null) return null;
+            if (p.i >= t.length || t[p.i][0] !== 'op' || t[p.i][1] !== ')') return null;
+            p.i++;
+            return v;
+        }
+        return null;
+    }
+
+    // Wartość inputa jak liczy ją serwer (checkbox → 1/0, reszta → num z .val()).
+    function evkCalcInputVal($i) {
+        if (!$i.length) return 0;
+        if ($i.is(':checkbox')) return $i.is(':checked') ? 1 : 0;
+        return evkCalcNum($i.first().val());
+    }
+    function evkCalcNotTemplate() {
+        return $(this).closest('.evk-rep-template, .evk-gallery-tpl').length === 0;
+    }
+
+    // Agregat: wiersze repeatera identyfikowane wzorcami nazw inputów subpola.
+    // (podgląd; serwer liczy z zapisanych wierszy, więc rozjazd = tylko chwilowy)
+    function evkCalcAggregate(func, $candidates) {
+        var rowsSeen = [], vals = [];
+        $candidates.each(function () {
+            var $inp = $(this);
+            var row  = $inp.closest('.evk-rep-row')[0] || null;
+            if (row && rowsSeen.indexOf(row) === -1) rowsSeen.push(row);
+            var raw = $inp.is(':checkbox') ? ($inp.is(':checked') ? '1' : '') : String($inp.val() == null ? '' : $inp.val());
+            if ($.trim(raw) === '') return;
+            vals.push(evkCalcNum(raw));
+        });
+        switch (func) {
+            case 'COUNT': return vals.length; // COUNT(rep.sub) = niepuste wartości; COUNT(rep) liczony w aggCb
+            case 'SUM':   return vals.reduce(function (a, b) { return a + b; }, 0);
+            case 'AVG':   return vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : 0;
+            case 'MIN':   return vals.length ? Math.min.apply(null, vals) : 0;
+            case 'MAX':   return vals.length ? Math.max.apply(null, vals) : 0;
+        }
+        return 0;
+    }
+
+    function evkCalcRecalcOne($calc) {
+        var formula = $calc.attr('data-evk-formula') || '';
+        var base    = $calc.attr('data-evk-base') || '';
+        var $row    = $calc.closest('.evk-rep-row');
+        var inRow   = $row.length > 0;
+
+        var fieldCb = function (key) {
+            if (inRow) {
+                // Ten sam wiersz; pomijamy inne pola calc (zakaz łańcuchów na poziomie).
+                var $ins = $row.find('[name$="[' + key + ']"]').not('.evk-rep-calc').filter(function () {
+                    return $(this).closest('.evk-rep-row')[0] === $row[0];
+                });
+                return evkCalcInputVal($ins);
+            }
+            var $top = $('[name="' + base + '[' + key + ']"]').not('.evk-rep-calc').filter(evkCalcNotTemplate);
+            return evkCalcInputVal($top);
+        };
+
+        var aggCb = function (func, rep, sub) {
+            var subSel = sub ? '[name$="[' + sub + ']"]' : '';
+            var $cand;
+            if (inRow) {
+                // Zagnieżdżony repeater w tym wierszu.
+                $cand = $row.find('[name*="[' + rep + ']"]' + subSel).filter(evkCalcNotTemplate);
+            } else {
+                // Repeater-pole w tej grupie → grupa-repeater (meta/opcje) → gdziekolwiek.
+                var sels = [
+                    '[name^="' + base + '[' + rep + ']["]',
+                    '[name^="' + rep + '["]',
+                    '[name^="evk_opt[' + rep + ']["]',
+                    '[name*="[' + rep + ']["]'
+                ];
+                for (var s = 0; s < sels.length; s++) {
+                    $cand = $(sels[s] + subSel).filter(evkCalcNotTemplate);
+                    if ($cand.length) break;
+                }
+            }
+            if (!sub) {
+                // COUNT(repeater): policz unikalne wiersze po dowolnym inpucie z nazwą repeatera.
+                var rows = [];
+                ($cand || $()).each(function () {
+                    var r = $(this).closest('.evk-rep-row')[0];
+                    if (r && rows.indexOf(r) === -1) rows.push(r);
+                });
+                return func === 'COUNT' ? rows.length : 0;
+            }
+            return evkCalcAggregate(func, $cand || $());
+        };
+
+        var v = evkCalcEval(formula, fieldCb, aggCb);
+        if (v === null) { $calc.val(''); return; }
+        var decAttr = $calc.attr('data-evk-decimals');
+        var dec = decAttr === '' || decAttr == null ? 6 : Math.max(0, Math.min(6, parseInt(decAttr, 10) || 0));
+        var s = v.toFixed(dec).replace(/\.?0+$/, '');
+        if (s === '' || s === '-0') s = '0';
+        $calc.val(s);
+    }
+
+    var evkCalcTimer = null;
+    function evkCalcRecalcAll() {
+        // Dwa przebiegi: najpierw calc w wierszach (żeby SUM po nich widziała świeże
+        // wartości), potem calc poza wierszami — jak na serwerze.
+        var $all = $('.evk-rep-calc[data-evk-formula]').filter(evkCalcNotTemplate);
+        $all.filter(function () { return $(this).closest('.evk-rep-row').length > 0; }).each(function () { evkCalcRecalcOne($(this)); });
+        $all.filter(function () { return $(this).closest('.evk-rep-row').length === 0; }).each(function () { evkCalcRecalcOne($(this)); });
+    }
+    function evkCalcSchedule() {
+        clearTimeout(evkCalcTimer);
+        evkCalcTimer = setTimeout(evkCalcRecalcAll, 120);
+    }
+
+    $(document).on('input change', 'input, select, textarea', function () {
+        if ($(this).hasClass('evk-rep-calc')) return; // readonly — nie zapętlaj
+        evkCalcSchedule();
+    });
+    // Dodanie/usunięcie wiersza zmienia agregaty.
+    $(document).on('click', '.evk-rep-add, .evk-rep-remove, .evk-gallery-add', evkCalcSchedule);
+    $(function () { evkCalcRecalcAll(); });
+
 })(jQuery);

@@ -2,6 +2,31 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.39.0] — 2026-07-18
+
+### Dodane
+
+- **Nowy typ pola „Pole obliczeniowe" (`calc`)** — pole tylko do odczytu liczone z formuły:
+  operatory `+ - * / ( )`, liczby, `{klucz}` (pole z tego samego poziomu — w wierszu
+  repeatera z tego wiersza) oraz agregaty `SUM / COUNT / AVG / MIN / MAX(repeater.subpole)`
+  po wierszach repeatera (`COUNT(repeater)` = liczba wierszy). Bez `eval()` — własny
+  tokenizer + parser zejść rekurencyjnych (`includes/calc.php`), przecinek dziesiętny
+  normalizowany. Opcja „miejsca dziesiętne" zaokrągla wynik; prefiks/sufiks działa.
+  - **Wartość liczy SERWER przy zapisie** (POST dla calc jest ignorowany) i zapisuje jako
+    zwykłą meta → front (Bricks) czyta ją jak liczbę, a kolumny list w adminie i pętle
+    mogą **sortować numerycznie** (`meta_value_num`) — gotowe pod rankingi.
+  - Kolejność przeliczania stała: wiersze od najgłębszych → poziom główny, więc
+    `SUM(pozycje.wartosc)` po wierszowym calc (`{cena}*{ilosc}`) działa; łańcuchy
+    calc→calc w obrębie tego samego poziomu zabronione (→ 0), cykle niemożliwe.
+  - Na poziomie głównym `{klucz}`/agregaty sięgają też do innych grup obiektu
+    (agregat czyta metę repeater-pola LUB grupy-repeatera). Działa dla wpisów/CPT,
+    termów, profilu użytkownika i Settings Pages; w metaboxie podgląd wyniku na żywo.
+  - Publiczne API **`evk_rep_recalc($object_id, $meta_type = 'post')`** — przeliczenie
+    pól calc po programowych zmianach danych (importy, własne nakładki).
+  (`includes/calc.php` nowy; `builder.php`, `metabox.php`, `locations.php`,
+  `admin-columns.php`, `bricks.php`, `assets/admin.js`, `assets/admin.css`,
+  `assets/builder.js`, `assets/builder.css`, `evk-repeater.php`)
+
 ## [1.38.1] — 2026-07-07
 
 ### Zmienione

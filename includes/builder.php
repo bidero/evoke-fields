@@ -319,6 +319,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'image_select' => 'Image Select',
         'gallery'  => 'Galeria',
         'file'     => 'Plik',
+        'calc'     => 'Pole obliczeniowe',
         'wysiwyg'  => 'Edytor WYSIWYG',
     ];
     $relacje = ['taxonomy' => 'Taksonomia', 'relationship' => 'Relacja (posty)', 'user' => 'Użytkownik'];
@@ -536,6 +537,12 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         $ofl = sanitize_text_field($f['toggle_off_label'] ?? '');
         if ($onl !== '') $def['toggle_on_label']  = $onl;
         if ($ofl !== '') $def['toggle_off_label'] = $ofl;
+    } elseif ($type === 'calc') {
+        $def['width']   = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
+        $def['formula'] = sanitize_text_field($f['formula'] ?? '');
+        if (isset($f['decimals']) && $f['decimals'] !== '' && is_numeric($f['decimals'])) {
+            $def['decimals'] = max(0, min(6, (int) $f['decimals']));
+        }
     } elseif (!$is_layout) {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         if (in_array($type, ['select', 'radio', 'button_group'], true)) {
@@ -646,6 +653,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $range_min       = $field['min']         ?? 0;
     $range_max       = $field['max']         ?? 100;
     $range_step      = $field['step']        ?? 1;
+    $calc_formula    = $field['formula']     ?? '';
+    $calc_decimals   = isset($field['decimals']) ? (string) (int) $field['decimals'] : '';
     $subf            = $field['sub_fields']  ?? [];
     $title_field     = $field['title_field'] ?? '';
     $add_label       = $field['add_label']   ?? '';
@@ -875,6 +884,28 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     <input type="number" min="0.0001" step="any" name="<?php echo esc_attr($base); ?>[step]" value="<?php echo esc_attr((string) $range_step); ?>" placeholder="1">
                 </div>
             </div>
+        </div>
+
+        <div class="evk-b-field-calc">
+            <div class="evk-b-section-title">Konfiguracja pola obliczeniowego</div>
+            <div class="evk-b-ctrl">
+                <label>Formuła</label>
+                <input type="text" name="<?php echo esc_attr($base); ?>[formula]" value="<?php echo esc_attr($calc_formula); ?>" placeholder="np. {cena} * {ilosc} albo SUM(pozycje.pkt)">
+            </div>
+            <div class="evk-b-inline-grid" style="margin-top:12px;">
+                <div class="evk-b-ctrl">
+                    <label>Miejsca dziesiętne (zaokrąglenie)</label>
+                    <input type="number" min="0" max="6" step="1" name="<?php echo esc_attr($base); ?>[decimals]" value="<?php echo esc_attr($calc_decimals); ?>" placeholder="bez zaokrąglenia">
+                </div>
+            </div>
+            <p class="description" style="margin:10px 0 0;">
+                <code>{klucz}</code> — pole z tego samego poziomu (w wierszu repeatera: z tego wiersza).
+                Agregaty po wierszach: <code>SUM / COUNT / AVG / MIN / MAX(repeater.subpole)</code>,
+                <code>COUNT(repeater)</code> = liczba wierszy. Operatory <code>+ - * /</code> i nawiasy.
+                Pole jest tylko do odczytu — wynik liczy się serwerowo przy zapisie i zapisuje jako zwykła meta
+                (sortowanie w pętli: meta_key = klucz pola). Formuła nie może wskazywać innego pola
+                obliczeniowego z tego samego poziomu; <code>SUM</code> po obliczeniowym subpolu wiersza działa.
+            </p>
         </div>
 
         <div class="evk-b-field-tax">

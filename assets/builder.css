@@ -136,6 +136,7 @@
 .evk-b-field.is-collapsed > .evk-b-field-opts,
 .evk-b-field.is-collapsed > .evk-b-field-image-select,
 .evk-b-field.is-collapsed > .evk-b-field-range,
+.evk-b-field.is-collapsed > .evk-b-field-calc,
 .evk-b-field.is-collapsed > .evk-b-field-tax,
 .evk-b-field.is-collapsed > .evk-b-field-gallery,
 .evk-b-field.is-collapsed > .evk-b-field-relationship,
@@ -199,7 +200,8 @@
 .evk-b-field[data-ftype="url"] .evk-b-opt-affix,
 .evk-b-field[data-ftype="date"] .evk-b-opt-affix,
 .evk-b-field[data-ftype="time"] .evk-b-opt-affix,
-.evk-b-field[data-ftype="datetime"] .evk-b-opt-affix{display:flex;}
+.evk-b-field[data-ftype="datetime"] .evk-b-opt-affix,
+.evk-b-field[data-ftype="calc"] .evk-b-opt-affix{display:flex;}
 .evk-b-field[data-ftype="textarea"] .evk-b-opt-rows{display:flex;}
 
 /* Szablon tytułu wiersza repeatera */
@@ -254,8 +256,11 @@
 .evk-b-field-tax .evk-b-ctrl-grid{display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;}
 
 /* ── Dodatkowe konfiguracje pól ── */
-.evk-b-field-image-select,.evk-b-field-range,.evk-b-field-gallery{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field-image-select,.evk-b-field-range,.evk-b-field-gallery,.evk-b-field-calc{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
 .evk-b-field.is-image-select .evk-b-field-image-select,.evk-b-field.is-range .evk-b-field-range,.evk-b-field.is-gallery .evk-b-field-gallery{display:block;}
+.evk-b-field[data-ftype="calc"] > .evk-b-field-calc{display:block;}
+.evk-b-field[data-ftype="calc"] .evk-b-badge{background:#f59e0b;}
+.evk-b-field-calc .description code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11px;}
 .evk-b-gallery-cats-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px;}
 .evk-b-gallery-cats-label code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11px;letter-spacing:0;text-transform:none;}
 .evk-b-field-gallery textarea{width:100%;font-family:Menlo,Consolas,monospace;font-size:12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;}
