@@ -2,6 +2,27 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.40.0] — 2026-07-18
+
+### Dodane
+
+- **Narzędzia → „Przelicz pola obliczeniowe"** — hurtowe przeliczenie pól calc dla
+  wybranego typu treści (`evk_rep_recalc` w pętli po wpisach). Rozwiązuje „zamrożone"
+  wyniki po zmianie formuły: dotąd istniejące wpisy trzymały starą wartość aż do
+  ręcznego przezapisania. Odporne na limit czasu hostingu współdzielonego: po ~20 s
+  przebieg zapisuje postęp (`evk_tools_recalc_progress`) i wznawia się od miejsca
+  przerwania przy kolejnym kliknięciu; cache mety zrzucany co 500 wpisów. Select
+  podpowiada typy treści, których faktycznie dotyczą grupy z calc. (`includes/tools.php`)
+
+### Zmienione
+
+- **Walidacja serwerowa min/max** — granice pól „Liczba" (`val_min`/`val_max`) i „Suwak"
+  (`min`/`max`) są teraz egzekwowane także przy zapisie (przycięcie do granicy), a nie
+  tylko jako atrybuty HTML, które można ominąć spreparowanym POST-em. Ważne dla danych
+  liczbowych karmiących pola obliczeniowe (np. punkty w rankingu).
+  `evk_rep_sanitize_value()` przyjmuje teraz definicję pola jako 3. argument.
+  (`includes/calc.php` — helper `evk_rep_clamp_number`, `includes/metabox.php`)
+
 ## [1.39.1] — 2026-07-18
 
 ### Naprawione

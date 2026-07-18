@@ -29,6 +29,16 @@ function evk_rep_calc_num($v): float {
     return is_numeric($s) ? (float) $s : 0.0;
 }
 
+/**
+ * Przycięcie liczby do granic (walidacja serwerowa min/max — atrybuty HTML
+ * to tylko UX, POST można sfałszować). Nie-numeryczne granice = brak granicy.
+ */
+function evk_rep_clamp_number($n, $min, $max) {
+    if (is_numeric($min) && $n < (float) $min) $n = $min + 0;
+    if (is_numeric($max) && $n > (float) $max) $n = $max + 0;
+    return $n;
+}
+
 /** Formuła → tokeny; null przy błędzie składni. */
 function evk_rep_calc_tokens(string $f): ?array {
     $out = [];

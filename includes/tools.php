@@ -270,6 +270,92 @@ add_action('admin_init', function () {
 });
 
 // =========================================================================
+// PRZELICZANIE PÓL OBLICZENIOWYCH (bulk evk_rep_recalc)
+// =========================================================================
+
+/**
+ * Typy treści, których dotyczą grupy z polami calc (do selecta w UI).
+ * Fallback: wszystkie publiczne, gdy żadna grupa nie ma pola calc.
+ */
+function evk_tools_recalc_post_types(): array {
+    $pts = [];
+    foreach (evk_rep_groups() as $g) {
+        if (($g['object_type'] ?? 'post') !== 'post') continue;
+        $has_calc = false;
+        $walk = function (array $fs) use (&$walk, &$has_calc) {
+            foreach ($fs as $f) {
+                if (($f['type'] ?? '') === 'calc') { $has_calc = true; return; }
+                if (($f['type'] ?? '') === 'repeater') $walk($f['sub_fields'] ?? []);
+            }
+        };
+        $walk($g['fields'] ?? []);
+        // Grupa-repeater bez calc też się liczy: jej wiersze mogą karmić calc z innej grupy.
+        if ($has_calc || evk_rep_is_repeater($g)) {
+            foreach ((array) ($g['post_types'] ?? []) as $pt) $pts[$pt] = true;
+        }
+    }
+    $out = [];
+    foreach (array_keys($pts) as $pt) {
+        $obj = get_post_type_object($pt);
+        if ($obj) $out[$pt] = $obj->labels->name . ' (' . $pt . ')';
+    }
+    if (!$out) {
+        foreach (get_post_types(['public' => true], 'objects') as $pt => $obj) {
+            if ($pt === 'attachment') continue;
+            $out[$pt] = $obj->labels->name . ' (' . $pt . ')';
+        }
+    }
+    return $out;
+}
+
+add_action('admin_init', function () {
+    if (empty($_POST['evk_tools_recalc'])) return;
+    if (!current_user_can('manage_options')) return;
+    check_admin_referer('evk_tools_recalc', 'evk_tools_nonce');
+
+    $pt = sanitize_key($_POST['evk_recalc_post_type'] ?? '');
+    if ($pt === '' || !post_type_exists($pt)) {
+        evk_tools_set_notice('error', 'Wybierz prawidłowy typ treści.');
+        evk_tools_redirect();
+    }
+
+    // Wznowienie przerwanego przebiegu tego samego typu (limit czasu hostingu).
+    $progress = get_option('evk_tools_recalc_progress');
+    $offset   = (is_array($progress) && ($progress['post_type'] ?? '') === $pt) ? (int) ($progress['offset'] ?? 0) : 0;
+
+    $ids = get_posts([
+        'post_type'     => $pt,
+        'post_status'   => 'any',
+        'numberposts'   => -1,
+        'fields'        => 'ids',
+        'orderby'       => 'ID',
+        'order'         => 'ASC',
+        'no_found_rows' => true,
+    ]);
+    $total = count($ids);
+    $start = time();
+    @set_time_limit(0);
+
+    for ($i = $offset; $i < $total; $i++) {
+        evk_rep_recalc((int) $ids[$i], 'post');
+        // Cache mety rośnie z każdym wpisem — zrzucaj co 500, żeby nie puchła pamięć.
+        if ((($i + 1) % 500) === 0) wp_cache_flush();
+        if ((time() - $start) > 20 && ($i + 1) < $total) {
+            update_option('evk_tools_recalc_progress', ['post_type' => $pt, 'offset' => $i + 1], false);
+            evk_tools_set_notice('warning', sprintf(
+                'Przeliczono %d z %d wpisów — przerwano przed limitem czasu hostingu. Kliknij „Przelicz" ponownie, dokończę od miejsca przerwania.',
+                $i + 1, $total
+            ));
+            evk_tools_redirect();
+        }
+    }
+
+    delete_option('evk_tools_recalc_progress');
+    evk_tools_set_notice('success', sprintf('Przeliczono pola obliczeniowe %d wpisów typu „%s".', $total, $pt));
+    evk_tools_redirect();
+});
+
+// =========================================================================
 // CZYSZCZENIE OSIEROCONYCH KLUCZY (bezpieczne)
 // =========================================================================
 
@@ -366,7 +452,7 @@ function evk_tools_page(): void {
         <h1><span class="dashicons dashicons-admin-tools"></span> Narzędzia</h1>
 
         <?php if ($notice): ?>
-            <div class="notice notice-<?php echo $notice['type'] === 'error' ? 'error' : 'success'; ?> is-dismissible">
+            <div class="notice notice-<?php echo in_array($notice['type'], ['error', 'warning'], true) ? $notice['type'] : 'success'; ?> is-dismissible">
                 <p><?php echo esc_html($notice['msg']); ?></p>
             </div>
         <?php endif; ?>
@@ -419,6 +505,38 @@ function evk_tools_page(): void {
                     </label></p>
                     <button type="submit" name="evk_tools_import" value="1" class="button button-primary">
                         <span class="dashicons dashicons-upload"></span> Importuj
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- PRZELICZANIE PÓL OBLICZENIOWYCH -->
+        <div class="evk-settings-group">
+            <h2 class="evk-settings-group-title"><span class="dashicons dashicons-calculator" style="vertical-align:text-bottom;color:#2563eb;"></span> Przelicz pola obliczeniowe</h2>
+            <div>
+                <p style="margin-top:0;color:#475569;">
+                    Po zmianie formuły pola obliczeniowego istniejące wpisy trzymają stary wynik aż do
+                    ponownego zapisania. To narzędzie przelicza je hurtowo (<code>evk_rep_recalc</code>).
+                    Przy dużej liczbie wpisów przebieg może wymagać kilku kliknięć — wznawia się
+                    od miejsca przerwania.
+                </p>
+                <?php $recalc_progress = get_option('evk_tools_recalc_progress'); ?>
+                <?php if (is_array($recalc_progress)): ?>
+                <p style="color:#92400e;background:#fef3c7;padding:8px 12px;border-radius:6px;">
+                    <span class="dashicons dashicons-clock" style="vertical-align:text-bottom;"></span>
+                    Przerwany przebieg dla typu <code><?php echo esc_html($recalc_progress['post_type'] ?? ''); ?></code>
+                    (od wpisu <?php echo (int) ($recalc_progress['offset'] ?? 0); ?>) — wybierz ten sam typ i kliknij „Przelicz", aby dokończyć.
+                </p>
+                <?php endif; ?>
+                <form method="post" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <?php wp_nonce_field('evk_tools_recalc', 'evk_tools_nonce'); ?>
+                    <select name="evk_recalc_post_type">
+                        <?php foreach (evk_tools_recalc_post_types() as $pt => $lbl): ?>
+                        <option value="<?php echo esc_attr($pt); ?>" <?php selected(($recalc_progress['post_type'] ?? '') === $pt); ?>><?php echo esc_html($lbl); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" name="evk_tools_recalc" value="1" class="button button-primary">
+                        <span class="dashicons dashicons-update"></span> Przelicz
                     </button>
                 </form>
             </div>

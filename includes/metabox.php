@@ -824,7 +824,7 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
         $bidir   = evk_rep_bidir_is_field($field);
         $old_ids = $bidir ? evk_rep_bidir_ids(get_metadata($meta_type, $object_id, $fkey, true)) : [];
 
-        $v = evk_rep_sanitize_value($type, $single[$fkey] ?? '');
+        $v = evk_rep_sanitize_value($type, $single[$fkey] ?? '', $field);
         if ($v === '' || $v === null) {
             // Pole z wartością domyślną: zapisz pustkę zamiast kasować, żeby świadome
             // wyczyszczenie nie przywracało defaultu przy ponownym otwarciu.
@@ -895,14 +895,20 @@ function evk_rep_render_metabox(\WP_Post $post, array $box): void {
 // ZAPIS
 // =========================================================================
 
-function evk_rep_sanitize_value(string $type, $v) {
+function evk_rep_sanitize_value(string $type, $v, array $field = []) {
     switch ($type) {
         case 'textarea': return sanitize_textarea_field((string) $v);
         case 'wysiwyg':  return wp_kses_post((string) $v);
         case 'url':      return esc_url_raw((string) $v);
         case 'email':    return sanitize_email((string) $v);
-        case 'number':   return $v === '' ? '' : (is_numeric($v) ? $v + 0 : sanitize_text_field((string) $v));
-        case 'range':    return $v === '' ? '' : (is_numeric($v) ? $v + 0 : sanitize_text_field((string) $v));
+        case 'number':
+            if ($v === '') return '';
+            if (!is_numeric($v)) return sanitize_text_field((string) $v);
+            return evk_rep_clamp_number($v + 0, $field['val_min'] ?? null, $field['val_max'] ?? null);
+        case 'range':
+            if ($v === '') return '';
+            if (!is_numeric($v)) return sanitize_text_field((string) $v);
+            return evk_rep_clamp_number($v + 0, $field['min'] ?? null, $field['max'] ?? null);
         case 'image':    return $v ? (int) $v : '';
         case 'file':     return $v ? (int) $v : '';
         case 'gallery':
@@ -969,7 +975,7 @@ function evk_rep_sanitize_rows(array $fields, $raw): array {
                 continue;
             }
             if ($t === 'calc') { $crow[$fk] = ''; continue; } // POST ignorowany; liczy pass niżej
-            $crow[$fk] = evk_rep_sanitize_value($t, $row[$fk] ?? '');
+            $crow[$fk] = evk_rep_sanitize_value($t, $row[$fk] ?? '', $f);
         }
         $nonempty = false;
         foreach ($crow as $v) {
@@ -994,7 +1000,7 @@ function evk_rep_sanitize_group_values(array $fields, $raw): array {
         } elseif ($t === 'calc') {
             $out[$fk] = ''; // POST ignorowany; liczy pass niżej
         } else {
-            $out[$fk] = evk_rep_sanitize_value($t, $raw[$fk] ?? '');
+            $out[$fk] = evk_rep_sanitize_value($t, $raw[$fk] ?? '', $f);
         }
     }
     // Pola calc grupy (wiersze repeaterów są już policzone w evk_rep_sanitize_rows).
@@ -1090,7 +1096,7 @@ add_filter('attachment_fields_to_save', function ($post, $attachment) {
             if (!in_array($type, $simple, true)) continue;
             $ak = 'evk_' . $fk;
             if (!array_key_exists($ak, $attachment)) continue;
-            $v = evk_rep_sanitize_value($type, wp_unslash($attachment[$ak]));
+            $v = evk_rep_sanitize_value($type, wp_unslash($attachment[$ak]), $f);
             if ($v === '' || $v === null) delete_post_meta($post['ID'], $fk);
             else                          update_post_meta($post['ID'], $fk, $v);
         }
