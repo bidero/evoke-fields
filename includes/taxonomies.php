@@ -36,6 +36,7 @@ function evk_render_taxonomies_page() {
     if ( isset( $_POST['evk_taxonomies_nonce'] ) && wp_verify_nonce( $_POST['evk_taxonomies_nonce'], 'evk_save_taxonomies' ) ) {
         if ( ! isset( $_POST['taxonomies'] ) || ! is_array( $_POST['taxonomies'] ) || empty( $_POST['taxonomies'] ) ) {
             update_option( 'evk_taxonomies', array() );
+            evk_rep_schedule_rewrite_flush();
             echo '<div class="updated"><p>' . esc_html__( 'Zapisano taksonomie.', 'evk-repeater' ) . '</p></div>';
         } else {
             $taxonomies    = array();
@@ -82,6 +83,7 @@ function evk_render_taxonomies_page() {
             }
 
             update_option( 'evk_taxonomies', $taxonomies );
+            evk_rep_schedule_rewrite_flush();
 
             echo '<div class="updated"><p>' . esc_html__( 'Zapisano taksonomie.', 'evk-repeater' ) . '</p></div>';
             if ( ! empty( $skipped_slugs ) ) {

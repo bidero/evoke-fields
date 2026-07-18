@@ -103,6 +103,7 @@ function evk_render_custom_post_types_page() {
             }
 
             update_option( 'evk_custom_post_types', $custom_post_types );
+            evk_rep_schedule_rewrite_flush();
             echo '<div class="updated"><p>' . __( 'Zapisano typy treści.', 'evk-repeater' ) . '</p></div>';
             if ( ! empty( $skipped_slugs ) ) {
                 echo '<div class="notice notice-warning"><p>' . esc_html( sprintf(
@@ -113,6 +114,7 @@ function evk_render_custom_post_types_page() {
             }
         } else {
             update_option( 'evk_custom_post_types', array() );
+            evk_rep_schedule_rewrite_flush();
             echo '<div class="updated"><p>' . __( 'Zapisano typy treści.', 'evk-repeater' ) . '</p></div>';
         }
     }

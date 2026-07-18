@@ -208,10 +208,12 @@ function evk_tools_run_import(array $data, bool $overwrite): array {
     if (isset($data['post_types']) && is_array($data['post_types'])) {
         $merged = evk_tools_merge_by_slug((array) get_option('evk_custom_post_types', []), $data['post_types'], $overwrite);
         update_option('evk_custom_post_types', $merged);
+        evk_rep_schedule_rewrite_flush();
     }
     if (isset($data['taxonomies']) && is_array($data['taxonomies'])) {
         $merged = evk_tools_merge_by_slug((array) get_option('evk_taxonomies', []), $data['taxonomies'], $overwrite);
         update_option('evk_taxonomies', $merged);
+        evk_rep_schedule_rewrite_flush();
     }
 
     // ── Strony ustawień (mapa keyed po slugu) ──

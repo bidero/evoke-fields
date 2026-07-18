@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.39.0
+ * Version: 1.39.1
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.39.0');
+define('EVK_REP_VERSION', '1.39.1');
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
 
@@ -64,6 +64,22 @@ add_action('admin_enqueue_scripts', function ($hook) {
     wp_enqueue_style('evk-rep-admin', EVK_REP_URL . 'assets/admin.css', [], EVK_REP_VERSION);
     evk_rep_admin_localize();
 });
+
+/**
+ * Odświeżenie permalinków po zmianie definicji CPT / taksonomii.
+ * register_post_type/register_taxonomy nie flushują rewrite rules — bez tego nowy
+ * CPT daje 404 na froncie do ręcznego wejścia w Ustawienia → Bezpośrednie odnośniki.
+ * Zapis definicji ustawia flagę; flush robimy RAZ, na następnym init, PO rejestracjach
+ * (priorytet 99 > domyślnego 10 hooków rejestrujących).
+ */
+function evk_rep_schedule_rewrite_flush(): void {
+    update_option('evk_rep_flush_rewrite', 1, false);
+}
+add_action('init', function () {
+    if (!get_option('evk_rep_flush_rewrite')) return;
+    delete_option('evk_rep_flush_rewrite');
+    flush_rewrite_rules();
+}, 99);
 
 // Kolejność ładowania jest ważna:
 // field-groups.php definiuje evk_rep_groups() — musi być przed metabox.php i bricks.php

@@ -2,6 +2,18 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.39.1] — 2026-07-18
+
+### Naprawione
+
+- **Nowy CPT / taksonomia dawały 404 na froncie** — `register_post_type()` nie odświeża
+  rewrite rules, a wtyczka nigdzie nie robiła flusha, więc po utworzeniu typu treści
+  trzeba było ręcznie wejść w Ustawienia → Bezpośrednie odnośniki. Teraz zapis definicji
+  CPT / taksonomii (także przez import w Narzędziach) ustawia flagę
+  `evk_rep_flush_rewrite`, a wtyczka robi jednorazowy `flush_rewrite_rules()` na
+  najbliższym `init` PO rejestracjach (priorytet 99).
+  (`evk-repeater.php`, `includes/cpt.php`, `includes/taxonomies.php`, `includes/tools.php`)
+
 ## [1.39.0] — 2026-07-18
 
 ### Dodane
