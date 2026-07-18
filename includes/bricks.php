@@ -881,38 +881,8 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
         if (isset($seen[$sk])) return;
         $seen[$sk] = true;
         $tags[] = ['name' => '{evk_field_' . $key . '}', 'label' => $label, 'group' => $g];
-        if ($type === 'image') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
-        } elseif ($type === 'file') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__id}',       'label' => $label . ' (ID)',           'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__filename}', 'label' => $label . ' (nazwa pliku)',  'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__preview}',  'label' => $label . ' (podgląd PDF/JPG)', 'group' => $g];
-        } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
-            $tags[] = ['name' => '{evk_field_' . $key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
-        } elseif ($type === 'taxonomy') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__id}',   'label' => $label . ' (ID termu)',   'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__slug}', 'label' => $label . ' (slug termu)', 'group' => $g];
-        } elseif ($type === 'gallery') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)', 'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',   'group' => $g];
-        } elseif ($type === 'relationship') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',   'label' => $label . ' (lista ID)',  'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}', 'label' => $label . ' (liczba)',    'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__url}',   'label' => $label . ' (link 1.)',   'group' => $g];
-        } elseif ($type === 'user') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__ids}',    'label' => $label . ' (lista ID)',      'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__count}',  'label' => $label . ' (liczba)',        'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__email}',  'label' => $label . ' (e-mail 1.)',     'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__url}',    'label' => $label . ' (URL autora 1.)', 'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__avatar}', 'label' => $label . ' (URL awatara 1.)', 'group' => $g];
-        } elseif ($type === 'link') {
-            $tags[] = ['name' => '{evk_field_' . $key . '__title}',  'label' => $label . ' (etykieta)',     'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__target}', 'label' => $label . ' (cel _blank)',   'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__html}',   'label' => $label . ' (gotowy <a>)',   'group' => $g];
-        } elseif (in_array($type, ['date', 'time', 'datetime'], true)) {
-            $tags[] = ['name' => '{evk_field_' . $key . '__raw}',       'label' => $label . ' (ISO)',     'group' => $g];
-            $tags[] = ['name' => '{evk_field_' . $key . '__timestamp}', 'label' => $label . ' (timestamp)', 'group' => $g];
+        foreach ((evk_rep_tag_prop_defs()[$type] ?? []) as $p => $suffix) {
+            $tags[] = ['name' => '{evk_field_' . $key . '__' . $p . '}', 'label' => $label . $suffix, 'group' => $g];
         }
     };
 
@@ -921,15 +891,8 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
         if (isset($seen[$opt_key])) return;
         $seen[$opt_key] = true;
         $tags[] = ['name' => '{' . $opt_key . '}', 'label' => $label, 'group' => $g];
-        if ($type === 'image') {
-            $tags[] = ['name' => '{' . $opt_key . '__id}',  'label' => $label . ' (ID)',  'group' => $g];
-            $tags[] = ['name' => '{' . $opt_key . '__alt}', 'label' => $label . ' (alt)', 'group' => $g];
-        } elseif ($type === 'file') {
-            $tags[] = ['name' => '{' . $opt_key . '__id}',       'label' => $label . ' (ID)',          'group' => $g];
-            $tags[] = ['name' => '{' . $opt_key . '__filename}', 'label' => $label . ' (nazwa pliku)', 'group' => $g];
-            $tags[] = ['name' => '{' . $opt_key . '__preview}',  'label' => $label . ' (podgląd PDF/JPG)', 'group' => $g];
-        } elseif (in_array($type, ['select', 'radio', 'button_group', 'image_select'], true)) {
-            $tags[] = ['name' => '{' . $opt_key . '__label}', 'label' => $label . ' (etykieta)', 'group' => $g];
+        foreach ((evk_rep_tag_prop_defs()[$type] ?? []) as $p => $suffix) {
+            $tags[] = ['name' => '{' . $opt_key . '__' . $p . '}', 'label' => $label . $suffix, 'group' => $g];
         }
     };
 
@@ -966,11 +929,57 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
 // RENDEROWANIE TAGÓW DYNAMICZNYCH
 // =========================================================================
 
+/**
+ * REJESTR propsów tagów per typ pola — JEDNO źródło prawdy dla listy tagów w pickerze
+ * Bricks (dynamic_tags_list) i whitelisty parsera (evk_rep_parse_tag). Nowy wariant
+ * taga = jeden wpis tutaj; osobne dopisywanie do parsera nie jest już potrzebne.
+ * Klucz = prop (po „__"), wartość = sufiks etykiety w pickerze.
+ */
+function evk_rep_tag_prop_defs(): array {
+    return [
+        'image'        => ['id' => ' (ID)', 'alt' => ' (alt)'],
+        'file'         => ['id' => ' (ID)', 'filename' => ' (nazwa pliku)', 'preview' => ' (podgląd PDF/JPG)'],
+        'select'       => ['label' => ' (etykieta)'],
+        'radio'        => ['label' => ' (etykieta)'],
+        'button_group' => ['label' => ' (etykieta)'],
+        'image_select' => ['label' => ' (etykieta)'],
+        'taxonomy'     => ['id' => ' (ID termu)', 'slug' => ' (slug termu)'],
+        'gallery'      => ['ids' => ' (lista ID)', 'count' => ' (liczba)'],
+        'relationship' => ['ids' => ' (lista ID)', 'count' => ' (liczba)', 'url' => ' (link 1.)'],
+        'user'         => ['ids' => ' (lista ID)', 'count' => ' (liczba)', 'email' => ' (e-mail 1.)', 'url' => ' (URL autora 1.)', 'avatar' => ' (URL awatara 1.)'],
+        'link'         => ['title' => ' (etykieta)', 'target' => ' (cel _blank)', 'html' => ' (gotowy <a>)'],
+        'date'         => ['raw' => ' (ISO)', 'timestamp' => ' (timestamp)'],
+        'time'         => ['raw' => ' (ISO)', 'timestamp' => ' (timestamp)'],
+        'datetime'     => ['raw' => ' (ISO)', 'timestamp' => ' (timestamp)'],
+    ];
+}
+
+/**
+ * Alternacja propsów do regexa parsera: unia rejestru + propsy tylko-PHP (path)
+ * + nazwy rozmiarów obrazków. Sort malejąco po długości, żeby 'ids' nie przegrało
+ * z 'id' (regex bierze pierwszy pasujący wariant alternacji).
+ */
+function evk_rep_tag_props_pattern(): string {
+    static $pat = null;
+    if ($pat !== null) return $pat;
+    $props = [];
+    foreach (evk_rep_tag_prop_defs() as $defs) {
+        foreach ($defs as $p => $_) $props[$p] = true;
+    }
+    foreach (['path', 'thumbnail', 'medium', 'medium_large', 'large', 'full', '1536x1536', '2048x2048'] as $p) {
+        $props[$p] = true;
+    }
+    $keys = array_keys($props);
+    usort($keys, function ($a, $b) { return strlen($b) - strlen($a); });
+    $pat = implode('|', array_map('preg_quote', $keys));
+    return $pat;
+}
+
 function evk_rep_parse_tag(string $raw): array {
     // __meta:klucz — meta powiązanego obiektu (user/relationship/taxonomy). Klucz dynamiczny.
     if (preg_match('/^(.+)__meta:([A-Za-z0-9_\-]+)$/', $raw, $m)) return [$m[1], 'meta:' . $m[2]];
-    // Props + standardowe rozmiary obrazków. Lista zamknięta, by klucze z „__" nie były psute.
-    if (preg_match('/^(.*)__(ids|id|alt|label|slug|count|url|email|avatar|title|target|html|raw|timestamp|filename|path|preview|thumbnail|medium|medium_large|large|full|1536x1536|2048x2048)$/', $raw, $m)) return [$m[1], $m[2]];
+    // Whitelist z rejestru — zamknięta lista, by klucze pól z „__" nie były psute.
+    if (preg_match('/^(.*)__(' . evk_rep_tag_props_pattern() . ')$/', $raw, $m)) return [$m[1], $m[2]];
     return [$raw, ''];
 }
 

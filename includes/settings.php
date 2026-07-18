@@ -324,8 +324,32 @@ add_action('admin_init', function () {
         } else {
             $clean = evk_rep_sanitize_group_values($g['fields'] ?? [], $gdata);
         }
-        update_option('evk_rep_opt_' . $gk, $clean);
+        // autoload=false: wartości grup (bywają duże — galerie, repeatery) nie mają
+        // obciążać alloptions na każdym żądaniu; czytane są punktowo przez get_option.
+        update_option('evk_rep_opt_' . $gk, $clean, false);
     }
     wp_safe_redirect(add_query_arg(['page' => $slug, 'tab' => (int) ($_POST['evk_settings_tab'] ?? 0), 'updated' => 1], admin_url('admin.php')));
     exit;
+});
+
+// Jednorazowa migracja: istniejące evk_rep_opt_* na autoload=no (nowe zapisy już tak mają).
+add_action('admin_init', function () {
+    if (get_option('evk_opt_autoload_off_done')) return;
+    global $wpdb;
+    $like  = $wpdb->esc_like('evk_rep_opt_') . '%';
+    $names = $wpdb->get_col($wpdb->prepare(
+        "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s AND autoload IN ('yes','on','auto','auto-on')",
+        $like
+    ));
+    if ($names) {
+        if (function_exists('wp_set_option_autoload_values')) { // WP 6.4+
+            wp_set_option_autoload_values(array_fill_keys($names, false));
+        } else {
+            foreach ($names as $n) {
+                $wpdb->update($wpdb->options, ['autoload' => 'no'], ['option_name' => $n]);
+            }
+            wp_cache_delete('alloptions', 'options');
+        }
+    }
+    update_option('evk_opt_autoload_off_done', 1);
 });

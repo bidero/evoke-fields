@@ -2,6 +2,31 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.41.0] — 2026-07-18
+
+### Dodane
+
+- **Publiczne API PHP** (`includes/api.php`) — do motywów i własnego kodu, niezależnie
+  od Bricks: `evk_get_field($key, $post_id, $prop)` (wartość jak tag dynamiczny),
+  `evk_rows($key, $post_id)` (wiersze repeatera — grupy lub pola; subpola calc już
+  policzone), `evk_get_option_field($group, $key, $default)` (alias `evk_rep_get_option`).
+  Wszystko za guardami `function_exists`.
+
+### Zmienione
+
+- **Wydajność: `evk_rep_opt_*` bez autoloadu** — wartości grup opcji (bywają duże:
+  galerie, repeatery) nie ładują się już z `alloptions` przy każdym żądaniu; nowe zapisy
+  z `autoload=false`, istniejące opcje migrowane jednorazowo (`wp_set_option_autoload_values`
+  na WP 6.4+, fallback `$wpdb`). (`includes/settings.php`, `includes/tools.php`)
+- **Rejestr propsów tagów** — warianty tagów (`__id`, `__label`, `__filename`…) mają
+  teraz JEDNO źródło prawdy: `evk_rep_tag_prop_defs()`. Picker Bricks i whitelist parsera
+  (`evk_rep_parse_tag`) są z niego generowane (alternacja sortowana malejąco po długości,
+  by `ids` nie przegrywało z `id`), więc nowy wariant to jeden wpis — koniec z rozjazdem
+  „tag w pickerze jest, parser go nie zna" (jak z `__filename` w 1.36.0). Efekt uboczny:
+  picker stron opcji pokazuje teraz komplet wariantów także dla typów link/user/relacja/
+  taksonomia/galeria/data (rozwiązywały się poprawnie już wcześniej — brakowało ich tylko
+  na liście). (`includes/bricks.php`)
+
 ## [1.40.0] — 2026-07-18
 
 ### Dodane

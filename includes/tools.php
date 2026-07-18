@@ -232,7 +232,7 @@ function evk_tools_run_import(array $data, bool $overwrite): array {
     foreach ((array) ($data['option_values'] ?? []) as $name => $val) {
         if (strpos((string) $name, EVK_TOOLS_OPT_PREFIX) !== 0) continue;
         if (get_option($name, null) !== null && !$overwrite) continue;
-        update_option($name, $val);
+        update_option($name, $val, false); // autoload=false — jak zapis w settings.php
     }
 
     evk_groups_cache_clear();
