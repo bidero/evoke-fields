@@ -2,6 +2,21 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.46.0] — 2026-07-19
+
+### Zmienione
+
+- **Pole „Obraz" w stylu galerii** — zamiast przycisku „Wybierz" + link „Usuń" pole
+  ma teraz spójny z galerią widok: gdy puste — kropkowany przycisk „Wybierz obraz";
+  gdy wybrane — kafelek z podglądem i czerwonym „×" pojawiającym się po najechaniu.
+  Klik w miniaturę podmienia obraz. Nowa opcja w builderze: **rozmiar podglądu
+  w edytorze (px)** (analogicznie do szerokości kafelka galerii; nie wpływa na front —
+  rozmiar wyjściowy ustawiasz w elemencie Image w Bricks). Podgląd zachowuje proporcje
+  obrazu (bez kadrowania do kwadratu). (`includes/metabox.php`, `includes/builder.php`,
+  `assets/admin.js`, `assets/admin.css`, `assets/builder.css`)
+- **Image Select** — kafelki opcji dostały spójny z resztą UI cień po najechaniu.
+  (`assets/admin.css`)
+
 ## [1.45.1] — 2026-07-19
 
 ### Techniczne

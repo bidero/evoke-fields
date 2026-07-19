@@ -27,7 +27,7 @@ System własnych pól dla WordPressa zintegrowany z **Bricks Builder**: grupy p�
 | Liczbowe | Liczba, Suwak (range), **Pole obliczeniowe (calc)** |
 | Wybór | Lista rozwijana, Radio, Grupa przycisków, Image Select, Checkbox, Przełącznik (toggle) |
 | Data/czas | Data, Czas, Data i godzina (zapis ISO; opcjonalny format wyświetlania) |
-| Media | Obraz, Galeria (z kategoriami), **Plik** (dowolny typ z biblioteki mediów) |
+| Media | Obraz (kafelek z podglądem, konfigurowalny rozmiar podglądu), Galeria (z kategoriami), **Plik** (dowolny typ z biblioteki mediów) |
 | Relacje | Taksonomia, Relacja (posty), Użytkownik — z opcją **relacji dwukierunkowej** (`reverse_key`) |
 | Inne | Kolor, Link/przycisk (URL + etykieta + cel), Repeater (pola powtarzalne) |
 | Układ | Zakładka, Akordeon, Nagłówek, Opis (nie zapisują danych) |

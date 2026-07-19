@@ -137,6 +137,7 @@
 .evk-b-field.is-collapsed > .evk-b-field-image-select,
 .evk-b-field.is-collapsed > .evk-b-field-range,
 .evk-b-field.is-collapsed > .evk-b-field-calc,
+.evk-b-field.is-collapsed > .evk-b-field-image,
 .evk-b-field.is-collapsed > .evk-b-field-tax,
 .evk-b-field.is-collapsed > .evk-b-field-gallery,
 .evk-b-field.is-collapsed > .evk-b-field-relationship,
@@ -256,8 +257,9 @@
 .evk-b-field-tax .evk-b-ctrl-grid{display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;}
 
 /* ── Dodatkowe konfiguracje pól ── */
-.evk-b-field-image-select,.evk-b-field-range,.evk-b-field-gallery,.evk-b-field-calc{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
+.evk-b-field-image-select,.evk-b-field-range,.evk-b-field-gallery,.evk-b-field-calc,.evk-b-field-image{display:none;margin-top:14px;padding:14px;background:#fff;border:1px solid #d7dde7;border-radius:8px;}
 .evk-b-field.is-image-select .evk-b-field-image-select,.evk-b-field.is-range .evk-b-field-range,.evk-b-field.is-gallery .evk-b-field-gallery{display:block;}
+.evk-b-field[data-ftype="image"] > .evk-b-field-image{display:block;}
 .evk-b-field[data-ftype="calc"] > .evk-b-field-calc{display:block;}
 .evk-b-field[data-ftype="calc"] .evk-b-badge{background:#f59e0b;}
 .evk-b-field-calc .description code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:4px;font-size:11px;}

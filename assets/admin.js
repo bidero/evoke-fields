@@ -66,27 +66,33 @@
         $(this).closest('.evk-rep-row').toggleClass('collapsed');
     });
 
-    // ── Media picker ──
-    $(document).on('click', '.evk-rep-image-pick', function (e) {
+    // ── Media picker (pole Obraz — kafelek jak galeria) ──
+    function evkImageApply($field, att) {
+        $field.find('.evk-rep-image-id').val(att.id);
+        var src = (att.sizes && (att.sizes.medium || att.sizes.thumbnail))
+            ? (att.sizes.medium || att.sizes.thumbnail).url : att.url;
+        $field.find('.evk-rep-image-thumb').html('<img src="' + src + '" alt="">');
+        $field.find('.evk-rep-image-item').show();
+        $field.find('.evk-rep-image-pick').hide();
+    }
+    // Dashed „Wybierz obraz" (puste) lub klik w miniaturę (podmiana) → picker.
+    $(document).on('click', '.evk-rep-image-pick, .evk-rep-image-thumb', function (e) {
         e.preventDefault();
         var $field = $(this).closest('.evk-rep-image');
-        var frame = wp.media({ title: 'Wybierz obraz', button: { text: 'Użyj' }, multiple: false });
+        var frame = wp.media({ title: 'Wybierz obraz', button: { text: 'Użyj' }, multiple: false, library: { type: 'image' } });
         frame.on('select', function () {
-            var att = frame.state().get('selection').first().toJSON();
-            $field.find('.evk-rep-image-id').val(att.id);
-            var src = (att.sizes && att.sizes.thumbnail) ? att.sizes.thumbnail.url : att.url;
-            $field.find('.evk-rep-image-preview').html('<img src="' + src + '" alt="">');
-            $field.find('.evk-rep-image-clear').show();
+            evkImageApply($field, frame.state().get('selection').first().toJSON());
         });
         frame.open();
     });
-
-    $(document).on('click', '.evk-rep-image-clear', function (e) {
+    // Hover-X — usuń obraz, wróć do dashed.
+    $(document).on('click', '.evk-rep-image-remove', function (e) {
         e.preventDefault();
         var $field = $(this).closest('.evk-rep-image');
         $field.find('.evk-rep-image-id').val('');
-        $field.find('.evk-rep-image-preview').empty();
-        $(this).hide();
+        $field.find('.evk-rep-image-thumb').empty();
+        $field.find('.evk-rep-image-item').hide();
+        $field.find('.evk-rep-image-pick').show();
     });
 
     // ── File picker (dowolny typ pliku) ──

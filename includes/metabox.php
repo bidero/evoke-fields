@@ -354,12 +354,16 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             break;
 
         case 'image':
-            $has = $val !== '' && $val !== null && $val !== 0 && $val !== '0';
-            echo '<div class="evk-rep-image">';
-            echo '<input type="hidden" class="evk-rep-image-id" name="' . esc_attr($name) . '" value="' . esc_attr((string) $val) . '">';
-            echo '<div class="evk-rep-image-preview">' . ($has ? wp_get_attachment_image((int) $val, 'thumbnail') : '') . '</div>';
-            echo '<button type="button" class="button evk-rep-image-pick">Wybierz</button>';
-            echo '<button type="button" class="button-link evk-rep-image-clear" style="' . ($has ? '' : 'display:none;') . '">Usuń</button>';
+            $iid = (int) $val;
+            $has = $iid > 0;
+            $pw  = max(40, min(400, (int) ($field['image_preview_width'] ?? 120)));
+            echo '<div class="evk-rep-image" style="--evk-img-w:' . esc_attr((string) $pw) . 'px;">';
+            echo '<input type="hidden" class="evk-rep-image-id" name="' . esc_attr($name) . '" value="' . esc_attr($has ? (string) $iid : '') . '">';
+            echo '<div class="evk-rep-image-item"' . ($has ? '' : ' style="display:none;"') . '>';
+            echo '<span class="evk-rep-image-thumb" title="Zmień obraz">' . ($has ? wp_get_attachment_image($iid, 'medium') : '') . '</span>';
+            echo '<button type="button" class="evk-rep-image-remove" title="Usuń"><span class="dashicons dashicons-no-alt"></span></button>';
+            echo '</div>';
+            echo '<button type="button" class="button evk-rep-image-pick"' . ($has ? ' style="display:none;"' : '') . '><span class="dashicons dashicons-format-image"></span> Wybierz obraz</button>';
             echo '</div>';
             break;
 

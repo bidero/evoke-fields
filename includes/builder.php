@@ -486,6 +486,11 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             : [];
         if ($roles) $def['user_roles'] = $roles;
         if (!empty($f['user_multiple'])) $def['user_multiple'] = true;
+    } elseif ($type === 'image') {
+        $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
+        if (isset($f['image_preview_width']) && $f['image_preview_width'] !== '' && is_numeric($f['image_preview_width'])) {
+            $def['image_preview_width'] = max(40, min(400, (int) $f['image_preview_width']));
+        }
     } elseif ($type === 'image_select') {
         $def['width']        = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         $def['options']      = sanitize_textarea_field(evk_rep_normalize_options_text($f['options'] ?? ''));
@@ -650,6 +655,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $options         = $field['options']     ?? '';
     $image_width     = (int)($field['image_width']  ?? 80);
     $image_height    = (int)($field['image_height'] ?? 80);
+    $image_prev_w    = isset($field['image_preview_width']) ? (int) $field['image_preview_width'] : 0;
     $range_min       = $field['min']         ?? 0;
     $range_max       = $field['max']         ?? 100;
     $range_step      = $field['step']        ?? 1;
@@ -784,6 +790,17 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 <span class="evk-b-opts-image">Opcje obrazków — jedna na linię, format <code>URL obrazka : Etykieta</code></span>
             </label>
             <textarea name="<?php echo esc_attr($base); ?>[options]" rows="3" placeholder="low : Niski&#10;high : Wysoki"><?php echo esc_textarea($options); ?></textarea>
+        </div>
+
+        <div class="evk-b-field-image">
+            <div class="evk-b-section-title">Konfiguracja obrazu</div>
+            <div class="evk-b-inline-grid">
+                <div class="evk-b-ctrl">
+                    <label>Rozmiar podglądu w edytorze (px)</label>
+                    <input type="number" min="40" max="400" step="1" name="<?php echo esc_attr($base); ?>[image_preview_width]" value="<?php echo $image_prev_w > 0 ? esc_attr((string) $image_prev_w) : ''; ?>" placeholder="120 (domyślnie)">
+                </div>
+            </div>
+            <p class="description" style="margin:10px 0 0;">Szerokość miniatury w metaboxie. Rozmiar wyjściowy na froncie ustawiasz w elemencie Image w Bricks.</p>
         </div>
 
         <div class="evk-b-field-image-select">
