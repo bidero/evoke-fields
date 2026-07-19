@@ -80,8 +80,11 @@
 
 /* Badge separatora (ukryty gdy pusty) */
 /* Badge typu pola — obecny na KAŻDYM polu. Domyślnie stonowany szary (pola danych);
-   akcenty tylko dla kategorii, które warto wyróżnić (patrz overrides niżej). */
-.evk-b-badge{flex:0 0 auto;display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#64748b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;}
+   akcenty tylko dla kategorii, które warto wyróżnić (patrz overrides niżej).
+   Slot o stałej szerokości rezerwuje miejsce, więc etykiety (.evk-b-fld-label)
+   startują zawsze w tym samym miejscu — a sam kafelek pozostaje dopasowany do treści. */
+.evk-b-badge-slot{flex:0 0 auto;width:104px;display:inline-flex;align-items:center;}
+.evk-b-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#64748b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;white-space:nowrap;}
 .evk-b-badge:empty{display:none;}
 /* Repeater / kontener */
 .evk-b-field[data-ftype="repeater"] .evk-b-badge{background:#2563eb;}

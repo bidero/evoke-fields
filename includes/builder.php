@@ -740,7 +740,7 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     <div class="<?php echo esc_attr($cls); ?>" data-base="<?php echo esc_attr($base); ?>" data-ftype="<?php echo esc_attr($type); ?>">
         <div class="evk-b-field-top">
             <span class="evk-b-handle <?php echo $sub ? 'evk-b-subhandle' : 'evk-b-fhandle'; ?> dashicons dashicons-menu" title="Przeciągnij"></span>
-            <span class="evk-b-badge" aria-hidden="true"></span>
+            <span class="evk-b-badge-slot"><span class="evk-b-badge" aria-hidden="true"></span></span>
             <input type="text" name="<?php echo esc_attr($base); ?>[label]" value="<?php echo esc_attr($label); ?>" placeholder="Etykieta pola" class="evk-b-fld-label">
             <?php if (!$sub): ?>
             <label class="evk-switch-wrap evk-b-col-switch" title="Pokaż jako kolumnę w panelu admina">

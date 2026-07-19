@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.48.2] — 2026-07-19
+
+### Naprawione
+
+- **Etykiety pól w edytorze startowały na różnej wysokości** — po dodaniu badge na każde
+  pole (1.48.0) różna szerokość plakietki przesuwała pole „Etykieta pola" (`.evk-b-fld-label`)
+  w każdym wierszu inaczej. Badge trafił do slotu o stałej szerokości (rezerwuje miejsce),
+  więc etykiety startują teraz równo w kolumnie, a sam kafelek pozostaje dopasowany do treści.
+  (`includes/builder.php`, `assets/builder.css`)
+
 ## [1.48.1] — 2026-07-19
 
 ### Naprawione
