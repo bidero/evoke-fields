@@ -2,6 +2,21 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.45.0] — 2026-07-19
+
+### Dodane
+
+- **Automatyczne aktualizacje z GitHub** — port poprawionego updatera z Evoke ONE
+  (1.19.4): najnowsze wydanie (Release, fallback: tagi — najwyższa wersja wybierana
+  przez `version_compare`, nie kolejność API) wpinane w natywny mechanizm aktualizacji
+  WP; link „Sprawdź aktualizacje" przy wtyczce; naprawa nazwy folderu zipballa;
+  wersja zainstalowana czytana z `checked[]` (bez „wiszącego" paska po aktualizacji).
+  **Repo jest prywatne** — na stronie wymagany token: `define('EVK_FIELDS_GITHUB_TOKEN',
+  'github_pat_...')` w wp-config.php (albo opcja `evk_fields_github_token`); PAT
+  z uprawnieniem „Contents: Read". Osobna klasa (`EVK_Fields_GitHub_Updater`) —
+  bez kolizji z Evoke ONE na tej samej stronie. (`includes/github-updater.php`,
+  `evk-repeater.php` — nowa stała `EVK_REP_FILE`)
+
 ## [1.44.0] — 2026-07-19
 
 ### Dodane
