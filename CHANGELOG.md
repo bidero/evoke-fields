@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.49.1] — 2026-07-19
+
+### Zmienione
+
+- **Lepsze domyślne odstępy/typografia w metaboksie** — etykieta pola (`.evk-s-label`)
+  dostała większą czcionkę (13px) i margines dolny (7px); nagłówek sekcji ma więcej
+  oddechu u góry i odrobinę większą czcionkę. Akordeon w metaboksie: `padding:0`, więc
+  jego pola układają się w tej samej siatce co reszta (pełne kreski wierszy).
+  (`assets/admin.css`)
+
 ## [1.49.0] — 2026-07-19
 
 ### Zmienione
