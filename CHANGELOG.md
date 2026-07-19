@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.52.1] — 2026-07-19
+
+### Naprawione
+
+- **Nagłówek pola miał zbyt duży lewy padding w metaboksie** — dwie przyczyny: WordPress
+  stylizuje `#poststuff h2 / h3.hndle` (`padding:8px 12px`, `font:14px`) z id w specyficzności,
+  co biło nasze reguły; dodatkowo wcięcie 14px było nakładane i na `.evk-s-heading-wrap`, i na
+  sam nagłówek (razem ~28px). Teraz reset na poziomie `#poststuff` przebija reguły WP, a wcięcie
+  14px jest tylko na samym nagłówku — tekst wyrównany do treści pól, podkreślenie na pełną
+  szerokość (spójnie z kreskami wierszy). (`assets/admin.css`)
+
 ## [1.52.0] — 2026-07-19
 
 ### Dodane
