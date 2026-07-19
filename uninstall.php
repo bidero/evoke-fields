@@ -30,6 +30,7 @@ $options = [
     'evk_opt_autoload_off_done',
     'evk_rep_flush_rewrite',
     'evk_tools_recalc_progress',
+    'evk_rep_style_tokens',
 ];
 foreach ($options as $opt) {
     delete_option($opt);

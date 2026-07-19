@@ -91,7 +91,7 @@ evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz
 
 ## Narzędzia
 
-**Eksport/Import** (JSON: grupy, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania) · **Przelicz pola obliczeniowe** (hurtowo, ze wznowieniem po limicie czasu hostingu) · **Czyszczenie osieroconych kluczy**.
+**Eksport/Import** (JSON: grupy, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania) · **Przelicz pola obliczeniowe** (hurtowo, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
 
 ## CPT i taksonomie
 

@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.51.0] — 2026-07-19
+
+### Dodane
+
+- **Narzędzia → „Wygląd pól" (tokeny stylów)** — kilka regulacji typografii/odstępów UI
+  pól jako zmienne CSS: wielkość i odstęp etykiety, odstęp nad nagłówkiem, padding pionowy
+  pola w metaboksie. Zapis globalny (opcja `evk_rep_style_tokens`, autoload=false),
+  wstrzykiwany jako `:root` override tylko gdy wartość różni się od domyślnej (zero narzutu
+  na czystej instalacji). Świadomie kilka tokenów zamiast pełnego edytora per-element
+  (mniejsza złożoność i utrzymanie). (`includes/tools.php`, `assets/admin.css`, `uninstall.php`)
+
 ## [1.50.0] — 2026-07-19
 
 ### Dodane

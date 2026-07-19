@@ -270,6 +270,59 @@ add_action('admin_init', function () {
 });
 
 // =========================================================================
+// TOKENY WYGLĄDU PÓL (zmienne CSS sterowane z Narzędzi)
+// Kilka tokenów zamiast pełnego edytora per-element — patrz README/CHANGELOG.
+// =========================================================================
+
+function evk_rep_style_token_defs(): array {
+    return [
+        'label_size'  => ['label' => 'Wielkość czcionki etykiety', 'var' => '--evk-label-size',  'def' => 13, 'min' => 9, 'max' => 20],
+        'label_gap'   => ['label' => 'Odstęp pod etykietą',        'var' => '--evk-label-gap',   'def' => 7,  'min' => 0, 'max' => 24],
+        'heading_top' => ['label' => 'Odstęp nad nagłówkiem',      'var' => '--evk-heading-top', 'def' => 16, 'min' => 0, 'max' => 48],
+        'row_pad'     => ['label' => 'Padding pionowy pola (metabox)', 'var' => '--evk-row-pad', 'def' => 13, 'min' => 4, 'max' => 32],
+    ];
+}
+
+function evk_rep_style_tokens(): array {
+    $v = get_option('evk_rep_style_tokens', []);
+    return is_array($v) ? $v : [];
+}
+
+/** ':root{...}' z NIEDOMYŚLNYCH tokenów (pusto = brak nadpisań → zero narzutu). */
+function evk_rep_style_tokens_css(): string {
+    $saved = evk_rep_style_tokens();
+    $css = '';
+    foreach (evk_rep_style_token_defs() as $k => $d) {
+        if (!isset($saved[$k]) || $saved[$k] === '' || !is_numeric($saved[$k])) continue;
+        $val = max($d['min'], min($d['max'], (int) $saved[$k]));
+        if ($val === (int) $d['def']) continue; // równe domyślnej — nie nadpisuj
+        $css .= $d['var'] . ':' . $val . 'px;';
+    }
+    return $css === '' ? '' : ':root{' . $css . '}';
+}
+
+add_action('admin_head', function () {
+    $css = evk_rep_style_tokens_css();
+    if ($css !== '') echo '<style id="evk-style-tokens">' . $css . "</style>\n";
+});
+
+add_action('admin_init', function () {
+    if (empty($_POST['evk_tools_style_save'])) return;
+    if (!current_user_can('manage_options')) return;
+    check_admin_referer('evk_tools_style', 'evk_tools_nonce');
+
+    $out = [];
+    foreach (evk_rep_style_token_defs() as $k => $d) {
+        $raw = $_POST['evk_style'][$k] ?? '';
+        if ($raw === '' || !is_numeric($raw)) continue;
+        $out[$k] = max($d['min'], min($d['max'], (int) $raw));
+    }
+    update_option('evk_rep_style_tokens', $out, false);
+    evk_tools_set_notice('success', 'Zapisano wygląd pól.');
+    evk_tools_redirect();
+});
+
+// =========================================================================
 // PRZELICZANIE PÓL OBLICZENIOWYCH (bulk evk_rep_recalc)
 // =========================================================================
 
@@ -538,6 +591,28 @@ function evk_tools_page(): void {
                     <button type="submit" name="evk_tools_recalc" value="1" class="button button-primary">
                         <span class="dashicons dashicons-update"></span> Przelicz
                     </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- WYGLĄD PÓL (TOKENY) -->
+        <div class="evk-settings-group">
+            <h2 class="evk-settings-group-title"><span class="dashicons dashicons-admin-appearance" style="vertical-align:text-bottom;color:#2563eb;"></span> Wygląd pól</h2>
+            <div>
+                <p style="margin-top:0;color:#475569;">
+                    Dostosuj typografię i odstępy UI pól (globalnie, we wszystkich metaboxach i na stronach ustawień).
+                    Puste = wartość domyślna. Wartości w pikselach.
+                </p>
+                <?php $st = evk_rep_style_tokens(); ?>
+                <form method="post" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;align-items:end;">
+                    <?php wp_nonce_field('evk_tools_style', 'evk_tools_nonce'); ?>
+                    <?php foreach (evk_rep_style_token_defs() as $k => $d): ?>
+                    <label style="display:block;">
+                        <span style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px;"><?php echo esc_html($d['label']); ?> (px)</span>
+                        <input type="number" min="<?php echo (int) $d['min']; ?>" max="<?php echo (int) $d['max']; ?>" step="1" name="evk_style[<?php echo esc_attr($k); ?>]" value="<?php echo esc_attr($st[$k] ?? ''); ?>" placeholder="<?php echo (int) $d['def']; ?> (domyślnie)" style="width:100%;">
+                    </label>
+                    <?php endforeach; ?>
+                    <div><button type="submit" name="evk_tools_style_save" value="1" class="button button-primary"><span class="dashicons dashicons-saved" style="vertical-align:text-bottom;"></span> Zapisz wygląd</button></div>
                 </form>
             </div>
         </div>

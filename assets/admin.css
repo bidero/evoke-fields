@@ -10,7 +10,7 @@
 .postbox[id^="evk_rep_"]:hover .hndle .evk-group-edit{opacity:1;}
 .postbox[id^="evk_rep_"] .hndle .evk-group-edit:hover{color:#2563eb;}
 .evk-group-edit .dashicons{font-size:16px;width:16px;height:16px;line-height:1;}
-.evk-rep-field > label,.evk-s-label{font-weight:600;font-size:13px;margin-bottom:7px;color:#111827;}
+.evk-rep-field > label,.evk-s-label{font-weight:600;font-size:var(--evk-label-size,13px);margin-bottom:var(--evk-label-gap,7px);color:#111827;}
 /* ── Instrukcja pola (pod inputem) + tooltip „?" przy etykiecie ── */
 .evk-s-instructions{margin:5px 0 0;font-size:12px;color:#6b7280;line-height:1.5;}
 .evk-s-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:5px;border-radius:50%;background:#cbd5e1;color:#fff;font:700 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:help;position:relative;vertical-align:middle;flex:0 0 auto;}
@@ -173,7 +173,7 @@
 .evk-mb-rows > .inside{padding-left:0;padding-right:0;}
 .evk-mb-rows .evk-s-panel.active{column-gap:0;row-gap:0;align-items:stretch;padding-top:0;}
 .evk-mb-rows .evk-s-acc.open .evk-s-acc-body{column-gap:0;row-gap:0;align-items:stretch;padding:0;}
-.evk-mb-rows .evk-s-field{padding:13px 14px;border-bottom:1px solid #eef2f7;}
+.evk-mb-rows .evk-s-field{padding:var(--evk-row-pad,13px) 14px;border-bottom:1px solid #eef2f7;}
 .evk-mb-rows .evk-s-panel.active > .evk-s-field:last-child,
 .evk-mb-rows .evk-s-acc.open .evk-s-acc-body > .evk-s-field:last-child{border-bottom:0;}
 /* Elementy pełnej szerokości wcięte, bo .inside stracił boczny padding. */
@@ -247,7 +247,7 @@
 .evk-s-desc--collapsible .evk-s-desc-body{padding:12px 15px 12px;border-top:1px solid #e2e8f0;}
 
 /* ── Nagłówek — rozbudowany (Faza 6B) ── */
-.evk-s-heading-wrap{grid-column:1 / -1;margin:16px 0 2px;}
+.evk-s-heading-wrap{grid-column:1 / -1;margin:var(--evk-heading-top,16px) 0 2px;}
 .evk-s-heading-wrap > h1,
 .evk-s-heading-wrap > h2,
 .evk-s-heading-wrap > h3,
