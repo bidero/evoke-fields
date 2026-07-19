@@ -586,4 +586,48 @@
     $(document).on('click', '.evk-rep-add, .evk-rep-remove, .evk-gallery-add', evkCalcSchedule);
     $(function () { evkCalcRecalcAll(); });
 
+    /* ── Zależne metaboxy taksonomii: wybór rodzica filtruje opcje dziecka ──
+       Metabox (select/radio) taksonomii z dep_tax/dep_key ma data-evk-dep-tax,
+       a każda opcja data-evk-dep="1,5" (ID termów nadrzędnych z term meta).
+       Pusty data-evk-dep = term uniwersalny (zawsze widoczny). */
+
+    function evkTaxParentVal(slug) {
+        var $sel = $('select[name="evk_tax_mb[' + slug + ']"]');
+        if ($sel.length) return parseInt($sel.val(), 10) || 0;
+        var $rad = $('input[type=radio][name="evk_tax_mb[' + slug + ']"]:checked');
+        if ($rad.length) return parseInt($rad.val(), 10) || 0;
+        return 0; // rodzic bez metaboxa EVK (styl domyślny) → bez filtrowania
+    }
+
+    function evkTaxFilterDependents() {
+        $('.evk-tax-mb[data-evk-dep-tax]').each(function () {
+            var $box    = $(this);
+            var parent  = evkTaxParentVal($box.attr('data-evk-dep-tax'));
+            var changed = false;
+
+            $box.find('option[data-evk-dep], input[type=radio][data-evk-dep]').each(function () {
+                var $o   = $(this);
+                var dep  = String($o.attr('data-evk-dep') || '');
+                var ids  = dep ? dep.split(',').map(Number) : [];
+                var show = !parent || !ids.length || ids.indexOf(parent) !== -1;
+                if ($o.is('option')) {
+                    $o.prop('disabled', !show).prop('hidden', !show);
+                    if (!show && $o.is(':selected')) { $o.closest('select').val('0'); changed = true; }
+                } else {
+                    $o.closest('li').toggle(show);
+                    if (!show && $o.is(':checked')) {
+                        $box.find('input[type=radio][value="0"]').prop('checked', true);
+                        changed = true;
+                    }
+                }
+            });
+
+            // Reset wyboru → przefiltruj też metaboxy zależne od TEGO (kaskada).
+            if (changed) evkTaxFilterDependents();
+        });
+    }
+
+    $(document).on('change', 'select[name^="evk_tax_mb["], input[type=radio][name^="evk_tax_mb["]', evkTaxFilterDependents);
+    $(function () { evkTaxFilterDependents(); });
+
 })(jQuery);

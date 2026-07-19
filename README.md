@@ -98,6 +98,7 @@ evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz
 **Evoke FIELDS → Typy treści / Taksonomie** — rejestracja własnych typów i taksonomii (z kolumną admina, REST, hierarchią). Permalinki odświeżają się automatycznie po zapisie definicji.
 
 - **Metabox wyboru** per taksonomia: **Checkboxy** (WP, wielokrotny), **Lista rozwijana** lub **Radio** (pojedynczy wybór z opcją „— brak —"); zapis przypisuje prawdziwe termy (`wp_set_object_terms`).
+- **Zależne metaboxy**: opcja „Filtruj opcje wg taksonomii" + klucz pola relacji (pole Taksonomia EVK na termach, term meta) — wybór termu nadrzędnego (np. Trenera) zawęża opcje zależnej taksonomii (np. Grupy); działa kaskadowo, termy bez relacji są zawsze widoczne.
 - **Kolumna taksonomii** na liście wpisów jest **sortowalna** po nazwie termu; wpisy bez termu pozostają na liście (sortują się na początku/końcu).
 
 ## Deinstalacja

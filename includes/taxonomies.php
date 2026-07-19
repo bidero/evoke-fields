@@ -80,6 +80,8 @@ function evk_render_taxonomies_page() {
                     'post_types'   => array_map( 'sanitize_text_field', $taxonomy['post_types'] ),
                     'add_columns'  => isset( $taxonomy['add_columns'] ) ? 1 : 0,
                     'meta_box'     => in_array( $taxonomy['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $taxonomy['meta_box'] : 'default',
+                    'dep_tax'      => sanitize_key( $taxonomy['dep_tax'] ?? '' ),
+                    'dep_key'      => sanitize_key( $taxonomy['dep_key'] ?? '' ),
                 );
             }
 
@@ -159,6 +161,17 @@ function evk_render_taxonomies_page() {
                                     <option value="select" <?php selected( $taxonomy['meta_box'] ?? '', 'select' ); ?>><?php esc_html_e( 'Lista rozwijana (pojedynczy)', 'evk-repeater' ); ?></option>
                                     <option value="radio" <?php selected( $taxonomy['meta_box'] ?? '', 'radio' ); ?>><?php esc_html_e( 'Radio (pojedynczy)', 'evk-repeater' ); ?></option>
                                 </select>
+                            </div>
+                            <div class="field-group">
+                                <label><?php esc_html_e( 'Filtruj opcje wg taksonomii', 'evk-repeater' ); ?></label><br>
+                                <select name="taxonomies[<?php echo esc_attr( $index ); ?>][dep_tax]" style="margin-bottom:6px;">
+                                    <option value=""><?php esc_html_e( '— bez filtrowania —', 'evk-repeater' ); ?></option>
+                                    <?php foreach ( $taxonomies as $other ) : if ( ( $other['slug'] ?? '' ) === ( $taxonomy['slug'] ?? '' ) ) continue; ?>
+                                    <option value="<?php echo esc_attr( $other['slug'] ); ?>" <?php selected( $taxonomy['dep_tax'] ?? '', $other['slug'] ); ?>><?php echo esc_html( $other['name'] . ' (' . $other['slug'] . ')' ); ?></option>
+                                    <?php endforeach; ?>
+                                </select><br>
+                                <input type="text" name="taxonomies[<?php echo esc_attr( $index ); ?>][dep_key]" value="<?php echo esc_attr( $taxonomy['dep_key'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'klucz pola relacji (term meta)', 'evk-repeater' ); ?>">
+                                <p class="description" style="margin:6px 0 0;"><?php esc_html_e( 'Wymaga metaboxa Lista/Radio. Klucz = pole typu Taksonomia (EVK) na termach TEJ taksonomii, wskazujące termy taksonomii nadrzędnej.', 'evk-repeater' ); ?></p>
                             </div>
                         </div>
                     </div>
@@ -281,6 +294,16 @@ function evk_render_taxonomies_page() {
                                 <option value="radio"><?php echo esc_js( __( 'Radio (pojedynczy)', 'evk-repeater' ) ); ?></option>
                             </select>
                         </div>
+                        <div class="field-group">
+                            <label><?php esc_html_e( 'Filtruj opcje wg taksonomii', 'evk-repeater' ); ?></label><br>
+                            <select name="taxonomies[${newIndex}][dep_tax]" style="margin-bottom:6px;">
+                                <option value=""><?php echo esc_js( __( '— bez filtrowania —', 'evk-repeater' ) ); ?></option>
+                                <?php foreach ( (array) get_option( 'evk_taxonomies', array() ) as $other ) : ?>
+                                <option value="<?php echo esc_attr( $other['slug'] ); ?>"><?php echo esc_html( $other['name'] . ' (' . $other['slug'] . ')' ); ?></option>
+                                <?php endforeach; ?>
+                            </select><br>
+                            <input type="text" name="taxonomies[${newIndex}][dep_key]" placeholder="<?php echo esc_attr( esc_js( __( 'klucz pola relacji (term meta)', 'evk-repeater' ) ) ); ?>">
+                        </div>
                     </div>
                 `;
                 fieldContainer.appendChild(newRow);
@@ -398,14 +421,18 @@ function evk_register_custom_taxonomies() {
 // METABOX POJEDYNCZEGO WYBORU (select / radio) — zamiast checkboxów WP
 // =========================================================================
 
+/** Pełna konfiguracja taksonomii (wiersz opcji) po slugu. */
+function evk_tax_mb_config( string $slug ): array {
+    foreach ( (array) get_option( 'evk_taxonomies', array() ) as $t ) {
+        if ( ( $t['slug'] ?? '' ) === $slug ) return (array) $t;
+    }
+    return array();
+}
+
 /** Styl metaboxa ('select'/'radio'/'default') z konfiguracji taksonomii. */
 function evk_tax_meta_box_style( string $slug ): string {
-    foreach ( (array) get_option( 'evk_taxonomies', array() ) as $t ) {
-        if ( ( $t['slug'] ?? '' ) === $slug ) {
-            return in_array( $t['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $t['meta_box'] : 'default';
-        }
-    }
-    return 'default';
+    $t = evk_tax_mb_config( $slug );
+    return in_array( $t['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $t['meta_box'] : 'default';
 }
 
 /** Callback meta_box_cb — WP przekazuje $box['args']['taxonomy']. */
@@ -413,13 +440,29 @@ function evk_tax_single_meta_box( $post, $box ) {
     $slug  = $box['args']['taxonomy'] ?? '';
     $tax   = get_taxonomy( $slug );
     if ( ! $tax ) return;
+    $cfg   = evk_tax_mb_config( $slug );
     $style = evk_tax_meta_box_style( $slug );
+
+    // Filtrowanie zależne: dep_tax = taksonomia nadrzędna, dep_key = pole relacji
+    // (typu Taksonomia EVK) na termach TEJ taksonomii → ID termów nadrzędnych w term meta.
+    $dep_tax = sanitize_key( $cfg['dep_tax'] ?? '' );
+    $dep_key = sanitize_key( $cfg['dep_key'] ?? '' );
+    $has_dep = $dep_tax !== '' && $dep_key !== '' && taxonomy_exists( $dep_tax );
+
+    $dep_attr = function ( $term_id ) use ( $has_dep, $dep_key ): string {
+        if ( ! $has_dep ) return '';
+        $ids = get_term_meta( (int) $term_id, $dep_key, true );
+        $ids = is_array( $ids ) ? array_values( array_filter( array_map( 'intval', $ids ) ) ) : array();
+        // Brak relacji = term „uniwersalny" — widoczny przy każdym wyborze rodzica.
+        return ' data-evk-dep="' . esc_attr( implode( ',', $ids ) ) . '"';
+    };
 
     $terms = get_terms( array( 'taxonomy' => $slug, 'hide_empty' => false, 'orderby' => 'name' ) );
     if ( is_wp_error( $terms ) ) $terms = array();
     $sel = wp_get_object_terms( (int) $post->ID, $slug, array( 'fields' => 'ids' ) );
     $cur = ( ! is_wp_error( $sel ) && $sel ) ? (int) $sel[0] : 0;
 
+    echo '<div class="evk-tax-mb" data-evk-tax="' . esc_attr( $slug ) . '"' . ( $has_dep ? ' data-evk-dep-tax="' . esc_attr( $dep_tax ) . '"' : '' ) . '>';
     wp_nonce_field( 'evk_tax_mb_' . $slug, 'evk_tax_mb_nonce_' . $slug );
     $name = 'evk_tax_mb[' . $slug . ']';
 
@@ -427,18 +470,19 @@ function evk_tax_single_meta_box( $post, $box ) {
         echo '<ul class="evk-tax-radio" style="margin:6px 0 0;max-height:200px;overflow-y:auto;">';
         echo '<li><label><input type="radio" name="' . esc_attr( $name ) . '" value="0" ' . checked( $cur, 0, false ) . '> &mdash; ' . esc_html__( 'brak', 'evk-repeater' ) . ' &mdash;</label></li>';
         foreach ( $terms as $t ) {
-            echo '<li><label><input type="radio" name="' . esc_attr( $name ) . '" value="' . (int) $t->term_id . '" ' . checked( $cur, (int) $t->term_id, false ) . '> ' . esc_html( $t->name ) . '</label></li>';
+            echo '<li><label><input type="radio" name="' . esc_attr( $name ) . '" value="' . (int) $t->term_id . '"' . $dep_attr( $t->term_id ) . ' ' . checked( $cur, (int) $t->term_id, false ) . '> ' . esc_html( $t->name ) . '</label></li>';
         }
         echo '</ul>';
     } else {
         echo '<select name="' . esc_attr( $name ) . '" style="width:100%;margin-top:6px;">';
         echo '<option value="0">&mdash; ' . esc_html__( 'brak', 'evk-repeater' ) . ' &mdash;</option>';
         foreach ( $terms as $t ) {
-            echo '<option value="' . (int) $t->term_id . '" ' . selected( $cur, (int) $t->term_id, false ) . '>' . esc_html( $t->name ) . '</option>';
+            echo '<option value="' . (int) $t->term_id . '"' . $dep_attr( $t->term_id ) . ' ' . selected( $cur, (int) $t->term_id, false ) . '>' . esc_html( $t->name ) . '</option>';
         }
         echo '</select>';
     }
     echo '<p style="margin:8px 0 0;"><a href="' . esc_url( admin_url( 'edit-tags.php?taxonomy=' . $slug ) ) . '" target="_blank">' . esc_html( $tax->labels->add_new_item ?? 'Dodaj' ) . '</a></p>';
+    echo '</div>';
 }
 
 // Zapis: własny metabox nie idzie przez tax_input WP — przypisujemy termy sami.

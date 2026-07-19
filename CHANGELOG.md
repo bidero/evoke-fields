@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.44.0] — 2026-07-19
+
+### Dodane
+
+- **Zależne metaboxy taksonomii** — w konfiguracji taksonomii można wskazać taksonomię
+  nadrzędną („Filtruj opcje wg taksonomii") i klucz pola relacji (pole typu Taksonomia
+  EVK na termach zależnej taksonomii, term meta). Metabox Lista/Radio filtruje wtedy
+  opcje po wybranym termie nadrzędnym (np. wybór Trenera zawęża listę Grup), resetuje
+  nieprawidłowy wybór i kaskaduje na kolejne poziomy zależności. Termy bez relacji są
+  „uniwersalne" (zawsze widoczne). Filtr działa w UI (JS); przy relacji dwukierunkowej
+  meta jest po obu stronach, więc kierunek pierwotny relacji nie ma znaczenia.
+  (`includes/taxonomies.php`, `assets/admin.js`)
+
 ## [1.43.0] — 2026-07-19
 
 ### Dodane
