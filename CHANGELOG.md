@@ -2,6 +2,21 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.43.0] — 2026-07-19
+
+### Dodane
+
+- **Opcja „Metabox wyboru" per taksonomia** — zamiast natywnych checkboxów WP można
+  wybrać **Listę rozwijaną** lub **Radio** (pojedynczy wybór z opcją „— brak —").
+  Idealne dla taksonomii typu „jeden termin na wpis" (np. Trener / Grupa zawodnika).
+  Własny `meta_box_cb` + zapis przez `wp_set_object_terms` (nonce per taksonomia,
+  cap `assign_terms`; POST nie może podmienić taksonomii ze stylem domyślnym).
+  (`includes/taxonomies.php`)
+- **Sortowalna kolumna taksonomii** na liście wpisów — dla taksonomii z włączoną
+  kolumną nagłówek sortuje po nazwie termu (`posts_clauses`: LEFT JOIN po
+  term_relationships/term_taxonomy/terms + GROUP_CONCAT). W przeciwieństwie do
+  sortowania po mecie **wpisy bez termu nie znikają z listy**. (`includes/taxonomies.php`)
+
 ## [1.42.0] — 2026-07-19
 
 ### Dodane

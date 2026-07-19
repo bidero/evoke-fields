@@ -79,6 +79,7 @@ function evk_render_taxonomies_page() {
                     'hierarchical' => isset( $taxonomy['hierarchical'] ) ? 1 : 0,
                     'post_types'   => array_map( 'sanitize_text_field', $taxonomy['post_types'] ),
                     'add_columns'  => isset( $taxonomy['add_columns'] ) ? 1 : 0,
+                    'meta_box'     => in_array( $taxonomy['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $taxonomy['meta_box'] : 'default',
                 );
             }
 
@@ -150,6 +151,14 @@ function evk_render_taxonomies_page() {
                                 <div class="checkbox-container">
                                     <input type="checkbox" name="taxonomies[<?php echo esc_attr( $index ); ?>][add_columns]" <?php checked( isset( $taxonomy['add_columns'] ) ? $taxonomy['add_columns'] : 0, 1 ); ?> />
                                 </div>
+                            </div>
+                            <div class="field-group">
+                                <label><?php esc_html_e( 'Metabox wyboru', 'evk-repeater' ); ?></label><br>
+                                <select name="taxonomies[<?php echo esc_attr( $index ); ?>][meta_box]">
+                                    <option value="default" <?php selected( $taxonomy['meta_box'] ?? 'default', 'default' ); ?>><?php esc_html_e( 'Checkboxy (WP, wielokrotny)', 'evk-repeater' ); ?></option>
+                                    <option value="select" <?php selected( $taxonomy['meta_box'] ?? '', 'select' ); ?>><?php esc_html_e( 'Lista rozwijana (pojedynczy)', 'evk-repeater' ); ?></option>
+                                    <option value="radio" <?php selected( $taxonomy['meta_box'] ?? '', 'radio' ); ?>><?php esc_html_e( 'Radio (pojedynczy)', 'evk-repeater' ); ?></option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -264,6 +273,14 @@ function evk_render_taxonomies_page() {
                                 <input type="checkbox" name="taxonomies[${newIndex}][add_columns]" />
                             </div>
                         </div>
+                        <div class="field-group">
+                            <label><?php esc_html_e( 'Metabox wyboru', 'evk-repeater' ); ?></label><br>
+                            <select name="taxonomies[${newIndex}][meta_box]">
+                                <option value="default"><?php echo esc_js( __( 'Checkboxy (WP, wielokrotny)', 'evk-repeater' ) ); ?></option>
+                                <option value="select"><?php echo esc_js( __( 'Lista rozwijana (pojedynczy)', 'evk-repeater' ) ); ?></option>
+                                <option value="radio"><?php echo esc_js( __( 'Radio (pojedynczy)', 'evk-repeater' ) ); ?></option>
+                            </select>
+                        </div>
                     </div>
                 `;
                 fieldContainer.appendChild(newRow);
@@ -368,7 +385,123 @@ function evk_register_custom_taxonomies() {
             'rewrite'           => array( 'slug' => $taxonomy['slug'] ),
         );
 
+        // Własny metabox wyboru (pojedynczy select/radio) zamiast checkboxów WP.
+        if ( in_array( $taxonomy['meta_box'] ?? '', array( 'select', 'radio' ), true ) ) {
+            $args['meta_box_cb'] = 'evk_tax_single_meta_box';
+        }
+
         register_taxonomy( $taxonomy['slug'], $post_types, $args );
     }
 }
+
+// =========================================================================
+// METABOX POJEDYNCZEGO WYBORU (select / radio) — zamiast checkboxów WP
+// =========================================================================
+
+/** Styl metaboxa ('select'/'radio'/'default') z konfiguracji taksonomii. */
+function evk_tax_meta_box_style( string $slug ): string {
+    foreach ( (array) get_option( 'evk_taxonomies', array() ) as $t ) {
+        if ( ( $t['slug'] ?? '' ) === $slug ) {
+            return in_array( $t['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $t['meta_box'] : 'default';
+        }
+    }
+    return 'default';
+}
+
+/** Callback meta_box_cb — WP przekazuje $box['args']['taxonomy']. */
+function evk_tax_single_meta_box( $post, $box ) {
+    $slug  = $box['args']['taxonomy'] ?? '';
+    $tax   = get_taxonomy( $slug );
+    if ( ! $tax ) return;
+    $style = evk_tax_meta_box_style( $slug );
+
+    $terms = get_terms( array( 'taxonomy' => $slug, 'hide_empty' => false, 'orderby' => 'name' ) );
+    if ( is_wp_error( $terms ) ) $terms = array();
+    $sel = wp_get_object_terms( (int) $post->ID, $slug, array( 'fields' => 'ids' ) );
+    $cur = ( ! is_wp_error( $sel ) && $sel ) ? (int) $sel[0] : 0;
+
+    wp_nonce_field( 'evk_tax_mb_' . $slug, 'evk_tax_mb_nonce_' . $slug );
+    $name = 'evk_tax_mb[' . $slug . ']';
+
+    if ( $style === 'radio' ) {
+        echo '<ul class="evk-tax-radio" style="margin:6px 0 0;max-height:200px;overflow-y:auto;">';
+        echo '<li><label><input type="radio" name="' . esc_attr( $name ) . '" value="0" ' . checked( $cur, 0, false ) . '> &mdash; ' . esc_html__( 'brak', 'evk-repeater' ) . ' &mdash;</label></li>';
+        foreach ( $terms as $t ) {
+            echo '<li><label><input type="radio" name="' . esc_attr( $name ) . '" value="' . (int) $t->term_id . '" ' . checked( $cur, (int) $t->term_id, false ) . '> ' . esc_html( $t->name ) . '</label></li>';
+        }
+        echo '</ul>';
+    } else {
+        echo '<select name="' . esc_attr( $name ) . '" style="width:100%;margin-top:6px;">';
+        echo '<option value="0">&mdash; ' . esc_html__( 'brak', 'evk-repeater' ) . ' &mdash;</option>';
+        foreach ( $terms as $t ) {
+            echo '<option value="' . (int) $t->term_id . '" ' . selected( $cur, (int) $t->term_id, false ) . '>' . esc_html( $t->name ) . '</option>';
+        }
+        echo '</select>';
+    }
+    echo '<p style="margin:8px 0 0;"><a href="' . esc_url( admin_url( 'edit-tags.php?taxonomy=' . $slug ) ) . '" target="_blank">' . esc_html( $tax->labels->add_new_item ?? 'Dodaj' ) . '</a></p>';
+}
+
+// Zapis: własny metabox nie idzie przez tax_input WP — przypisujemy termy sami.
+add_action( 'save_post', function ( $post_id ) {
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+    if ( empty( $_POST['evk_tax_mb'] ) || ! is_array( $_POST['evk_tax_mb'] ) ) return;
+
+    foreach ( $_POST['evk_tax_mb'] as $slug => $tid ) {
+        $slug = sanitize_key( $slug );
+        // Tylko nasze taksonomie ze stylem select/radio (nie pozwól nadpisać innych przez POST).
+        if ( evk_tax_meta_box_style( $slug ) === 'default' ) continue;
+        $nonce = $_POST[ 'evk_tax_mb_nonce_' . $slug ] ?? '';
+        if ( ! wp_verify_nonce( $nonce, 'evk_tax_mb_' . $slug ) ) continue;
+        $tax = get_taxonomy( $slug );
+        if ( ! $tax || ! current_user_can( $tax->cap->assign_terms ) ) continue;
+        $tid = (int) $tid;
+        wp_set_object_terms( (int) $post_id, $tid > 0 ? array( $tid ) : array(), $slug, false );
+    }
+} );
+
+// =========================================================================
+// SORTOWANIE KOLUMNY TAKSONOMII (lista wpisów; klucz kolumny WP: taxonomy-{slug})
+// =========================================================================
+
+add_action( 'admin_init', function () {
+    foreach ( (array) get_option( 'evk_taxonomies', array() ) as $t ) {
+        if ( empty( $t['add_columns'] ) ) continue;
+        $slug = (string) ( $t['slug'] ?? '' );
+        if ( $slug === '' ) continue;
+        foreach ( (array) ( $t['post_types'] ?? array() ) as $pt ) {
+            add_filter( "manage_edit-{$pt}_sortable_columns", function ( $cols ) use ( $slug ) {
+                $cols[ 'taxonomy-' . $slug ] = 'evk_tax_' . $slug;
+                return $cols;
+            } );
+        }
+    }
+} );
+
+add_filter( 'posts_clauses', function ( $clauses, $q ) {
+    if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
+    $ob = $q->get( 'orderby' );
+    if ( ! is_string( $ob ) || strpos( $ob, 'evk_tax_' ) !== 0 ) return $clauses;
+    $slug = substr( $ob, 8 );
+
+    // Walidacja: tylko nasze taksonomie z włączoną kolumną.
+    $ok = false;
+    foreach ( (array) get_option( 'evk_taxonomies', array() ) as $t ) {
+        if ( ( $t['slug'] ?? '' ) === $slug && ! empty( $t['add_columns'] ) ) { $ok = true; break; }
+    }
+    if ( ! $ok ) return $clauses;
+
+    global $wpdb;
+    // LEFT JOIN: wpisy bez termu ZOSTAJĄ na liście (NULL sortuje się na początku ASC) —
+    // w przeciwieństwie do sortowania po mecie, nic nie znika.
+    $clauses['join']   .= $wpdb->prepare(
+        " LEFT JOIN {$wpdb->term_relationships} evk_tr ON {$wpdb->posts}.ID = evk_tr.object_id
+          LEFT JOIN {$wpdb->term_taxonomy} evk_tt ON evk_tr.term_taxonomy_id = evk_tt.term_taxonomy_id AND evk_tt.taxonomy = %s
+          LEFT JOIN {$wpdb->terms} evk_t ON evk_tt.term_id = evk_t.term_id",
+        $slug
+    );
+    $clauses['groupby'] = "{$wpdb->posts}.ID";
+    $order              = strtoupper( (string) $q->get( 'order' ) ) === 'DESC' ? 'DESC' : 'ASC';
+    $clauses['orderby'] = "GROUP_CONCAT(DISTINCT evk_t.name ORDER BY evk_t.name ASC) {$order}, {$wpdb->posts}.post_title ASC";
+    return $clauses;
+}, 10, 2 );
 ?>

@@ -97,6 +97,9 @@ evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz
 
 **Evoke FIELDS → Typy treści / Taksonomie** — rejestracja własnych typów i taksonomii (z kolumną admina, REST, hierarchią). Permalinki odświeżają się automatycznie po zapisie definicji.
 
+- **Metabox wyboru** per taksonomia: **Checkboxy** (WP, wielokrotny), **Lista rozwijana** lub **Radio** (pojedynczy wybór z opcją „— brak —"); zapis przypisuje prawdziwe termy (`wp_set_object_terms`).
+- **Kolumna taksonomii** na liście wpisów jest **sortowalna** po nazwie termu; wpisy bez termu pozostają na liście (sortują się na początku/końcu).
+
 ## Deinstalacja
 
 `uninstall.php` usuwa **konfigurację** wtyczki (grupy pól, definicje CPT/taksonomii, strony ustawień i ich wartości, transienty). **Nie usuwa** danych treści: meta wpisów/termów/użytkowników z wartościami pól i załączniki zostają.
