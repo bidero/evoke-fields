@@ -2,21 +2,14 @@
 
 /* wspólny wygląd pola (single + wiersz) */
 .evk-rep-field,.evk-s-field{display:flex;flex-direction:column;min-width:0;}
-/* Delikatne oddzielenie pól grupy pojedynczej (nie dotyczy wierszy repeatera —
-   te mają klasę .evk-rep-field). Grid rozciąga pola w wierszu do równej wysokości,
-   więc kreski pól obok siebie wyrównują się same. */
-.evk-s-field{padding-bottom:14px;border-bottom:1px solid #eef2f7;}
-.evk-s-field:last-child{padding-bottom:0;border-bottom:0;}
-/* Layout-separatory nie potrzebują dodatkowej kreski (mają własny chrome). */
-.evk-s-field.evk-rep-field--heading,.evk-s-field.evk-rep-field--description{border-bottom:0;padding-bottom:0;}
 /* Logika warunkowa — pole ukryte runtime */
 .evk-s-field.evk-cond-hidden{display:none!important;}
-/* ── Link „Edytuj grupę pól" w nagłówku metaboxu (hover) ── */
-.postbox[id^="evk_rep_"] .postbox-header{position:relative;}
-.postbox[id^="evk_rep_"] .evk-group-edit{position:absolute;right:36px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;opacity:0;transition:opacity .15s,color .15s;color:#94a3b8;text-decoration:none;line-height:1;}
-.postbox[id^="evk_rep_"]:hover .evk-group-edit{opacity:1;}
-.postbox[id^="evk_rep_"] .evk-group-edit:hover{color:#2563eb;}
-.evk-group-edit .dashicons{font-size:17px;width:17px;height:17px;line-height:1;}
+/* ── Link „Edytuj grupę pól" — inline w uchwycie tytułu (.hndle), tuż za nazwą,
+   z dala od strzałek porządkowania/zwijania w .handle-actions. Widoczny po najechaniu. ── */
+.postbox[id^="evk_rep_"] .hndle .evk-group-edit{display:inline-flex;align-items:center;margin-left:8px;vertical-align:middle;opacity:0;transition:opacity .15s,color .15s;color:#94a3b8;text-decoration:none;line-height:1;}
+.postbox[id^="evk_rep_"]:hover .hndle .evk-group-edit{opacity:1;}
+.postbox[id^="evk_rep_"] .hndle .evk-group-edit:hover{color:#2563eb;}
+.evk-group-edit .dashicons{font-size:16px;width:16px;height:16px;line-height:1;}
 .evk-rep-field > label,.evk-s-label{font-weight:600;font-size:12px;margin-bottom:5px;color:#111827;}
 /* ── Instrukcja pola (pod inputem) + tooltip „?" przy etykiecie ── */
 .evk-s-instructions{margin:5px 0 0;font-size:12px;color:#6b7280;line-height:1.5;}
@@ -146,7 +139,7 @@
 /* PANELE — grid 12-kol; szerokości pól działają także w trybie single */
 .evk-s-panels{display:block;}
 .evk-s-panel{display:none;}
-.evk-s-panel.active{display:grid;grid-template-columns:repeat(12,1fr);gap:16px 16px;}
+.evk-s-panel.active{display:grid;grid-template-columns:repeat(12,1fr);gap:18px 16px;align-items:start;padding-top:2px;}
 
 .evk-s-heading{grid-column:1 / -1;margin:6px 0 0;padding-bottom:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
 
@@ -157,7 +150,7 @@
 .evk-s-acc-head .dashicons{transition:transform .15s;color:#64748b;}
 .evk-s-acc.open .evk-s-acc-head .dashicons{transform:rotate(180deg);}
 .evk-s-acc-body{display:none;}
-.evk-s-acc.open .evk-s-acc-body{display:grid;grid-template-columns:repeat(12,1fr);gap:16px 16px;padding:15px;}
+.evk-s-acc.open .evk-s-acc-body{display:grid;grid-template-columns:repeat(12,1fr);gap:18px 16px;align-items:start;padding:15px;}
 
 /* ── Pole repeater w grupie pojedynczej ── */
 .evk-rep-field--repeater{display:flex;flex-direction:column;}
@@ -169,6 +162,8 @@
 .postbox.evk-seamless{border:0;background:transparent;box-shadow:none;}
 .postbox.evk-seamless > .postbox-header{display:none;}
 .postbox.evk-seamless > .inside{margin:0;padding:0;}
+/* Oddech u góry metaboxu grupy — pierwsze etykiety nie przyklejone do nagłówka. */
+.postbox[id^="evk_rep_"]:not(.evk-seamless) > .inside{padding-top:8px;}
 
 /* ── Strona ustawień ── */
 .evk-settings-wrap .evk-settings-tabs{margin-bottom:18px;}

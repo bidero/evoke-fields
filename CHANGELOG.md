@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.48.1] — 2026-07-19
+
+### Naprawione
+
+- **Link „Edytuj grupę pól" nachodził na strzałki metaboxu** — był pozycjonowany
+  bezwzględnie przy prawej krawędzi nagłówka, więc lądował na przyciskach
+  porządkowania/zwijania (`.handle-actions`). Teraz siedzi inline w uchwycie tytułu
+  (`.hndle`), tuż za nazwą grupy, z dala od strzałek. (`assets/admin.css`)
+- **Brzydki odstęp/kreska pod polami** — per‑polowa kreska z 1.47.0 „odklejała się"
+  od krótszych pól (grid rozciągał pola do wysokości wiersza, linia wisiała w pustce).
+  Zastąpiona czystymi, spójnymi odstępami: `align-items:start`, równiejszy rytm pionowy
+  i oddech u góry metaboxu, żeby pierwsze etykiety nie przylegały do nagłówka.
+  (`assets/admin.css`)
+
 ## [1.48.0] — 2026-07-19
 
 ### Zmienione
