@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.52.2] — 2026-07-19
+
+### Naprawione
+
+- **Regresja z 1.52.1: rozmiar nagłówka (h1–h5) przestał działać, a podtekst/separator dotykały
+  krawędzi** — reset `#poststuff` był zbyt szeroki (narzucał `font-size:12px` na każdy nagłówek),
+  a wcięcie 14px trafiło na sam nagłówek, nie na jego wrap. Teraz reset zeruje tylko poziomy/górny
+  padding nagłówka (rozmiar i padding-dół zostają regułom `--h1..--h5`), a wcięcie całego bloku
+  (nagłówek + podtekst + separator) jest na `.evk-s-heading-wrap`. (`assets/admin.css`)
+
 ## [1.52.1] — 2026-07-19
 
 ### Naprawione

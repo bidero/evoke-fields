@@ -145,11 +145,11 @@
 .evk-s-panel.active{display:grid;grid-template-columns:repeat(12,1fr);gap:18px 16px;align-items:start;padding-top:2px;}
 
 .evk-s-heading{grid-column:1 / -1;margin:0 0 0;padding-bottom:8px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;}
-/* WP domyślnie stylizuje #poststuff h2 / h3.hndle (padding 8px 12px, font 14px) — te reguły
-   mają id w specyficzności i biją nasze klasy. Nasze nagłówki (dowolny tag h1–h5) resetujemy
-   na poziomie #poststuff, żeby zniknął narzucony lewy padding i rozmiar. */
-#poststuff .evk-s-heading{margin:0;padding:0 0 8px;font-size:12px;line-height:1.35;}
-#poststuff .evk-mb-rows .evk-s-heading{padding:0 14px 8px;}
+/* WP dokłada padding do #poststuff h2 / h3.hndle (id w specyficzności bije nasze klasy).
+   Zerujemy WYŁĄCZNIE poziomy/górny padding i margines naszych nagłówków — rozmiar (font)
+   i padding-dół zostawiamy regułom per-rozmiar (--h1..--h5), żeby zmiana wielkości działała.
+   Wcięcie całego bloku (nagłówek + podtekst + separator) robi padding wrapa niżej. */
+#poststuff .evk-s-heading{margin:0;padding-top:0;padding-left:0;padding-right:0;}
 
 /* ── Single: akordeon ── */
 .evk-s-acc{grid-column:1 / -1;border:1px solid #d7dde7;border-radius:10px;overflow:hidden;}
@@ -184,10 +184,11 @@
 .evk-mb-rows .evk-s-field{padding:var(--evk-row-pad,13px) 14px;border-bottom:1px solid #eef2f7;}
 .evk-mb-rows .evk-s-panel.active > .evk-s-field:last-child,
 .evk-mb-rows .evk-s-acc.open .evk-s-acc-body > .evk-s-field:last-child{border-bottom:0;}
-/* Elementy pełnej szerokości wcięte, bo .inside stracił boczny padding.
-   Nagłówek wcinamy TYLKO na samym nagłówku (patrz reguła #poststuff wyżej) — nie na wrapie,
-   żeby nie dublować wcięcia (wrap 14px + własny padding nagłówka = 28px). */
+/* Elementy pełnej szerokości wcięte, bo .inside stracił boczny padding. Cały blok nagłówka
+   wcinamy na WRAPIE (obejmuje nagłówek, podtekst i separator), a poziomy padding samego
+   nagłówka jest wyzerowany wyżej — więc nie ma dublowania. */
 .evk-mb-rows .evk-s-tabs{margin-left:14px;margin-right:14px;}
+.evk-mb-rows .evk-s-heading-wrap{padding-left:14px;padding-right:14px;}
 .evk-mb-rows .evk-s-desc,
 .evk-mb-rows .evk-s-acc{margin-left:14px;margin-right:14px;}
 
