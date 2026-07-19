@@ -310,6 +310,60 @@ add_action('admin_init', function () {
 });
 
 // =========================================================================
+// DUPLIKOWANIE GRUPY PÓL
+// =========================================================================
+
+add_filter('post_row_actions', function ($actions, $post) {
+    if ($post->post_type !== 'evk_field_group' || !current_user_can('edit_post', $post->ID)) return $actions;
+    $url = wp_nonce_url(
+        admin_url('admin.php?action=evk_duplicate_group&post=' . $post->ID),
+        'evk_duplicate_' . $post->ID
+    );
+    $actions['evk_duplicate'] = '<a href="' . esc_url($url) . '">Duplikuj</a>';
+    return $actions;
+}, 10, 2);
+
+add_action('admin_action_evk_duplicate_group', function () {
+    $src_id = (int) ($_GET['post'] ?? 0);
+    if (!$src_id || !current_user_can('edit_post', $src_id)) wp_die('Brak uprawnień.');
+    check_admin_referer('evk_duplicate_' . $src_id);
+
+    $src = get_post($src_id);
+    if (!$src || $src->post_type !== 'evk_field_group') wp_die('To nie jest grupa pól.');
+
+    // Unikalny klucz: sprawdzamy po WSZYSTKICH grupach (też draftach — kolizja
+    // ujawniłaby się dopiero przy aktywacji kopii).
+    $taken = [];
+    foreach (get_posts(['post_type' => 'evk_field_group', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'no_found_rows' => true]) as $gid) {
+        $k = (string) get_post_meta($gid, '_evk_key', true);
+        if ($k !== '') $taken[$k] = true;
+    }
+    $base = (string) get_post_meta($src_id, '_evk_key', true) ?: 'grupa';
+    $key  = $base . '_kopia';
+    for ($n = 2; isset($taken[$key]); $n++) $key = $base . '_kopia' . $n;
+
+    // Kopia jako draft (nieaktywna) — świadoma decyzja: aktywujesz po przejrzeniu.
+    $new_id = wp_insert_post([
+        'post_type'   => 'evk_field_group',
+        'post_title'  => $src->post_title . ' (kopia)',
+        'post_status' => 'draft',
+        'menu_order'  => $src->menu_order,
+    ], true);
+    if (is_wp_error($new_id)) wp_die('Nie udało się utworzyć kopii: ' . esc_html($new_id->get_error_message()));
+
+    foreach (get_post_meta($src_id) as $mk => $vals) {
+        if (strpos($mk, '_evk_') !== 0) continue;
+        $val = maybe_unserialize($vals[0] ?? '');
+        // wp_slash: update_post_meta robi unslash, a _evk_fields to JSON z cudzysłowami.
+        update_post_meta($new_id, $mk, $mk === '_evk_key' ? $key : wp_slash($val));
+    }
+
+    evk_groups_cache_clear();
+    wp_safe_redirect(get_edit_post_link((int) $new_id, 'url'));
+    exit;
+});
+
+// =========================================================================
 // MENU — usuń auto-duplikat "Evoke FIELDS"
 // =========================================================================
 

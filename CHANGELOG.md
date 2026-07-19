@@ -2,6 +2,29 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.42.0] — 2026-07-19
+
+### Dodane
+
+- **README.md z pełną dokumentacją** — typy pól, wszystkie warianty tagów dynamicznych
+  (tabela z rejestru propsów), pętle, formuły calc, publiczne API PHP, narzędzia,
+  lokalizacje, kolumny. CHANGELOG przestaje pełnić rolę jedynej dokumentacji.
+- **Duplikowanie grupy pól** — akcja „Duplikuj" na liście grup: kopia jako szkic
+  z unikalnym kluczem (`_kopia`, `_kopia2`…, sprawdzane po wszystkich grupach,
+  także nieaktywnych), pełna kopia schematu, redirect do edycji kopii.
+  (`includes/field-groups.php`)
+- **`uninstall.php`** — przy odinstalowaniu usuwa konfigurację wtyczki (grupy pól,
+  definicje CPT/taksonomii, strony ustawień i wartości `evk_rep_opt_*`, flagi,
+  transienty) i flushuje rewrite rules. Świadomie NIE usuwa danych treści
+  (meta wpisów/termów/użytkowników, załączniki).
+
+### Naprawione
+
+- **Angielskie etykiety metaboxów taksonomii** — rejestracja własnych taksonomii
+  sklejała etykiety z angielskich szablonów („All Trener", „+ Add New Trener").
+  Teraz komplet polskich etykiet (w tym `most_used`, `not_found`, `no_terms`,
+  warianty dla niehierarchicznych). (`includes/taxonomies.php`)
+
 ## [1.41.0] — 2026-07-18
 
 ### Dodane
