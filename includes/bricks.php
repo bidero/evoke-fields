@@ -556,7 +556,9 @@ function evk_rep_resolve_option(string $tagContent, string $prop = '') {
         if (strpos($tagContent, $prefix) !== 0) continue;
         $fk    = substr($tagContent, strlen($prefix));
         $field = $group['fields'][$fk] ?? null;
-        if (!$field) return '';
+        // Klucze grup mogą być swoimi prefiksami (np. 'dane' i 'dane_firmy') —
+        // brak pola w tej grupie nie kończy szukania, tag może należeć do dłuższej.
+        if (!$field) continue;
         if (function_exists('evk_rep_get_option')) {
             $val = evk_rep_get_option($gk, $fk);
         } else {
@@ -863,7 +865,14 @@ add_filter('bricks/query/loop_object_id', function ($object_id, $object, $query_
 }, 10, 3);
 
 add_action('bricks/query/after_loop', function ($query_obj = null) {
-    evk_rep_stack_pop();
+    // Pop tylko WŁASNEGO kontekstu (qid ze szczytu = to zapytanie). Pętla, która nie
+    // pushowała (natywna, EVK Relacja/Termy/Użytkownicy, pusta pętla wierszy),
+    // kończąc się nie może zdjąć kontekstu wiersza pętli nadrzędnej — elementy
+    // renderowane po niej w tym samym wierszu traciłyby tagi subpól.
+    $top = evk_rep_stack_top();
+    if ($top !== null && (!is_object($query_obj) || ($top['qid'] ?? null) === spl_object_id($query_obj))) {
+        evk_rep_stack_pop();
+    }
     unset($GLOBALS['evk_rep_current_term'], $GLOBALS['evk_rep_current_user'], $GLOBALS['evk_rep_current_attachment']);
 }, 10, 1);
 

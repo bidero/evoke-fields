@@ -289,6 +289,59 @@ function evk_rep_calc_finish_saves(string $meta_type, int $object_id, array $gro
 // =========================================================================
 
 /**
+ * Przelicz pola calc WSZYSTKICH grup opcji (stron ustawień) z zapisanych wartości.
+ * Kolejność jak przy zapisie: najpierw wiersze repeaterów każdej grupy, potem poziom
+ * główny grup pojedynczych — pass główny startuje po zapisaniu wierszy wszystkich
+ * grup, więc agregaty między grupami (get_option) czytają świeże dane.
+ * Grupy bez zapisanej opcji są pomijane (nie tworzymy pustych evk_rep_opt_*).
+ * Zwraca liczbę grup, których wartości się zmieniły.
+ */
+function evk_rep_recalc_options(): int {
+    $groups = evk_rep_groups();
+    $stored = [];
+    foreach ($groups as $gk => $g) {
+        $v = get_option('evk_rep_opt_' . $gk);
+        if (is_array($v)) $stored[$gk] = $v;
+    }
+
+    $changed = [];
+
+    // Pass 1: wiersze (grupa-repeater w całości; pola-repeatery grup pojedynczych).
+    foreach ($stored as $gk => $vals) {
+        $g = $groups[$gk];
+        if (evk_rep_is_repeater($g)) {
+            $new = evk_rep_calc_apply_rows($g['fields'] ?? [], array_values($vals));
+        } else {
+            $new = $vals;
+            foreach (($g['fields'] ?? []) as $fk => $f) {
+                if (($f['type'] ?? '') !== 'repeater') continue;
+                if (isset($new[$fk]) && is_array($new[$fk])) {
+                    $new[$fk] = evk_rep_calc_apply_rows($f['sub_fields'] ?? [], array_values($new[$fk]));
+                }
+            }
+        }
+        if ($new !== $vals) {
+            update_option('evk_rep_opt_' . $gk, $new, false);
+            $changed[$gk] = true;
+        }
+        $stored[$gk] = $new;
+    }
+
+    // Pass 2: poziom główny grup pojedynczych.
+    foreach ($stored as $gk => $vals) {
+        $g = $groups[$gk];
+        if (evk_rep_is_repeater($g)) continue;
+        $new = evk_rep_calc_apply_group_values($g['fields'] ?? [], $vals);
+        if ($new !== $vals) {
+            update_option('evk_rep_opt_' . $gk, $new, false);
+            $changed[$gk] = true;
+        }
+    }
+
+    return count($changed);
+}
+
+/**
  * Przelicz wszystkie pola calc obiektu (post/term/user) z zapisanej mety.
  * Do wywoływania po programowych zmianach danych (import, własne nakładki —
  * np. lista obecności dopisująca wiersze bez ekranu edycji).

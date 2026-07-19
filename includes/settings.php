@@ -328,6 +328,18 @@ add_action('admin_init', function () {
         // obciążać alloptions na każdym żądaniu; czytane są punktowo przez get_option.
         update_option('evk_rep_opt_' . $gk, $clean, false);
     }
+    // Drugi pass pól calc grup pojedynczych: przy pierwszym (w sanitize) agregat
+    // z repeatera INNEJ grupy zapisywanej w tym samym submitcie czytał get_option,
+    // więc grupa stojąca w zakładce PRZED swoim źródłem widziała stare wiersze.
+    // Teraz wszystkie opcje zakładki są już zapisane.
+    foreach ($tab_groups as $gk) {
+        $gk = sanitize_key($gk);
+        if (!isset($groups[$gk]) || evk_rep_is_repeater($groups[$gk])) continue;
+        $vals = get_option('evk_rep_opt_' . $gk);
+        if (!is_array($vals)) continue;
+        $recalced = evk_rep_calc_apply_group_values($groups[$gk]['fields'] ?? [], $vals);
+        if ($recalced !== $vals) update_option('evk_rep_opt_' . $gk, $recalced, false);
+    }
     wp_safe_redirect(add_query_arg(['page' => $slug, 'tab' => (int) ($_POST['evk_settings_tab'] ?? 0), 'updated' => 1], admin_url('admin.php')));
     exit;
 });

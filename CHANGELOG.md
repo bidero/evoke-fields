@@ -2,6 +2,45 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.53.0] — 2026-07-19
+
+### Dodane
+
+- **Przeliczanie pól obliczeniowych dla stron ustawień, termów i użytkowników** — narzędzie
+  Narzędzia → „Przelicz pola obliczeniowe" ma teraz wybór zakresu: typ treści (jak dotąd),
+  **strony ustawień (opcje)**, **termy taksonomii**, **użytkownicy**. Dotąd narzędzie
+  obsługiwało wyłącznie wpisy, a calc w opcjach przeliczał się tylko przy ręcznym zapisie
+  każdej zakładki strony ustawień. Wznowienie po limicie czasu hostingu działa we wszystkich
+  zakresach (postęp trzyma zakres, stary format postępu konwertowany). Nowe publiczne API:
+  `evk_rep_recalc_options(): int` — przelicza wszystkie grupy opcji w kolejności
+  wiersze → poziom główny (agregaty między grupami czytają świeżo zapisane wiersze).
+  (`includes/tools.php`, `includes/calc.php`, `README.md`)
+
+### Naprawione
+
+- **Eksport/import gubił lokalizację grup pól** — eksport nie zawierał typu obiektu grupy
+  (`object_type`), listy taksonomii ani flagi „ukryj tytuł"; po imporcie grupa przypisana
+  do termów / profilu użytkownika / mediów po cichu stawała się grupą wpisów. Teraz te pola
+  są eksportowane i importowane; stare pliki eksportu (bez tych kluczy) **nie nadpisują**
+  lokalizacji istniejących grup. (`includes/tools.php`)
+- **Tag `{evk_opt_…}` przestawał działać przy grupach o kluczach-prefiksach** — resolver
+  przy grupach np. `dane` i `dane_firmy` dopasowywał krótszą grupę i kończył z pustym
+  wynikiem (`return ''`) zamiast szukać dalej (`continue`); tag `{evk_opt_dane_firmy_nip}`
+  bywał pusty zależnie od kolejności grup. (`includes/bricks.php`)
+- **Zagnieżdżona pętla mogła zdejmować kontekst wiersza pętli nadrzędnej** —
+  `bricks/query/after_loop` zdejmował kontekst ze stosu bezwarunkowo, także gdy kończyła się
+  pętla, która nic nie pushowała (natywna, EVK Relacja / Termy / Użytkownicy, pusta pętla
+  wierszy). Tagi subpól w elementach renderowanych PO takiej pętli w tym samym wierszu były
+  puste do następnej iteracji. Teraz pop wykonuje się tylko przy zgodności identyfikatora
+  zapytania ze szczytem stosu. (`includes/bricks.php`)
+- **Pole calc na stronie ustawień mogło liczyć agregat ze starych wierszy innej grupy** —
+  grupy zakładki zapisują się po kolei, więc calc agregujący repeater z innej grupy tego
+  samego submitu widział poprzedni stan, jeśli stał w zakładce przed źródłem. Dodany drugi
+  pass calc po zapisaniu wszystkich grup zakładki. (`includes/settings.php`)
+- **Wyszukiwarka pola „Użytkownik" wymaga teraz uprawnienia `list_users`** — endpoint AJAX
+  zwracał display name + e-mail dowolnego użytkownika każdemu z `edit_posts` (autor/redaktor
+  mógł enumerować adresy). Tryb postów bez zmian. (`includes/metabox.php`)
+
 ## [1.52.2] — 2026-07-19
 
 ### Naprawione

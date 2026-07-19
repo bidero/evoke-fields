@@ -75,16 +75,22 @@ function evk_tools_export_groups(): array {
         $fields = $json ? (json_decode($json, true) ?? []) : [];
         $pts    = get_post_meta($p->ID, '_evk_post_types', true);
 
+        $obj = get_post_meta($p->ID, '_evk_object_type', true);
+        $tax = get_post_meta($p->ID, '_evk_taxonomies', true);
+
         $entry = [
-            'key'        => $key,
-            'label'      => $p->post_title,
-            'status'     => $p->post_status,
-            'menu_order' => (int) $p->menu_order,
-            'post_types' => is_array($pts) && $pts ? array_values($pts) : ['post'],
-            'repeater'   => (bool) get_post_meta($p->ID, '_evk_repeater', true),
-            'collapsed'  => (bool) get_post_meta($p->ID, '_evk_collapsed', true),
-            'seamless'   => (bool) get_post_meta($p->ID, '_evk_seamless', true),
-            'fields'     => $fields,
+            'key'         => $key,
+            'label'       => $p->post_title,
+            'status'      => $p->post_status,
+            'menu_order'  => (int) $p->menu_order,
+            'object_type' => in_array($obj, ['post', 'term', 'user', 'media'], true) ? $obj : 'post',
+            'post_types'  => is_array($pts) && $pts ? array_values($pts) : ['post'],
+            'taxonomies'  => is_array($tax) ? array_values($tax) : [],
+            'repeater'    => (bool) get_post_meta($p->ID, '_evk_repeater', true),
+            'collapsed'   => (bool) get_post_meta($p->ID, '_evk_collapsed', true),
+            'seamless'    => (bool) get_post_meta($p->ID, '_evk_seamless', true),
+            'hide_title'  => (bool) get_post_meta($p->ID, '_evk_hide_title', true),
+            'fields'      => $fields,
         ];
         $al = get_post_meta($p->ID, '_evk_add_label', true);
         if ($al) $entry['add_label'] = (string) $al;
@@ -198,6 +204,20 @@ function evk_tools_run_import(array $data, bool $overwrite): array {
         update_post_meta($pid, '_evk_repeater',  !empty($g['repeater'])  ? 1 : 0);
         update_post_meta($pid, '_evk_collapsed', !empty($g['collapsed']) ? 1 : 0);
         update_post_meta($pid, '_evk_seamless',  !empty($g['seamless'])  ? 1 : 0);
+        // Lokalizacja grupy. Stare pliki eksportu (≤1.52.x) nie mają tych kluczy —
+        // wtedy NIE nadpisujemy istniejącej grupy (import zdegradowałby np. grupę
+        // termów do grupy wpisów); nowa grupa dostaje domyślne 'post'.
+        if (array_key_exists('object_type', $g) || !$existing) {
+            $obj = in_array($g['object_type'] ?? 'post', ['post', 'term', 'user', 'media'], true) ? ($g['object_type'] ?? 'post') : 'post';
+            update_post_meta($pid, '_evk_object_type', $obj);
+        }
+        if (array_key_exists('taxonomies', $g) || !$existing) {
+            $txs = array_values(array_filter(array_map('sanitize_key', (array) ($g['taxonomies'] ?? []))));
+            update_post_meta($pid, '_evk_taxonomies', $txs);
+        }
+        if (array_key_exists('hide_title', $g) || !$existing) {
+            update_post_meta($pid, '_evk_hide_title', !empty($g['hide_title']) ? 1 : 0);
+        }
         if (!empty($g['add_label']))   update_post_meta($pid, '_evk_add_label', sanitize_text_field($g['add_label']));
         else                           delete_post_meta($pid, '_evk_add_label');
         if (!empty($g['title_field'])) update_post_meta($pid, '_evk_title_field', sanitize_key($g['title_field']));
@@ -363,42 +383,110 @@ function evk_tools_recalc_post_types(): array {
     return $out;
 }
 
+/**
+ * Postęp wznowienia przeliczania (z konwersją starego formatu: post_type → scope).
+ * Zwraca ['scope' => 'post:pt'|'options'|'term'|'user', 'offset' => int] albo null.
+ */
+function evk_tools_recalc_progress(): ?array {
+    $p = get_option('evk_tools_recalc_progress');
+    if (!is_array($p)) return null;
+    if (isset($p['scope']))     return ['scope' => (string) $p['scope'], 'offset' => (int) ($p['offset'] ?? 0)];
+    if (isset($p['post_type'])) return ['scope' => 'post:' . $p['post_type'], 'offset' => (int) ($p['offset'] ?? 0)];
+    return null;
+}
+
+/** Czytelna etykieta zakresu przeliczania (dla notice i podpowiedzi wznowienia). */
+function evk_tools_recalc_scope_label(string $scope): string {
+    if (strpos($scope, 'post:') === 0) {
+        $pt  = substr($scope, 5);
+        $obj = get_post_type_object($pt);
+        return $obj ? $obj->labels->name . ' (' . $pt . ')' : $pt;
+    }
+    if ($scope === 'options') return 'strony ustawień (opcje)';
+    if ($scope === 'term')    return 'termy taksonomii';
+    if ($scope === 'user')    return 'użytkownicy';
+    return $scope;
+}
+
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_recalc'])) return;
     if (!current_user_can('manage_options')) return;
     check_admin_referer('evk_tools_recalc', 'evk_tools_nonce');
 
-    $pt = sanitize_key($_POST['evk_recalc_post_type'] ?? '');
-    if ($pt === '' || !post_type_exists($pt)) {
-        evk_tools_set_notice('error', 'Wybierz prawidłowy typ treści.');
+    $scope = sanitize_text_field(wp_unslash($_POST['evk_recalc_scope'] ?? ''));
+
+    // Strony ustawień: jeden przebieg (grup opcji jest najwyżej kilkanaście).
+    if ($scope === 'options') {
+        $n = evk_rep_recalc_options();
+        evk_tools_set_notice('success', sprintf('Przeliczono pola obliczeniowe stron ustawień — zaktualizowano %d grup opcji.', $n));
         evk_tools_redirect();
     }
 
-    // Wznowienie przerwanego przebiegu tego samego typu (limit czasu hostingu).
-    $progress = get_option('evk_tools_recalc_progress');
-    $offset   = (is_array($progress) && ($progress['post_type'] ?? '') === $pt) ? (int) ($progress['offset'] ?? 0) : 0;
+    // Pozostałe zakresy: lista ID + typ mety, wspólna pętla ze wznowieniem.
+    $ids       = [];
+    $meta_type = '';
+    if (strpos($scope, 'post:') === 0) {
+        $pt = sanitize_key(substr($scope, 5));
+        if ($pt === '' || !post_type_exists($pt)) {
+            evk_tools_set_notice('error', 'Wybierz prawidłowy typ treści.');
+            evk_tools_redirect();
+        }
+        $meta_type = 'post';
+        $ids = get_posts([
+            'post_type'     => $pt,
+            'post_status'   => 'any',
+            'numberposts'   => -1,
+            'fields'        => 'ids',
+            'orderby'       => 'ID',
+            'order'         => 'ASC',
+            'no_found_rows' => true,
+        ]);
+    } elseif ($scope === 'term') {
+        $taxes = [];
+        foreach (evk_rep_groups_for_object('term') as $g) {
+            foreach ((array) ($g['taxonomies'] ?? []) as $tx) {
+                if (taxonomy_exists($tx)) $taxes[$tx] = true;
+            }
+        }
+        if (!$taxes) {
+            evk_tools_set_notice('error', 'Żadna aktywna grupa pól nie jest przypisana do termów taksonomii.');
+            evk_tools_redirect();
+        }
+        $meta_type = 'term';
+        $terms = get_terms(['taxonomy' => array_keys($taxes), 'hide_empty' => false, 'fields' => 'ids']);
+        $ids   = is_wp_error($terms) ? [] : array_map('intval', $terms);
+    } elseif ($scope === 'user') {
+        if (!evk_rep_groups_for_object('user')) {
+            evk_tools_set_notice('error', 'Żadna aktywna grupa pól nie jest przypisana do profilu użytkownika.');
+            evk_tools_redirect();
+        }
+        $meta_type = 'user';
+        $ids = array_map('intval', get_users(['fields' => 'ID']));
+    } else {
+        evk_tools_set_notice('error', 'Wybierz prawidłowy zakres przeliczania.');
+        evk_tools_redirect();
+    }
 
-    $ids = get_posts([
-        'post_type'     => $pt,
-        'post_status'   => 'any',
-        'numberposts'   => -1,
-        'fields'        => 'ids',
-        'orderby'       => 'ID',
-        'order'         => 'ASC',
-        'no_found_rows' => true,
-    ]);
+    // Stabilna kolejność między przebiegami — wznowienie liczy od offsetu.
+    $ids = array_map('intval', (array) $ids);
+    sort($ids);
+
+    // Wznowienie przerwanego przebiegu TEGO SAMEGO zakresu (limit czasu hostingu).
+    $progress = evk_tools_recalc_progress();
+    $offset   = ($progress && $progress['scope'] === $scope) ? $progress['offset'] : 0;
+
     $total = count($ids);
     $start = time();
     @set_time_limit(0);
 
     for ($i = $offset; $i < $total; $i++) {
-        evk_rep_recalc((int) $ids[$i], 'post');
-        // Cache mety rośnie z każdym wpisem — zrzucaj co 500, żeby nie puchła pamięć.
+        evk_rep_recalc($ids[$i], $meta_type);
+        // Cache mety rośnie z każdym obiektem — zrzucaj co 500, żeby nie puchła pamięć.
         if ((($i + 1) % 500) === 0) wp_cache_flush();
         if ((time() - $start) > 20 && ($i + 1) < $total) {
-            update_option('evk_tools_recalc_progress', ['post_type' => $pt, 'offset' => $i + 1], false);
+            update_option('evk_tools_recalc_progress', ['scope' => $scope, 'offset' => $i + 1], false);
             evk_tools_set_notice('warning', sprintf(
-                'Przeliczono %d z %d wpisów — przerwano przed limitem czasu hostingu. Kliknij „Przelicz" ponownie, dokończę od miejsca przerwania.',
+                'Przeliczono %d z %d obiektów — przerwano przed limitem czasu hostingu. Kliknij „Przelicz" ponownie (ten sam zakres), dokończę od miejsca przerwania.',
                 $i + 1, $total
             ));
             evk_tools_redirect();
@@ -406,7 +494,7 @@ add_action('admin_init', function () {
     }
 
     delete_option('evk_tools_recalc_progress');
-    evk_tools_set_notice('success', sprintf('Przeliczono pola obliczeniowe %d wpisów typu „%s".', $total, $pt));
+    evk_tools_set_notice('success', sprintf('Przeliczono pola obliczeniowe %d obiektów — zakres: %s.', $total, evk_tools_recalc_scope_label($scope)));
     evk_tools_redirect();
 });
 
@@ -570,25 +658,34 @@ function evk_tools_page(): void {
             <h2 class="evk-settings-group-title"><span class="dashicons dashicons-calculator" style="vertical-align:text-bottom;color:#2563eb;"></span> Przelicz pola obliczeniowe</h2>
             <div>
                 <p style="margin-top:0;color:#475569;">
-                    Po zmianie formuły pola obliczeniowego istniejące wpisy trzymają stary wynik aż do
-                    ponownego zapisania. To narzędzie przelicza je hurtowo (<code>evk_rep_recalc</code>).
-                    Przy dużej liczbie wpisów przebieg może wymagać kilku kliknięć — wznawia się
-                    od miejsca przerwania.
+                    Po zmianie formuły pola obliczeniowego istniejące wartości trzymają stary wynik aż do
+                    ponownego zapisania. To narzędzie przelicza je hurtowo (<code>evk_rep_recalc</code> /
+                    <code>evk_rep_recalc_options</code>) — wpisy wybranego typu, wartości stron ustawień,
+                    termy lub użytkowników. Przy dużej liczbie obiektów przebieg może wymagać kilku
+                    kliknięć — wznawia się od miejsca przerwania.
                 </p>
-                <?php $recalc_progress = get_option('evk_tools_recalc_progress'); ?>
-                <?php if (is_array($recalc_progress)): ?>
+                <?php $recalc_progress = evk_tools_recalc_progress(); ?>
+                <?php if ($recalc_progress): ?>
                 <p style="color:#92400e;background:#fef3c7;padding:8px 12px;border-radius:6px;">
                     <span class="dashicons dashicons-clock" style="vertical-align:text-bottom;"></span>
-                    Przerwany przebieg dla typu <code><?php echo esc_html($recalc_progress['post_type'] ?? ''); ?></code>
-                    (od wpisu <?php echo (int) ($recalc_progress['offset'] ?? 0); ?>) — wybierz ten sam typ i kliknij „Przelicz", aby dokończyć.
+                    Przerwany przebieg — zakres <code><?php echo esc_html(evk_tools_recalc_scope_label($recalc_progress['scope'])); ?></code>
+                    (od obiektu <?php echo (int) $recalc_progress['offset']; ?>) — wybierz ten sam zakres i kliknij „Przelicz", aby dokończyć.
                 </p>
                 <?php endif; ?>
                 <form method="post" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <?php wp_nonce_field('evk_tools_recalc', 'evk_tools_nonce'); ?>
-                    <select name="evk_recalc_post_type">
-                        <?php foreach (evk_tools_recalc_post_types() as $pt => $lbl): ?>
-                        <option value="<?php echo esc_attr($pt); ?>" <?php selected(($recalc_progress['post_type'] ?? '') === $pt); ?>><?php echo esc_html($lbl); ?></option>
-                        <?php endforeach; ?>
+                    <?php $cur_scope = $recalc_progress['scope'] ?? ''; ?>
+                    <select name="evk_recalc_scope">
+                        <optgroup label="Wpisy (typ treści)">
+                            <?php foreach (evk_tools_recalc_post_types() as $pt => $lbl): ?>
+                            <option value="post:<?php echo esc_attr($pt); ?>" <?php selected($cur_scope === 'post:' . $pt); ?>><?php echo esc_html($lbl); ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                        <optgroup label="Inne zakresy">
+                            <option value="options" <?php selected($cur_scope === 'options'); ?>>Strony ustawień (opcje)</option>
+                            <option value="term" <?php selected($cur_scope === 'term'); ?>>Termy taksonomii</option>
+                            <option value="user" <?php selected($cur_scope === 'user'); ?>>Użytkownicy</option>
+                        </optgroup>
                     </select>
                     <button type="submit" name="evk_tools_recalc" value="1" class="button button-primary">
                         <span class="dashicons dashicons-update"></span> Przelicz

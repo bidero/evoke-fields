@@ -131,7 +131,9 @@ add_action('wp_ajax_evk_rel_search', function () {
     $s = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 
     // Tryb użytkowników (pole „Użytkownik") — ta sama wyszukiwarka co relacja.
+    // Wyniki zawierają e-maile, więc samo edit_posts to za mało (enumeracja adresów).
     if (isset($_GET['source']) && sanitize_key($_GET['source']) === 'user') {
+        if (!current_user_can('list_users')) wp_send_json_error('caps');
         $roles = isset($_GET['roles']) ? array_filter(array_map('sanitize_key', explode(',', (string) $_GET['roles']))) : [];
         $args  = [
             'search'         => $s !== '' ? '*' . $s . '*' : '',

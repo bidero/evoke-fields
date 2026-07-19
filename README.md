@@ -66,7 +66,7 @@ Pole tylko do odczytu; wynik liczy **serwer przy zapisie** (wartości z formular
 - Agregaty po wierszach repeatera: `SUM / COUNT / AVG / MIN / MAX(repeater.subpole)`, `COUNT(repeater)` = liczba wierszy. Na poziomie głównym repeater może pochodzić z **innej grupy** tego samego wpisu.
 - Kolejność stała: wiersze (od najgłębszych) → poziom główny. `SUM(pozycje.wartosc)` po wierszowym calc działa; **łańcuchy calc→calc na tym samym poziomie są zabronione** (dają 0). Brak głębokich ścieżek (`SUM(a.b.c)`) — użyj calc-mostka w wierszu pośrednim.
 - Przecinek dziesiętny w danych jest normalizowany; opcja „miejsca dziesiętne" zaokrągla wynik.
-- Po **zmianie formuły** istniejące wpisy przelicz w **Narzędzia → Przelicz pola obliczeniowe**; po programowych zmianach danych wołaj `evk_rep_recalc()`.
+- Po **zmianie formuły** istniejące wartości przelicz w **Narzędzia → Przelicz pola obliczeniowe** (zakres: typ treści / strony ustawień / termy / użytkownicy); po programowych zmianach danych wołaj `evk_rep_recalc()` (obiekty) lub `evk_rep_recalc_options()` (opcje).
 
 ## Pole „Plik" i podgląd PDF
 
@@ -86,12 +86,13 @@ Przełącznik „Kolumna" przy polu grupy pojedynczej: etykieta, pozycja, **„U
 evk_get_field( string $klucz, int $post_id = 0, string $prop = '' ); // jak tag dynamiczny
 evk_rows( string $klucz, int $post_id = 0 ): array;                  // wiersze repeatera
 evk_get_option_field( string $grupa, string $klucz = '', $default = '' ); // strony ustawień
-evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz pola calc
+evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz pola calc obiektu
+evk_rep_recalc_options(): int;                                       // przelicz pola calc stron ustawień
 ```
 
 ## Narzędzia
 
-**Eksport/Import** (JSON: grupy, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania) · **Przelicz pola obliczeniowe** (hurtowo, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
+**Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
 
 ## CPT i taksonomie
 
