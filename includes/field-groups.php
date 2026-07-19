@@ -73,7 +73,7 @@ add_action('manage_evk_field_group_posts_custom_column', function ($col, $post_i
             $walk  = function (array $fs) use (&$walk, &$count) {
                 foreach ($fs as $f) {
                     $t = $f['type'] ?? '';
-                    if (in_array($t, ['tab', 'accordion', 'heading'], true)) continue;
+                    if (in_array($t, ['tab', 'accordion', 'accordion_end', 'heading'], true)) continue;
                     if ($t === 'repeater') { $count++; $walk($f['sub_fields'] ?? []); continue; }
                     $count++;
                 }

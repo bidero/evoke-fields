@@ -660,7 +660,7 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
 
     $panels = [];
     $cur = null;
-    $acc = null;
+    $acc = null; // indeks otwartego bloku akordeonu w blokach bieżącego panelu, albo null
     foreach ($fields as $fkey => $f) {
         $t = $f['type'] ?? 'text';
         if ($t === 'tab') {
@@ -673,27 +673,64 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
             $panels[] = ['label' => $has_tabs ? 'Ogólne' : null, 'blocks' => []];
             $cur = count($panels) - 1;
         }
-        if ($t === 'heading') {
-            $acc = null;
-            $panels[$cur]['blocks'][] = ['type' => 'heading', 'label' => $f['label'] ?? '', 'field' => $f];
-            continue;
-        }
-        if ($t === 'description') {
-            $acc = null;
-            $panels[$cur]['blocks'][] = ['type' => 'description', 'label' => $f['label'] ?? '', 'field' => $f];
-            continue;
-        }
         if ($t === 'accordion') {
-            $panels[$cur]['blocks'][] = ['type' => 'accordion', 'label' => $f['label'] ?? '', 'fields' => []];
+            // Nowy akordeon zamyka ewentualny poprzedni (bez zagnieżdżania).
+            $panels[$cur]['blocks'][] = ['type' => 'accordion', 'label' => $f['label'] ?? '', 'blocks' => []];
             $acc = array_key_last($panels[$cur]['blocks']);
             continue;
         }
-        if ($acc !== null) {
-            $panels[$cur]['blocks'][$acc]['fields'][] = ['key' => $fkey, 'field' => $f];
+        if ($t === 'accordion_end') {
+            $acc = null; // koniec akordeonu — kolejne pola wracają na poziom panelu
+            continue;
+        }
+        // Blok treści (nagłówek/opis/pole) — trafia do otwartego akordeonu albo do panelu.
+        if ($t === 'heading') {
+            $block = ['type' => 'heading', 'label' => $f['label'] ?? '', 'field' => $f];
+        } elseif ($t === 'description') {
+            $block = ['type' => 'description', 'label' => $f['label'] ?? '', 'field' => $f];
         } else {
-            $panels[$cur]['blocks'][] = ['type' => 'field', 'key' => $fkey, 'field' => $f];
+            $block = ['type' => 'field', 'key' => $fkey, 'field' => $f];
+        }
+        if ($acc !== null) {
+            $panels[$cur]['blocks'][$acc]['blocks'][] = $block;
+        } else {
+            $panels[$cur]['blocks'][] = $block;
         }
     }
+
+    // Render pojedynczego bloku treści (nagłówek/opis/pole) — używany w panelu i w akordeonie.
+    $render_block = function (array $b) use ($ctx) {
+        if ($b['type'] === 'heading') {
+            $f        = $b['field'] ?? [];
+            $size     = $f['heading_size'] ?? 'h3';
+            $subtxt   = $f['heading_sub']  ?? '';
+            $separator = !empty($f['heading_separator']);
+            $tag      = in_array($size, ['h1','h2','h3','h4','h5'], true) ? $size : 'h3';
+            echo '<div class="evk-s-heading-wrap' . ($separator ? ' has-separator' : '') . '">';
+            echo '<' . $tag . ' class="evk-s-heading evk-s-heading--' . esc_attr($tag) . '">' . esc_html($b['label']) . '</' . $tag . '>';
+            if ($subtxt !== '') echo '<p class="evk-s-heading-sub">' . esc_html($subtxt) . '</p>';
+            echo '</div>';
+        } elseif ($b['type'] === 'description') {
+            $f         = $b['field'] ?? [];
+            $content   = $f['desc_content'] ?? '';
+            $collapsed = !empty($f['desc_collapsed']);
+            $collapsible = !empty($f['desc_collapsible']);
+            if ($collapsible) {
+                $open = $collapsed ? '' : ' open';
+                echo '<details class="evk-s-desc evk-s-desc--collapsible"' . $open . '>';
+                echo '<summary class="evk-s-desc-summary">' . esc_html($b['label']) . ' <span class="evk-s-desc-chevron dashicons dashicons-arrow-down-alt2"></span></summary>';
+                echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
+                echo '</details>';
+            } else {
+                echo '<div class="evk-s-desc">';
+                if ($b['label'] !== '') echo '<strong class="evk-s-desc-title">' . esc_html($b['label']) . '</strong>';
+                echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
+                echo '</div>';
+            }
+        } else {
+            evk_rep_render_ctx_field($b['key'], $b['field'], $ctx);
+        }
+    };
 
     echo '<div class="evk-s">';
     if ($has_tabs) {
@@ -707,41 +744,14 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
     foreach ($panels as $pi => $p) {
         echo '<div class="evk-s-panel' . ($pi === 0 ? ' active' : '') . '" data-panel="' . $pi . '">';
         foreach ($p['blocks'] as $b) {
-            if ($b['type'] === 'heading') {
-                $f        = $b['field'] ?? [];
-                $size     = $f['heading_size'] ?? 'h3';
-                $subtxt   = $f['heading_sub']  ?? '';
-                $separator = !empty($f['heading_separator']);
-                $tag      = in_array($size, ['h1','h2','h3','h4','h5'], true) ? $size : 'h3';
-                echo '<div class="evk-s-heading-wrap' . ($separator ? ' has-separator' : '') . '">';
-                echo '<' . $tag . ' class="evk-s-heading evk-s-heading--' . esc_attr($tag) . '">' . esc_html($b['label']) . '</' . $tag . '>';
-                if ($subtxt !== '') echo '<p class="evk-s-heading-sub">' . esc_html($subtxt) . '</p>';
-                echo '</div>';
-            } elseif ($b['type'] === 'description') {
-                $f         = $b['field'] ?? [];
-                $content   = $f['desc_content'] ?? '';
-                $collapsed = !empty($f['desc_collapsed']);
-                $collapsible = !empty($f['desc_collapsible']);
-                if ($collapsible) {
-                    $open = $collapsed ? '' : ' open';
-                    echo '<details class="evk-s-desc evk-s-desc--collapsible"' . $open . '>';
-                    echo '<summary class="evk-s-desc-summary">' . esc_html($b['label']) . ' <span class="evk-s-desc-chevron dashicons dashicons-arrow-down-alt2"></span></summary>';
-                    echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
-                    echo '</details>';
-                } else {
-                    echo '<div class="evk-s-desc">';
-                    if ($b['label'] !== '') echo '<strong class="evk-s-desc-title">' . esc_html($b['label']) . '</strong>';
-                    echo '<div class="evk-s-desc-body">' . wp_kses_post($content) . '</div>';
-                    echo '</div>';
-                }
-            } elseif ($b['type'] === 'accordion') {
+            if ($b['type'] === 'accordion') {
                 echo '<div class="evk-s-acc"><button type="button" class="evk-s-acc-head">' . esc_html($b['label']) . '<span class="dashicons dashicons-arrow-down-alt2"></span></button><div class="evk-s-acc-body">';
-                foreach ($b['fields'] as $it) {
-                    evk_rep_render_ctx_field($it['key'], $it['field'], $ctx);
+                foreach (($b['blocks'] ?? []) as $ib) {
+                    $render_block($ib);
                 }
                 echo '</div></div>';
             } else {
-                evk_rep_render_ctx_field($b['key'], $b['field'], $ctx);
+                $render_block($b);
             }
         }
         echo '</div>';

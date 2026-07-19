@@ -329,7 +329,7 @@ function evk_rep_field_type_optgroups(bool $sub = false): array {
         'Pola danych'        => $data,
         'Relacje'            => $relacje,
         'Repeater'           => ['repeater' => 'Repeater (pola powtarzalne)'],
-        'Układ (separatory)' => ['tab' => 'Zakładka', 'accordion' => 'Akordeon', 'heading' => 'Nagłówek', 'description' => 'Opis (blok tekstowy)'],
+        'Układ (separatory)' => ['tab' => 'Zakładka', 'accordion' => 'Akordeon', 'accordion_end' => 'Koniec akordeonu', 'heading' => 'Nagłówek', 'description' => 'Opis (blok tekstowy)'],
     ];
 }
 

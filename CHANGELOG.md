@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.50.0] — 2026-07-19
+
+### Dodane
+
+- **Separator „Koniec akordeonu"** — akordeon może teraz zawierać **dowolną zawartość**,
+  w tym **nagłówki i opisy**, a jego koniec wyznaczasz jawnym znacznikiem (nowy typ
+  układu „Koniec akordeonu"). Wcześniej nagłówek/opis automatycznie zamykały akordeon,
+  więc nie dało się ich w nim umieścić. Teraz: akordeon zbiera pola/nagłówki/opisy aż do
+  znacznika końca; pola po znaczniku wracają na poziom grupy. Bez znacznika akordeon
+  działa jak dotąd (do następnej zakładki/akordeonu). (`includes/metabox.php`,
+  `includes/builder.php`, `includes/bricks.php`, `includes/field-groups.php`,
+  `assets/builder.js`)
+
 ## [1.49.1] — 2026-07-19
 
 ### Zmienione

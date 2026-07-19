@@ -65,7 +65,7 @@
         image_select: 'IMAGE SELECT', gallery: 'GALERIA', file: 'PLIK', wysiwyg: 'WYSIWYG',
         // Akcenty wg kategorii
         calc: 'CALC', taxonomy: 'TAX', relationship: 'RELACJA', user: 'USER', repeater: 'REPEATER',
-        tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS'
+        tab: 'ZAKŁADKA', accordion: 'AKORDEON', accordion_end: 'KONIEC AKORD.', heading: 'NAGŁÓWEK', description: 'OPIS'
     };
 
     function applyType($field) {

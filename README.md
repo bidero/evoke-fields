@@ -30,7 +30,7 @@ System własnych pól dla WordPressa zintegrowany z **Bricks Builder**: grupy p�
 | Media | Obraz (kafelek z podglądem, konfigurowalny rozmiar podglądu), Galeria (z kategoriami), **Plik** (dowolny typ z biblioteki mediów) |
 | Relacje | Taksonomia, Relacja (posty), Użytkownik — z opcją **relacji dwukierunkowej** (`reverse_key`) |
 | Inne | Kolor, Link/przycisk (URL + etykieta + cel), Repeater (pola powtarzalne) |
-| Układ | Zakładka, Akordeon, Nagłówek, Opis (nie zapisują danych) |
+| Układ | Zakładka, Akordeon, Koniec akordeonu, Nagłówek, Opis (nie zapisują danych) |
 
 Wspólne opcje pól: szerokość, placeholder, wymagane, prefiks/sufiks, instrukcja + tooltip, wartość domyślna, walidacja (min/max — **egzekwowane też serwerowo**, wzorzec regex, własny komunikat), **logika warunkowa** (pokaż/ukryj wg innych pól, reguły all/any), kolumna w panelu admina.
 
