@@ -85,6 +85,11 @@
         });
         frame.open();
     });
+    // Link „Edytuj grupę pól" w nagłówku metaboxu — nie zwijaj/przeciągaj boxa.
+    $(document).on('click mousedown', '.evk-group-edit', function (e) {
+        e.stopPropagation();
+    });
+
     // Hover-X — usuń obraz, wróć do dashed.
     $(document).on('click', '.evk-rep-image-remove', function (e) {
         e.preventDefault();

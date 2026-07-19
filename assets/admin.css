@@ -2,8 +2,21 @@
 
 /* wspólny wygląd pola (single + wiersz) */
 .evk-rep-field,.evk-s-field{display:flex;flex-direction:column;min-width:0;}
+/* Delikatne oddzielenie pól grupy pojedynczej (nie dotyczy wierszy repeatera —
+   te mają klasę .evk-rep-field). Grid rozciąga pola w wierszu do równej wysokości,
+   więc kreski pól obok siebie wyrównują się same. */
+.evk-s-field{padding-bottom:14px;border-bottom:1px solid #eef2f7;}
+.evk-s-field:last-child{padding-bottom:0;border-bottom:0;}
+/* Layout-separatory nie potrzebują dodatkowej kreski (mają własny chrome). */
+.evk-s-field.evk-rep-field--heading,.evk-s-field.evk-rep-field--description{border-bottom:0;padding-bottom:0;}
 /* Logika warunkowa — pole ukryte runtime */
 .evk-s-field.evk-cond-hidden{display:none!important;}
+/* ── Link „Edytuj grupę pól" w nagłówku metaboxu (hover) ── */
+.postbox[id^="evk_rep_"] .postbox-header{position:relative;}
+.postbox[id^="evk_rep_"] .evk-group-edit{position:absolute;right:36px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;opacity:0;transition:opacity .15s,color .15s;color:#94a3b8;text-decoration:none;line-height:1;}
+.postbox[id^="evk_rep_"]:hover .evk-group-edit{opacity:1;}
+.postbox[id^="evk_rep_"] .evk-group-edit:hover{color:#2563eb;}
+.evk-group-edit .dashicons{font-size:17px;width:17px;height:17px;line-height:1;}
 .evk-rep-field > label,.evk-s-label{font-weight:600;font-size:12px;margin-bottom:5px;color:#111827;}
 /* ── Instrukcja pola (pod inputem) + tooltip „?" przy etykiecie ── */
 .evk-s-instructions{margin:5px 0 0;font-size:12px;color:#6b7280;line-height:1.5;}

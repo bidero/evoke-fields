@@ -218,6 +218,7 @@ function evk_rep_groups(): array {
         $tax = get_post_meta($post->ID, '_evk_taxonomies', true);
 
         $entry = [
+            'id'          => (int) $post->ID,
             'label'       => $post->post_title,
             'object_type' => in_array($obj, ['post', 'term', 'user', 'media'], true) ? $obj : 'post',
             'post_types'  => is_array($pts) && $pts ? $pts : ['post'],

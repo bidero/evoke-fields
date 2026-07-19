@@ -17,8 +17,11 @@ add_action('add_meta_boxes', function () {
         // termy/użytkownicy → locations.php; media → panel szczegółów załącznika (niżej).
         if (($group['object_type'] ?? 'post') !== 'post') continue;
         $seamless = !empty($group['seamless']);
+        // Tytuł + (dla nie-seamless) link „Edytuj grupę pól" widoczny po najechaniu na metabox.
+        $title = esc_html($group['label'] ?? $key);
+        if (!$seamless) $title .= evk_rep_group_edit_link_html($group);
         foreach ((array) ($group['post_types'] ?? []) as $pt) {
-            add_meta_box('evk_rep_' . $key, $group['label'] ?? $key, 'evk_rep_render_metabox', $pt, 'normal', 'default', ['group_key' => $key]);
+            add_meta_box('evk_rep_' . $key, $title, 'evk_rep_render_metabox', $pt, 'normal', 'default', ['group_key' => $key]);
             if ($seamless) {
                 add_filter('postbox_classes_' . $pt . '_evk_rep_' . $key, function ($classes) {
                     $classes[] = 'evk-seamless';
@@ -886,6 +889,19 @@ function evk_rep_render_row(string $name_base, array $fields, $index, array $val
 // =========================================================================
 // META BOX
 // =========================================================================
+
+/**
+ * Link „Edytuj grupę pól" do wstrzyknięcia w tytuł metaboxu (odsyła do edycji CPT
+ * evk_field_group). Pusty, gdy brak ID grupy lub uprawnień. Etykieta jest już
+ * escapowana przez callera — tu dokładamy tylko bezpieczny anchor.
+ */
+function evk_rep_group_edit_link_html(array $group): string {
+    $gid = (int) ($group['id'] ?? 0);
+    if ($gid <= 0 || !current_user_can('edit_post', $gid)) return '';
+    $url = get_edit_post_link($gid);
+    if (!$url) return '';
+    return ' <a href="' . esc_url($url) . '" class="evk-group-edit" title="Edytuj grupę pól" target="_blank" rel="noopener"><span class="dashicons dashicons-edit"></span></a>';
+}
 
 function evk_rep_render_metabox(\WP_Post $post, array $box): void {
     $key    = $box['args']['group_key'];

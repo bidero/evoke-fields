@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.47.0] — 2026-07-19
+
+### Dodane
+
+- **Link „Edytuj grupę pól" w nagłówku metaboxu** — po najechaniu na metabox grupy
+  (na ekranie edycji wpisu) po prawej stronie nagłówka pojawia się ikona odsyłająca
+  do edycji definicji grupy (CPT `evk_field_group`), otwierana w nowej karcie.
+  Tylko dla grup nie‑seamless i użytkowników z prawem edycji grupy. Schemat grup
+  przechowuje teraz ID posta grupy (`id`). (`includes/metabox.php`, `includes/field-groups.php`)
+
+### Zmienione
+
+- **Delikatne oddzielenie pól** — pola grupy pojedynczej dostały spójny dolny padding
+  i cienką kreskę (nie dotyczy wierszy repeatera ani separatorów układu). Dzięki
+  rozciąganiu pól w gridzie kreski pól obok siebie wyrównują się automatycznie.
+  (`assets/admin.css`)
+
 ## [1.46.0] — 2026-07-19
 
 ### Zmienione
