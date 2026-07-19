@@ -2,6 +2,18 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.48.0] — 2026-07-19
+
+### Zmienione
+
+- **Badge typu na każdym polu w edytorze grup** — dotąd plakietkę typu miały tylko
+  pola „specjalne" (rozmyty podział). Teraz każdy typ ma badge, ale kolorowany wg
+  kategorii, żeby zachować hierarchię: pola danych — stonowany **szary**; repeater —
+  niebieski; separatory układu (zakładka/akordeon/nagłówek/opis) — błękit; relacje
+  (taksonomia/relacja/użytkownik) — morski; pole obliczeniowe — bursztyn. Spójność
+  przy zachowaniu sygnału dla elementów strukturalnych. (`assets/builder.js`,
+  `assets/builder.css`)
+
 ## [1.47.0] — 2026-07-19
 
 ### Dodane

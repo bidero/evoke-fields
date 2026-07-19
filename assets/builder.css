@@ -79,8 +79,21 @@
 .evk-b-field-clone .dashicons,.evk-b-field-remove .dashicons{font-size:16px;width:16px;height:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
 
 /* Badge separatora (ukryty gdy pusty) */
-.evk-b-badge{flex:0 0 auto;display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#2563eb;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;}
+/* Badge typu pola — obecny na KAŻDYM polu. Domyślnie stonowany szary (pola danych);
+   akcenty tylko dla kategorii, które warto wyróżnić (patrz overrides niżej). */
+.evk-b-badge{flex:0 0 auto;display:inline-flex;align-items:center;padding:4px 10px;border-radius:7px;background:#64748b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.6px;}
 .evk-b-badge:empty{display:none;}
+/* Repeater / kontener */
+.evk-b-field[data-ftype="repeater"] .evk-b-badge{background:#2563eb;}
+/* Separatory układu */
+.evk-b-field[data-ftype="tab"] .evk-b-badge,
+.evk-b-field[data-ftype="accordion"] .evk-b-badge,
+.evk-b-field[data-ftype="heading"] .evk-b-badge,
+.evk-b-field[data-ftype="description"] .evk-b-badge{background:#0ea5e9;}
+/* Relacje */
+.evk-b-field[data-ftype="taxonomy"] .evk-b-badge,
+.evk-b-field[data-ftype="relationship"] .evk-b-badge,
+.evk-b-field[data-ftype="user"] .evk-b-badge{background:#0d9488;}
 
 /* Siatka kontrolek z etykietami — wypełnia szerokość, zawija na wąskim */
 .evk-b-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-top:14px;}
@@ -346,7 +359,3 @@
 .evk-b-field.is-collapsed > .evk-b-field-toggle,
 .evk-b-field.is-collapsed > .evk-b-field-description,
 .evk-b-field.is-collapsed > .evk-b-field-heading-ext{display:none!important;}
-
-/* Badge kolory dla nowych typów */
-.evk-b-field[data-ftype="toggle"] .evk-b-badge{background:#8b5cf6;}
-.evk-b-field[data-ftype="description"] .evk-b-badge{background:#0ea5e9;}

@@ -56,7 +56,17 @@
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    var BADGE = { tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS', repeater: 'REPEATER', taxonomy: 'TAX', image_select: 'IMAGE SELECT', button_group: 'BUTTONS', range: 'SUWAK', gallery: 'GALERIA', relationship: 'RELACJA', toggle: 'TOGGLE', link: 'LINK', user: 'USER', calc: 'CALC' };
+    var BADGE = {
+        // Pola danych (badge szary)
+        text: 'TEKST', textarea: 'TEKST WIEL.', number: 'LICZBA', range: 'SUWAK',
+        email: 'E-MAIL', url: 'URL', link: 'LINK', select: 'LISTA', radio: 'RADIO',
+        button_group: 'BUTTONS', checkbox: 'CHECKBOX', toggle: 'TOGGLE', color: 'KOLOR',
+        date: 'DATA', time: 'CZAS', datetime: 'DATA+CZAS', image: 'OBRAZ',
+        image_select: 'IMAGE SELECT', gallery: 'GALERIA', file: 'PLIK', wysiwyg: 'WYSIWYG',
+        // Akcenty wg kategorii
+        calc: 'CALC', taxonomy: 'TAX', relationship: 'RELACJA', user: 'USER', repeater: 'REPEATER',
+        tab: 'ZAKŁADKA', accordion: 'AKORDEON', heading: 'NAGŁÓWEK', description: 'OPIS'
+    };
 
     function applyType($field) {
         var t = $field.children('.evk-b-field-grid').find('.evk-b-type').first().val();
