@@ -291,7 +291,71 @@ add_action('save_post_evk_field_group', function ($post_id) {
     update_post_meta($post_id, '_evk_fields', wp_slash(wp_json_encode($clean, JSON_UNESCAPED_UNICODE)));
 
     evk_groups_cache_clear();
+
+    // ── Ostrzeżenie (nieblokujące) o kolizjach kluczy między grupami ──
+    // Klucze meta to GLOBALNA przestrzeń nazw: resolver tagów bierze pierwszą pasującą
+    // grupę, a schemat trzyma jedną grupę per klucz — duplikat cicho przesłania drugą stronę.
+    $gk        = (string) get_post_meta($post_id, '_evk_key', true);
+    $conflicts = [];
+
+    // Duplikat klucza całej GRUPY (druga grupa znika ze schematu).
+    if ($gk !== '') {
+        $dupe = get_posts([
+            'post_type'     => 'evk_field_group',
+            'post_status'   => ['publish', 'draft', 'pending', 'private', 'future'],
+            'numberposts'   => 1,
+            'fields'        => 'ids',
+            'no_found_rows' => true,
+            'meta_key'      => '_evk_key',
+            'meta_value'    => $gk,
+            'exclude'       => [$post_id],
+        ]);
+        if ($dupe) $conflicts[$gk][] = get_the_title((int) $dupe[0]) ?: ('grupa #' . (int) $dupe[0]);
+    }
+
+    // Klucze meta zajmowane przez TĘ grupę: repeater → klucz grupy; pojedyncza → klucze pól danych.
+    $mine = [];
+    if (!empty($_POST['evk_group_repeater'])) {
+        if ($gk !== '') $mine[] = $gk;
+    } else {
+        foreach ($clean as $fk => $f) {
+            if (!evk_rep_is_layout($f['type'] ?? 'text')) $mine[] = (string) $fk;
+        }
+    }
+    foreach (evk_rep_groups() as $ogk => $og) {
+        if ((int) ($og['id'] ?? 0) === (int) $post_id) continue;
+        $theirs = [];
+        if (evk_rep_is_repeater($og)) {
+            $theirs[] = (string) $ogk;
+        } else {
+            foreach (($og['fields'] ?? []) as $ofk => $of) {
+                if (!evk_rep_is_layout($of['type'] ?? 'text')) $theirs[] = (string) $ofk;
+            }
+        }
+        foreach (array_intersect($mine, $theirs) as $dup) {
+            $conflicts[$dup][] = ($og['label'] ?? '') !== '' ? $og['label'] : (string) $ogk;
+        }
+    }
+    if ($conflicts) {
+        set_transient('evk_group_key_conflicts_' . get_current_user_id(), $conflicts, 120);
+    }
 }, 10);
+
+// Notice po zapisie grupy z kolidującymi kluczami (transient ustawiony wyżej).
+add_action('admin_notices', function () {
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen || $screen->post_type !== 'evk_field_group') return;
+    $c = get_transient('evk_group_key_conflicts_' . get_current_user_id());
+    if (!is_array($c) || !$c) return;
+    delete_transient('evk_group_key_conflicts_' . get_current_user_id());
+    $items = [];
+    foreach ($c as $key => $where) {
+        $items[] = '<code>' . esc_html((string) $key) . '</code> (także w: ' . esc_html(implode(', ', array_unique($where))) . ')';
+    }
+    echo '<div class="notice notice-warning is-dismissible"><p><strong>Evoke FIELDS:</strong> '
+        . 'te klucze są użyte również w innych grupach pól — tagi dynamiczne i meta mogą wskazywać inne pole niż oczekujesz: '
+        . implode(' · ', $items) . '</p></div>';
+});
 
 // =========================================================================
 // HELPERY WSPÓŁDZIELONE
@@ -486,6 +550,8 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
             : [];
         if ($roles) $def['user_roles'] = $roles;
         if (!empty($f['user_multiple'])) $def['user_multiple'] = true;
+        if (($f['user_style'] ?? '') === 'select') $def['user_style'] = 'select';
+        if (!empty($f['user_default_current'])) $def['user_default_current'] = true;
     } elseif ($type === 'image') {
         $def['width'] = in_array((int)($f['width'] ?? 0), $allowed_widths, true) ? (int)$f['width'] : 0;
         if (isset($f['image_preview_width']) && $f['image_preview_width'] !== '' && is_numeric($f['image_preview_width'])) {
@@ -677,6 +743,8 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
     $rel_style           = $field['rel_style'] ?? 'pills';
     $user_multi          = !empty($field['user_multiple']);
     $user_roles          = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
+    $user_style          = $field['user_style'] ?? 'pills';
+    $user_def_cur        = !empty($field['user_default_current']);
     $bidirectional       = !empty($field['bidirectional']);
     $reverse_key         = $field['reverse_key'] ?? '';
     $placeholder         = $field['placeholder'] ?? '';
@@ -979,6 +1047,17 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
             </div>
             <label class="evk-b-inline-check" style="margin:10px 0 0;">
                 <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_multiple]" value="1" <?php checked($user_multi); ?>> Wielokrotny wybór (wielu użytkowników)
+            </label>
+            <div class="evk-b-ctrl" style="margin-top:12px;">
+                <label>Styl wyboru</label>
+                <select name="<?php echo esc_attr($base); ?>[user_style]">
+                    <option value="pills" <?php selected($user_style, 'pills'); ?>>Pigułki + wyszukiwarka (z awatarami)</option>
+                    <option value="select" <?php selected($user_style, 'select'); ?>>Lista rozwijana</option>
+                </select>
+            </div>
+            <label class="evk-b-inline-check" style="margin:10px 0 0;">
+                <input type="checkbox" name="<?php echo esc_attr($base); ?>[user_default_current]" value="1" <?php checked($user_def_cur); ?>>
+                Domyślnie bieżący użytkownik (nowe wpisy / nowe wiersze)
             </label>
             <?php $u_cheat = ($key !== '' ? $key : 'klucz'); ?>
             <details class="evk-b-cheat">

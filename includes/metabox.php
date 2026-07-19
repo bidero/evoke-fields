@@ -105,10 +105,11 @@ function evk_rep_render_gallery_item(string $name, $index, int $img, string $cat
     echo '</div>';
 }
 
-function evk_rep_render_rel_item(string $name, $id, string $title, bool $tpl = false): void {
+function evk_rep_render_rel_item(string $name, $id, string $title, bool $tpl = false, string $img = ''): void {
     $idv = $tpl ? '__RID__' : (string) $id;
     echo '<div class="evk-rel-item" data-id="' . esc_attr($idv) . '">';
     echo '<span class="evk-rel-handle dashicons dashicons-menu" title="Przeciągnij"></span>';
+    if ($img !== '') echo '<img class="evk-rel-avatar" src="' . esc_url($img) . '" alt="">';
     echo '<input type="hidden" name="' . esc_attr($name) . '[]" value="' . esc_attr($idv) . '">';
     echo '<span class="evk-rel-title">' . ($tpl ? '' : esc_html($title)) . '</span>';
     echo '<button type="button" class="evk-rel-remove" title="Usuń"><span class="dashicons dashicons-no-alt"></span></button>';
@@ -145,8 +146,18 @@ add_action('wp_ajax_evk_rel_search', function () {
         if ($roles) $args['role__in'] = $roles;
         $uq  = new WP_User_Query($args);
         $out = [];
+        $role_defs = wp_roles()->roles;
         foreach ((array) $uq->get_results() as $u) {
-            $out[] = ['id' => $u->ID, 'title' => $u->display_name ?: $u->user_login, 'type' => $u->user_email];
+            $role_names = [];
+            foreach ((array) $u->roles as $r) {
+                $role_names[] = translate_user_role($role_defs[$r]['name'] ?? $r);
+            }
+            $out[] = [
+                'id'    => $u->ID,
+                'title' => $u->display_name ?: $u->user_login,
+                'type'  => $u->user_email . ($role_names ? ' · ' . implode(', ', $role_names) : ''),
+                'img'   => get_avatar_url($u->ID, ['size' => 40]) ?: '',
+            ];
         }
         wp_send_json_success($out);
     }
@@ -431,20 +442,27 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
             $multiple = !empty($field['rel_multiple']);
             // Post Object — prosta lista rozwijana zamiast pigułek + wyszukiwarki.
             if (($field['rel_style'] ?? '') === 'select') {
-                $opts = get_posts([
+                $opt_ids = get_posts([
                     'post_type'   => $rpts,
                     'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
                     'numberposts' => 300,
                     'orderby'     => 'title',
                     'order'       => 'ASC',
+                    'fields'      => 'ids',
                     'suppress_filters' => false,
                 ]);
+                $opt_ids = array_map('intval', $opt_ids);
+                // Wybrane spoza limitu 300 MUSZĄ zostać na liście — opcja nieobecna
+                // w selekcie nie wraca w POST i zapis by je skasował.
+                foreach ($ids as $pid) {
+                    if (!in_array($pid, $opt_ids, true) && get_post_status($pid) !== false) $opt_ids[] = $pid;
+                }
+                if ($opt_ids && function_exists('_prime_post_caches')) _prime_post_caches($opt_ids, false, false);
                 $sel_name = $multiple ? $name . '[]' : $name;
                 echo '<select class="evk-rep-postobject" name="' . esc_attr($sel_name) . '"' . ($multiple ? ' multiple size="6"' : '') . '>';
                 if (!$multiple) echo '<option value="">— wybierz —</option>';
-                foreach ($opts as $p) {
-                    $pid = (int) $p->ID;
-                    echo '<option value="' . esc_attr((string) $pid) . '" ' . selected(in_array($pid, $ids, true), true, false) . '>' . esc_html(get_the_title($p) ?: '(bez tytułu)') . '</option>';
+                foreach ($opt_ids as $pid) {
+                    echo '<option value="' . esc_attr((string) $pid) . '" ' . selected(in_array($pid, $ids, true), true, false) . '>' . esc_html(get_the_title($pid) ?: '(bez tytułu)') . '</option>';
                 }
                 echo '</select>';
                 break;
@@ -469,12 +487,34 @@ function evk_rep_render_field_input(string $name, array $field, $val, string $co
                 : ((int) $val > 0 ? [(int) $val] : []);
             $u_multi = !empty($field['user_multiple']);
             $u_roles = !empty($field['user_roles']) && is_array($field['user_roles']) ? $field['user_roles'] : [];
+            // Styl „lista rozwijana" — jak rel_style=select w Relacji.
+            if (($field['user_style'] ?? '') === 'select') {
+                $uargs = ['fields' => ['ID', 'display_name', 'user_login'], 'orderby' => 'display_name', 'order' => 'ASC', 'number' => 300];
+                if ($u_roles) $uargs['role__in'] = $u_roles;
+                $users  = get_users($uargs);
+                $listed = array_map(function ($u) { return (int) $u->ID; }, $users);
+                // Wybrani spoza limitu / spoza ról muszą zostać na liście (jak w Relacji).
+                foreach ($uids as $uid) {
+                    if (in_array($uid, $listed, true)) continue;
+                    $ud = get_userdata($uid);
+                    if ($ud) $users[] = $ud;
+                }
+                $sel_name = $u_multi ? $name . '[]' : $name;
+                echo '<select class="evk-rep-userobject" name="' . esc_attr($sel_name) . '"' . ($u_multi ? ' multiple size="6"' : '') . '>';
+                if (!$u_multi) echo '<option value="">— wybierz —</option>';
+                foreach ($users as $u) {
+                    $uid = (int) $u->ID;
+                    echo '<option value="' . esc_attr((string) $uid) . '" ' . selected(in_array($uid, $uids, true), true, false) . '>' . esc_html($u->display_name ?: $u->user_login) . '</option>';
+                }
+                echo '</select>';
+                break;
+            }
             echo '<div class="evk-rel" data-name="' . esc_attr($name) . '" data-source="user" data-roles="' . esc_attr(implode(',', $u_roles)) . '" data-multiple="' . ($u_multi ? '1' : '0') . '">';
             echo '<div class="evk-rel-selected">';
             foreach ($uids as $uid) {
                 $u = get_userdata($uid);
                 if (!$u) continue;
-                evk_rep_render_rel_item($name, $uid, $u->display_name ?: $u->user_login);
+                evk_rep_render_rel_item($name, $uid, $u->display_name ?: $u->user_login, false, get_avatar_url($uid, ['size' => 40]) ?: '');
             }
             echo '</div>';
             echo '<div class="evk-rel-search-wrap"><input type="text" class="evk-rel-search" placeholder="Szukaj użytkowników…" autocomplete="off"><div class="evk-rel-results"></div></div>';
@@ -613,6 +653,12 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
     }
 
     $has_default = evk_rep_default_capable($type) && ($field['default'] ?? '') !== '';
+    // Pole Użytkownik z opcją „domyślnie bieżący" — default = ID zalogowanego.
+    $default_val = $has_default ? $field['default'] : '';
+    if (!$has_default && $type === 'user' && !empty($field['user_default_current'])) {
+        $has_default = true;
+        $default_val = [get_current_user_id()];
+    }
     if ($mode === 'single') {
         $mt   = $ctx['meta_type'] ?? 'post';
         $oid  = (int) ($ctx['object_id'] ?? $ctx['post_id'] ?? 0);
@@ -620,21 +666,21 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         // Wartość domyślna tylko gdy meta nieobecne (nowy wpis), nie gdy wyczyszczone.
         if ($has_default && ($val === '' || $val === null)) {
             $all = get_metadata($mt, $oid, $fkey, false);
-            if (!is_array($all) || count($all) === 0) $val = $field['default'];
+            if (!is_array($all) || count($all) === 0) $val = $default_val;
         }
         $name = 'evk_single[' . $fkey . ']';
         $eid  = 'evk_ed_' . ($ctx['uid'] ?? 'g') . '_' . $fkey;
         $c    = 'single';
     } elseif ($mode === 'option') {
         $val  = array_key_exists($fkey, (array) ($ctx['values'] ?? [])) ? $ctx['values'][$fkey]
-              : ($has_default ? $field['default'] : '');
+              : ($has_default ? $default_val : '');
         $name = $ctx['name_base'] . '[' . $fkey . ']';
         $eid  = 'evk_ed_' . ($ctx['uid'] ?? 'o') . '_' . $fkey;
         $c    = 'single';
     } else {
         // Tryb wiersza repeatera — nowy wiersz (brak klucza w values) dostaje default.
         $val  = array_key_exists($fkey, (array) ($ctx['values'] ?? [])) ? $ctx['values'][$fkey]
-              : ($has_default ? $field['default'] : '');
+              : ($has_default ? $default_val : '');
         $name = $ctx['name_base'] . '[' . $ctx['index'] . '][' . $fkey . ']';
         $eid  = '';
         $c    = 'row';
@@ -845,7 +891,8 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
         if ($v === '' || $v === null) {
             // Pole z wartością domyślną: zapisz pustkę zamiast kasować, żeby świadome
             // wyczyszczenie nie przywracało defaultu przy ponownym otwarciu.
-            if (evk_rep_default_capable($type) && ($field['default'] ?? '') !== '') {
+            if ((evk_rep_default_capable($type) && ($field['default'] ?? '') !== '')
+                || ($type === 'user' && !empty($field['user_default_current']))) {
                 update_metadata($meta_type, $object_id, $fkey, '');
             } else {
                 delete_metadata($meta_type, $object_id, $fkey);

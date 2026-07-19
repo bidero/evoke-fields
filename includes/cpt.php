@@ -12,6 +12,7 @@ function evk_reserved_post_type_slugs() {
         'post', 'page', 'attachment', 'revision', 'nav_menu_item', 'custom_css',
         'customize_changeset', 'oembed_cache', 'user_request', 'wp_block',
         'wp_template', 'wp_template_part', 'wp_global_styles', 'wp_navigation',
+        'wp_font_family', 'wp_font_face', // WP 6.5+ (biblioteka fontów)
         'action', 'author', 'order', 'theme', 'evk_field_group',
     );
 }
@@ -303,7 +304,10 @@ function evk_render_custom_post_types_page() {
                     `;
                     if (key === 'page-attributes') {
                         for (const [optKey, optLabel] of Object.entries(additionalOptions)) {
-                            const isChecked = optKey !== 'show_order';
+                            // Nowy CPT: hierarchia domyślnie WYŁĄCZONA (typy zwykle płaskie jak
+                            // wpisy; hierarchia + atrybuty strony spowalnia ekran edycji przy
+                            // dużej liczbie wpisów). Istniejące wiersze zachowują swój stan.
+                            const isChecked = optKey !== 'show_order' && optKey !== 'hierarchical';
                             inner += `
                                 <label>
                                     <input type="checkbox" name="custom_post_types[${index}][${optKey}]" ${isChecked ? 'checked' : ''} />

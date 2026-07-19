@@ -2,6 +2,46 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.54.0] — 2026-07-19
+
+### Dodane
+
+- **Pole Użytkownik: styl „lista rozwijana"** — obok pigułek z wyszukiwarką (jak
+  `rel_style` w Relacji); wybrani spoza limitu listy (300) / spoza ról zostają na liście,
+  więc zapis ich nie kasuje. (`includes/builder.php`, `includes/metabox.php`)
+- **Pole Użytkownik: opcja „Domyślnie bieżący użytkownik"** — nowe wpisy i nowe wiersze
+  repeatera dostają zalogowanego użytkownika; świadome wyczyszczenie pola NIE przywraca
+  domyślnego przy ponownym otwarciu (pusta meta zamiast kasowania — jak przy wartościach
+  domyślnych pól tekstowych). (`includes/builder.php`, `includes/metabox.php`)
+- **Awatary i role w polu Użytkownik** — pigułki wybranych i wyniki wyszukiwarki pokazują
+  awatar; wyniki dodatkowo rolę obok e-maila. (`includes/metabox.php`, `assets/admin.js`,
+  `assets/admin.css`)
+- **Ostrzeżenie o zdublowanych kluczach między grupami** — po zapisie grupy pól notice
+  wylicza klucze (pól danych, pól-repeaterów i klucz grupy-repeatera, a także duplikat
+  klucza całej grupy) użyte również w innych grupach. Klucze meta to globalna przestrzeń —
+  duplikat cicho przesłaniał pole/grupę; teraz przynajmniej to widać. Nieblokujące.
+  (`includes/builder.php`)
+
+### Zmienione
+
+- **Logika warunkowa z debounce (80 ms)** — pełny przebieg warunków nie odpala się już na
+  każde naciśnięcie klawisza; przy dużych repeaterach pisanie przestaje przycinać.
+  (`assets/admin.js`)
+- **Relacja w stylu „lista rozwijana" pobiera tylko ID** (+ jeden bulk-prime cache tytułów)
+  zamiast 300 pełnych obiektów wpisów przy każdym renderze pola. (`includes/metabox.php`)
+- **Nowe typy treści domyślnie NIEhierarchiczne** — hierarchia + atrybuty strony spowalniają
+  ekran edycji przy dużej liczbie wpisów, a typy są zwykle płaskie; istniejące definicje
+  zachowują swój stan. (`includes/cpt.php`)
+- Slugi `wp_font_family` / `wp_font_face` (biblioteka fontów, WP 6.5+) dodane do
+  zarezerwowanych przy rejestracji CPT. (`includes/cpt.php`)
+
+### Naprawione
+
+- **Relacja w stylu „lista rozwijana" kasowała wybrane wpisy spoza pierwszych 300** —
+  wpis wybrany, ale nieobecny na liście (limit 300, kolejność alfabetyczna), nie wracał
+  w POST i znikał przy zapisie. Wybrane ID są teraz zawsze doklejane do listy opcji.
+  (`includes/metabox.php`)
+
 ## [1.53.0] — 2026-07-19
 
 ### Dodane

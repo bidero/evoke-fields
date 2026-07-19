@@ -188,6 +188,10 @@
                 }
                 res.data.forEach(function (p) {
                     var $r = $('<div class="evk-rel-result"></div>').attr('data-id', p.id);
+                    if (p.img) {
+                        $r.attr('data-img', p.img);
+                        $r.append($('<img class="evk-rel-result-img" alt="">').attr('src', p.img));
+                    }
                     $r.append($('<span class="evk-rel-result-title"></span>').text(p.title));
                     $r.append($('<span class="evk-rel-result-type"></span>').text(p.type));
                     $results.append($r);
@@ -201,12 +205,14 @@
         var $rel      = $(this).closest('.evk-rel');
         var id        = String($(this).attr('data-id'));
         var title     = $(this).find('.evk-rel-result-title').text();
+        var img       = $(this).attr('data-img') || '';
         var $selected = $rel.children('.evk-rel-selected');
         if ($selected.find('.evk-rel-item[data-id="' + id + '"]').length) return; // już dodany
         if (String($rel.attr('data-multiple')) !== '1') $selected.empty();        // single = jeden
         var html  = $rel.children('.evk-rel-tpl').html().split('__RID__').join(id);
         var $item = $(html);
         $item.find('.evk-rel-title').text(title);
+        if (img) $item.find('.evk-rel-title').before($('<img class="evk-rel-avatar" alt="">').attr('src', img));
         $selected.append($item);
         $rel.find('.evk-rel-search').val('');
         $rel.find('.evk-rel-results').empty().hide();
@@ -391,9 +397,13 @@
     }
     window.evkEvalAll = evkEvalAll;
 
-    // Każda zmiana pola → przelicz wszystkie warunki (tanio, obsługuje zagnieżdżenia).
+    // Każda zmiana pola → przelicz wszystkie warunki (obsługuje zagnieżdżenia).
+    // Debounce: przy dużych repeaterach pełny przebieg na każde naciśnięcie klawisza
+    // było czuć przy pisaniu; 80 ms jest niezauważalne, a tnie pracę wielokrotnie.
+    var evkCondTimer = null;
     $(document).on('change input', '.evk-s input, .evk-s select, .evk-s textarea', function () {
-        evkEvalAll();
+        clearTimeout(evkCondTimer);
+        evkCondTimer = setTimeout(function () { evkEvalAll(); }, 80);
     });
     $(function () { evkEvalAll(); });
 
