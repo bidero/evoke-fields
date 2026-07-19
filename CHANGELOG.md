@@ -2,6 +2,12 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.45.1] — 2026-07-19
+
+### Techniczne
+
+- Wydanie testowe mechanizmu aktualizacji z GitHub (bez zmian funkcjonalnych).
+
 ## [1.45.0] — 2026-07-19
 
 ### Dodane
