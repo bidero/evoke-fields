@@ -22,12 +22,10 @@ add_action('add_meta_boxes', function () {
         if (!$seamless) $title .= evk_rep_group_edit_link_html($group);
         foreach ((array) ($group['post_types'] ?? []) as $pt) {
             add_meta_box('evk_rep_' . $key, $title, 'evk_rep_render_metabox', $pt, 'normal', 'default', ['group_key' => $key]);
-            if ($seamless) {
-                add_filter('postbox_classes_' . $pt . '_evk_rep_' . $key, function ($classes) {
-                    $classes[] = 'evk-seamless';
-                    return $classes;
-                });
-            }
+            add_filter('postbox_classes_' . $pt . '_evk_rep_' . $key, function ($classes) use ($seamless) {
+                $classes[] = $seamless ? 'evk-seamless' : 'evk-mb-rows'; // evk-mb-rows → separatory wierszy (CSS)
+                return $classes;
+            });
         }
     }
 });

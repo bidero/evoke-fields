@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.49.0] — 2026-07-19
+
+### Zmienione
+
+- **Separatory wierszy w metaboksie na 100% szerokości (styl Meta Box)** — pola w metaboksie
+  wpisu są teraz oddzielane ciągłą, poziomą kreską przez całą szerokość metaboksu, niezależnie
+  od liczby kolumn w wierszu. Osiągnięte prostą metodą: `.inside` traci boczny padding, padding
+  wchodzi do pól, a odstęp kolumnowy zeruję — dzięki temu dolne kreski sąsiednich pól łączą się
+  w jedną linię (kolumny nadal rozdzielone, tylko paddingiem zamiast odstępu siatki). Elementy
+  pełnej szerokości (zakładki, nagłówki, opisy, akordeony) dostają własne wcięcie. Ograniczone
+  do metaboksu wpisu (klasa `evk-mb-rows`); strony ustawień / termy zostają na czystych odstępach.
+  (`assets/admin.css`, `includes/metabox.php`)
+
 ## [1.48.2] — 2026-07-19
 
 ### Naprawione
