@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.52.0] — 2026-07-19
+
+### Dodane
+
+- **Dwa dodatkowe tokeny wyglądu pól** (Narzędzia → Wygląd pól): **wielkość czcionki tekstu
+  w polach** (`--evk-input-size`, dotyczy inputów/textarea/select w polach pojedynczych
+  i repeaterach) oraz **odstęp pod nagłówkiem** (`--evk-heading-bottom`). Świadomie jako
+  globalne tokeny w Narzędziach (spójnie z resztą), nie per-pole. (`includes/tools.php`,
+  `assets/admin.css`)
+
 ## [1.51.0] — 2026-07-19
 
 ### Dodane

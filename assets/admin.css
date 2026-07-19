@@ -33,6 +33,9 @@
 .evk-s-field input[type=number],.evk-s-field input[type=date],.evk-s-field textarea,.evk-s-field select{
     width:100%;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04);
 }
+/* Token wielkości czcionki tekstu w polach (single + repeater). */
+.evk-s-field input,.evk-s-field textarea,.evk-s-field select,
+.evk-rep-field input,.evk-rep-field textarea,.evk-rep-field select{font-size:var(--evk-input-size,14px);}
 .evk-rep-field input:focus,.evk-rep-field select:focus,.evk-rep-field textarea:focus,
 .evk-s-field input:focus,.evk-s-field select:focus,.evk-s-field textarea:focus{
     border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;
@@ -247,7 +250,7 @@
 .evk-s-desc--collapsible .evk-s-desc-body{padding:12px 15px 12px;border-top:1px solid #e2e8f0;}
 
 /* ── Nagłówek — rozbudowany (Faza 6B) ── */
-.evk-s-heading-wrap{grid-column:1 / -1;margin:var(--evk-heading-top,16px) 0 2px;}
+.evk-s-heading-wrap{grid-column:1 / -1;margin:var(--evk-heading-top,16px) 0 var(--evk-heading-bottom,2px);}
 .evk-s-heading-wrap > h1,
 .evk-s-heading-wrap > h2,
 .evk-s-heading-wrap > h3,

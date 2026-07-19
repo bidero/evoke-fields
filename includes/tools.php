@@ -276,10 +276,12 @@ add_action('admin_init', function () {
 
 function evk_rep_style_token_defs(): array {
     return [
-        'label_size'  => ['label' => 'Wielkość czcionki etykiety', 'var' => '--evk-label-size',  'def' => 13, 'min' => 9, 'max' => 20],
-        'label_gap'   => ['label' => 'Odstęp pod etykietą',        'var' => '--evk-label-gap',   'def' => 7,  'min' => 0, 'max' => 24],
-        'heading_top' => ['label' => 'Odstęp nad nagłówkiem',      'var' => '--evk-heading-top', 'def' => 16, 'min' => 0, 'max' => 48],
-        'row_pad'     => ['label' => 'Padding pionowy pola (metabox)', 'var' => '--evk-row-pad', 'def' => 13, 'min' => 4, 'max' => 32],
+        'label_size'     => ['label' => 'Wielkość czcionki etykiety',     'var' => '--evk-label-size',     'def' => 13, 'min' => 9,  'max' => 20],
+        'input_size'     => ['label' => 'Wielkość czcionki tekstu w polach', 'var' => '--evk-input-size',   'def' => 14, 'min' => 10, 'max' => 20],
+        'label_gap'      => ['label' => 'Odstęp pod etykietą',            'var' => '--evk-label-gap',      'def' => 7,  'min' => 0,  'max' => 24],
+        'heading_top'    => ['label' => 'Odstęp nad nagłówkiem',          'var' => '--evk-heading-top',    'def' => 16, 'min' => 0,  'max' => 48],
+        'heading_bottom' => ['label' => 'Odstęp pod nagłówkiem',          'var' => '--evk-heading-bottom', 'def' => 2,  'min' => 0,  'max' => 40],
+        'row_pad'        => ['label' => 'Padding pionowy pola (metabox)', 'var' => '--evk-row-pad',        'def' => 13, 'min' => 4,  'max' => 32],
     ];
 }
 
