@@ -94,6 +94,10 @@ evk_rep_recalc_options(): int;                                       // przelicz
 
 **Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania, **import selektywny** wg sekcji) · **Kopie zapasowe konfiguracji** (auto-zrzut przy każdej zmianie struktury do chronionego katalogu w `uploads`, rotacja 30 kopii; ręczna kopia, przywracanie, pobieranie) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
 
+## Import CSV
+
+**Evoke FIELDS → Import CSV** — import do typów treści z mapowaniem kolumn: rdzeń wpisu (tytuł, treść, zajawka, status, slug, data, kolejność), taksonomie (po nazwie/slug, z opcją tworzenia brakujących termów) oraz **proste pola EVK** grup pojedynczych. Wybór separatora i kodowania (UTF-8 / Windows-1250 / ISO-8859-2), auto-dopasowanie kolumn po nazwie, podgląd wartości. Tryb **twórz i aktualizuj** z kluczem dopasowania (ID / slug / tytuł / pole EVK). Duże pliki przetwarzane porcjami ze wznowieniem; pola calc przeliczane po imporcie. Puste komórki domyślnie nie nadpisują istniejących wartości. Zakres: proste typy pól (bez repeaterów, relacji po nazwie i wgrywania obrazów z URL — planowane).
+
 ## CPT i taksonomie
 
 **Evoke FIELDS → Typy treści / Taksonomie** — rejestracja własnych typów i taksonomii (z kolumną admina, REST, hierarchią). Permalinki odświeżają się automatycznie po zapisie definicji.

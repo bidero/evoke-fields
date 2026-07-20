@@ -33,19 +33,20 @@ $options = [
     'evk_rep_style_tokens',
 ];
 
-// Katalog automatycznych kopii konfiguracji (uploads/evk-backups-*) — usuń pliki + folder.
-$backups_dir = get_option('evk_backups_dir');
-if (is_string($backups_dir) && strpos($backups_dir, 'evk-backups-') === 0) {
-    $up = wp_get_upload_dir();
-    if (empty($up['error']) && !empty($up['basedir'])) {
-        $dir = trailingslashit($up['basedir']) . $backups_dir;
+// Katalogi robocze w uploads (kopie konfiguracji + pliki importu CSV) — pliki + folder.
+$up = wp_get_upload_dir();
+foreach ([['evk_backups_dir', 'evk-backups-'], ['evk_csv_dir', 'evk-imports-']] as $pair) {
+    list($opt_name, $prefix) = $pair;
+    $sub = get_option($opt_name);
+    if (is_string($sub) && strpos($sub, $prefix) === 0 && empty($up['error']) && !empty($up['basedir'])) {
+        $dir = trailingslashit($up['basedir']) . $sub;
         foreach ((array) glob(trailingslashit($dir) . '*') as $f) {
             if (is_file($f)) @unlink($f);
         }
         @rmdir($dir);
     }
+    $options[] = $opt_name;
 }
-$options[] = 'evk_backups_dir';
 
 foreach ($options as $opt) {
     delete_option($opt);

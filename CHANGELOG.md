@@ -2,6 +2,26 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.56.0] — 2026-07-20
+
+### Dodane
+
+- **Import CSV z mapowaniem kolumn** (Evoke FIELDS → Import CSV) — przepływ trójkrokowy:
+  wgranie pliku (wybór/auto-wykrycie separatora i kodowania, w tym Windows-1250/ISO-8859-2
+  dla polskich znaków) → mapowanie kolumn na cele (rdzeń wpisu: tytuł/treść/zajawka/status/
+  slug/data/kolejność; taksonomie po nazwie/slug z opcją tworzenia brakujących termów;
+  proste pola EVK grup pojedynczych) → import porcjami ze wznowieniem (time-box jak
+  „Przelicz", pasek postępu, auto-kontynuacja). Tryb **twórz i aktualizuj** z kluczem
+  dopasowania (ID wpisu / slug / tytuł / dowolne pole EVK) i wyborem „aktualizuj/pomiń".
+  Automatyczne dopasowanie kolumn po nazwie nagłówka, podgląd przykładowych wartości,
+  konwersja typów (checkbox/toggle z „tak/1/yes", listy wyboru po wartości LUB etykiecie,
+  daty przez `strtotime` → ISO, liczby z przecinkiem dziesiętnym i separatorem tysięcy).
+  Puste komórki domyślnie nie nadpisują istniejących wartości. Po każdym wpisie
+  przeliczane są pola calc. Zakres MVP: typy treści + proste pola (bez repeaterów,
+  relacji po nazwie i sideloadu obrazów). Pliki importu trafiają do chronionego katalogu
+  `uploads/evk-imports-<hash>/`. (`includes/import-csv.php`, `evk-repeater.php`,
+  `uninstall.php`)
+
 ## [1.55.0] — 2026-07-20
 
 ### Dodane
