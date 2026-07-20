@@ -122,7 +122,8 @@ function evk_backups_list(): array {
 /** Bezpieczna ścieżka pliku kopii z nazwy z formularza (nie wychodzi poza katalog). */
 function evk_backups_resolve(string $file): string {
     $file = basename($file); // zdejmij ewentualne ../
-    if (!preg_match('/^evk-config-[0-9]{8}-[0-9]{6}-[a-z0-9]{4}\.json$/', $file)) return '';
+    // Sufiks z wp_generate_password(4,false,false) = A-Za-z0-9 (mieszana wielkość!).
+    if (!preg_match('/^evk-config-[0-9]{8}-[0-9]{6}-[A-Za-z0-9]{4}\.json$/', $file)) return '';
     $info = evk_backups_dir_info();
     if (!$info) return '';
     $path = $info['path'] . $file;

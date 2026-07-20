@@ -106,7 +106,8 @@ function evk_csv_dir(): ?string {
 /** Bezpieczna ścieżka pliku importu z nazwy w sesji (nie wychodzi poza katalog). */
 function evk_csv_file_path(string $file): string {
     $file = basename($file);
-    if (!preg_match('/^import-[a-z0-9]{12}\.csv$/', $file)) return '';
+    // wp_generate_password(12,false,false) daje znaki A-Za-z0-9 (mieszana wielkość!).
+    if (!preg_match('/^import-[A-Za-z0-9]{12}\.csv$/', $file)) return '';
     $dir = evk_csv_dir();
     if ($dir === null) return '';
     $p = $dir . $file;

@@ -2,6 +2,18 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.56.1] — 2026-07-20
+
+### Naprawione
+
+- **Import CSV zawsze zgłaszał „Sesja importu wygasła — wgraj plik ponownie"** na kroku
+  mapowania. Nazwa pliku importu pochodzi z `wp_generate_password(12, false, false)`, która
+  zwraca znaki **mieszanej wielkości** (`A-Za-z0-9`), a walidujący ją regex dopuszczał tylko
+  `[a-z0-9]` — więc niemal każdy token (z choć jedną wielką literą) był odrzucany i sesja
+  wyglądała na wygasłą. Ten sam błąd dotyczył walidacji nazw kopii zapasowych (pobieranie/
+  przywracanie/usuwanie kopii z wielką literą w losowym sufiksie). Oba wzorce dopuszczają
+  teraz `A-Za-z0-9`. (`includes/import-csv.php`, `includes/backups.php`)
+
 ## [1.56.0] — 2026-07-20
 
 ### Dodane
