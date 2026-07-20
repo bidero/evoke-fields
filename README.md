@@ -17,6 +17,7 @@ System własnych pól dla WordPressa zintegrowany z **Bricks Builder**: grupy p�
 - **Grupa pojedyncza** — każde pole to osobna meta (`klucz pola` = klucz mety).
 - **Grupa-repeater** — cała grupa to powtarzalne wiersze; meta pod kluczem grupy (tablica wierszy).
 - **Lokalizacje:** wpisy/CPT (wybrane typy treści), **termy** wybranych taksonomii, **profil użytkownika**, **media** (panel załącznika — tylko proste typy pól: tekst, liczba, select itd.).
+- Opcje grupy: repeater, zwinięte wiersze, bezramkowy, ukryj tytuł grupy, **etykieta z lewej** (input wyrównany do wspólnej kolumny; szerokość kolumny w Narzędzia → Wygląd pól).
 - Aktywność grupy przełączasz na liście grup (publish/draft). Grupę można **duplikować** (akcja „Duplikuj" na liście).
 
 ## Typy pól
@@ -105,7 +106,7 @@ evk_rep_recalc_options(): int;                                       // przelicz
 
 ## Narzędzia
 
-**Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania, **import selektywny** wg sekcji) · **Kopie zapasowe konfiguracji** (auto-zrzut przy każdej zmianie struktury do chronionego katalogu w `uploads`, rotacja 30 kopii; ręczna kopia, przywracanie, pobieranie) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
+**Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania, **import selektywny** wg sekcji) · **Kopie zapasowe konfiguracji** (auto-zrzut przy każdej zmianie struktury do chronionego katalogu w `uploads`, rotacja 30 kopii; ręczna kopia, przywracanie, pobieranie) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, szerokość etykiety z lewej, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
 
 ## Import CSV
 

@@ -219,25 +219,31 @@ function evk_render_custom_post_types_page() {
                                     <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][all_items]" value="<?php echo esc_attr( $post_type['all_items'] ?? '' ); ?>" placeholder="np. Wszystkie książki" />
                                     </label>
+                                </div>
+                                <div class="evk-cpt-labels">
+                                    <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Tytuł, slug i lista', 'evk-repeater' ); ?></p>
                                     <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK lub szablon)', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][title_field]" value="<?php echo esc_attr( $post_type['title_field'] ?? '' ); ?>" placeholder="np. nazwa  albo  {imie} {nazwisko}" style="font-family:Menlo,Consolas,monospace;" />
                                         <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Wartość pola (lub złożenie kilku pól w klamrach) staje się tytułem wpisu przy zapisie — widocznym na liście, w wyszukiwarce i relacjach.', 'evk-repeater' ); ?></span>
                                     </label>
-                                    <label style="display:block;margin-top:8px;">
+                                    <label class="evk-cpt-check">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][hide_title]" <?php checked( ! empty( $post_type['hide_title'] ), 1 ); ?> />
-                                        <?php echo esc_html__( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ); ?>
+                                        <span><?php echo esc_html__( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ); ?></span>
                                     </label>
-                                    <label style="display:block;margin-top:4px;">
+                                    <label class="evk-cpt-check">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][hide_title_col]" <?php checked( ! empty( $post_type['hide_title_col'] ), 1 ); ?> />
-                                        <?php echo esc_html__( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ); ?>
+                                        <span><?php echo esc_html__( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ); ?></span>
                                     </label>
-                                    <label style="display:block;margin-top:4px;">
+                                    <label class="evk-cpt-check">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][rand_slug]" <?php checked( ! empty( $post_type['rand_slug'] ), 1 ); ?> />
-                                        <?php echo esc_html__( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ); ?>
+                                        <span><?php echo esc_html__( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ); ?></span>
                                     </label>
-                                    <label style="display:block;margin-top:8px;">
+                                </div>
+                                <div class="evk-cpt-labels">
+                                    <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Ochrona danych', 'evk-repeater' ); ?> <span><?php echo esc_html__( '(pola wrażliwe / typ chroniony)', 'evk-repeater' ); ?></span></p>
+                                    <label class="evk-cpt-check">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protected]" <?php checked( ! empty( $post_type['protected'] ), 1 ); ?> />
-                                        <?php echo esc_html__( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji (404 dla reszty; poza REST/wyszukiwarką/archiwum/sitemapą)', 'evk-repeater' ); ?>
+                                        <span><?php echo esc_html__( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji (404 dla reszty; poza REST/wyszukiwarką/archiwum/sitemapą)', 'evk-repeater' ); ?></span>
                                     </label>
                                     <label><?php echo esc_html__( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_field]" value="<?php echo esc_attr( $post_type['protect_email_field'] ?? '' ); ?>" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />
@@ -375,25 +381,31 @@ function evk_render_custom_post_types_page() {
                                 <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                     <input type="text" name="custom_post_types[${index}][all_items]" placeholder="np. Wszystkie książki" />
                                 </label>
+                            </div>
+                            <div class="evk-cpt-labels">
+                                <p class="evk-cpt-labels-title"><?php echo esc_js( __( 'Tytuł, slug i lista', 'evk-repeater' ) ); ?></p>
                                 <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK lub szablon)', 'evk-repeater' ); ?>
                                     <input type="text" name="custom_post_types[${index}][title_field]" placeholder="np. nazwa  albo  {imie} {nazwisko}" style="font-family:Menlo,Consolas,monospace;" />
                                     <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Wartość pola (lub złożenie kilku pól w klamrach) staje się tytułem wpisu przy zapisie.', 'evk-repeater' ) ); ?></span>
                                 </label>
-                                <label style="display:block;margin-top:8px;">
+                                <label class="evk-cpt-check">
                                     <input type="checkbox" name="custom_post_types[${index}][hide_title]" />
-                                    <?php echo esc_js( __( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ) ); ?>
+                                    <span><?php echo esc_js( __( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ) ); ?></span>
                                 </label>
-                                <label style="display:block;margin-top:4px;">
+                                <label class="evk-cpt-check">
                                     <input type="checkbox" name="custom_post_types[${index}][hide_title_col]" />
-                                    <?php echo esc_js( __( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ) ); ?>
+                                    <span><?php echo esc_js( __( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ) ); ?></span>
                                 </label>
-                                <label style="display:block;margin-top:4px;">
+                                <label class="evk-cpt-check">
                                     <input type="checkbox" name="custom_post_types[${index}][rand_slug]" />
-                                    <?php echo esc_js( __( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ) ); ?>
+                                    <span><?php echo esc_js( __( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ) ); ?></span>
                                 </label>
-                                <label style="display:block;margin-top:8px;">
+                            </div>
+                            <div class="evk-cpt-labels">
+                                <p class="evk-cpt-labels-title"><?php echo esc_js( __( 'Ochrona danych', 'evk-repeater' ) ); ?> <span><?php echo esc_js( __( '(pola wrażliwe / typ chroniony)', 'evk-repeater' ) ); ?></span></p>
+                                <label class="evk-cpt-check">
                                     <input type="checkbox" name="custom_post_types[${index}][protected]" />
-                                    <?php echo esc_js( __( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji', 'evk-repeater' ) ); ?>
+                                    <span><?php echo esc_js( __( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji', 'evk-repeater' ) ); ?></span>
                                 </label>
                                 <label><?php echo esc_js( __( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ) ); ?>
                                     <input type="text" name="custom_post_types[${index}][protect_email_field]" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />

@@ -852,7 +852,10 @@ function evk_rep_render_group_object(string $meta_type, int $object_id, string $
         $rows = is_array($rows) ? array_values($rows) : [];
         evk_rep_render_repeater_widget($key, $fields, $rows, $group['title_field'] ?? '', 0, !empty($group['collapsed']), $group['add_label'] ?? '');
     } else {
+        $ll = !empty($group['label_left']);
+        if ($ll) echo '<div class="evk-label-left">';
         evk_rep_render_single($key, $fields, $object_id, $meta_type);
+        if ($ll) echo '</div>';
     }
 }
 

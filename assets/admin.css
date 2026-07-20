@@ -4,6 +4,20 @@
 .evk-rep-field,.evk-s-field{display:flex;flex-direction:column;min-width:0;}
 /* Logika warunkowa — pole ukryte runtime */
 .evk-s-field.evk-cond-hidden{display:none!important;}
+
+/* ── Etykieta z lewej (opcja grupy „label_left") — stała kolumna etykiety, żeby
+   inputy wszystkich pól zaczynały się w tym samym miejscu (nie rozjeżdżają się). ── */
+.evk-label-left .evk-s-field{display:grid;grid-template-columns:var(--evk-label-col,160px) minmax(0,1fr);column-gap:14px;align-items:start;}
+.evk-label-left .evk-s-label{grid-column:1;margin:0;padding-top:8px;align-self:start;}
+.evk-label-left .evk-s-field > :not(.evk-s-label){grid-column:2;min-width:0;}
+.evk-label-left .evk-s-instructions{grid-column:2;}
+/* Elementy pełnej szerokości (repeater, nagłówek, opis) zostają jednokolumnowe. */
+.evk-label-left .evk-s-field.evk-rep-field--repeater{display:flex;}
+/* Wąskie ekrany: wróć do etykiety nad polem, żeby nie ściskać. */
+@media (max-width:782px){
+  .evk-label-left .evk-s-field{display:flex;}
+  .evk-label-left .evk-s-label{padding-top:0;margin-bottom:var(--evk-label-gap,7px);}
+}
 /* ── Link „Edytuj grupę pól" — inline w uchwycie tytułu (.hndle), tuż za nazwą,
    z dala od strzałek porządkowania/zwijania w .handle-actions. Widoczny po najechaniu. ── */
 .postbox[id^="evk_rep_"] .hndle .evk-group-edit{display:inline-flex;align-items:center;margin-left:8px;vertical-align:middle;opacity:0;transition:opacity .15s,color .15s;color:#94a3b8;text-decoration:none;line-height:1;}

@@ -90,6 +90,10 @@ function evk_group_opts_metabox(\WP_Post $post): void {
                 <input type="checkbox" name="evk_group_hide_title" value="1" <?php checked(get_post_meta($post->ID, '_evk_hide_title', true)); ?>>
                 Ukryj tytuł grupy
             </label>
+            <label>
+                <input type="checkbox" name="evk_group_label_left" value="1" <?php checked(get_post_meta($post->ID, '_evk_label_left', true)); ?>>
+                Etykieta z lewej (input wyrównany)
+            </label>
         </div>
 
         <label class="evk-group-option-field">
@@ -243,6 +247,7 @@ add_action('save_post_evk_field_group', function ($post_id) {
     update_post_meta($post_id, '_evk_collapsed', !empty($_POST['evk_group_collapsed']) ? 1 : 0);
     update_post_meta($post_id, '_evk_seamless',  !empty($_POST['evk_group_seamless'])  ? 1 : 0);
     update_post_meta($post_id, '_evk_hide_title', !empty($_POST['evk_group_hide_title']) ? 1 : 0);
+    update_post_meta($post_id, '_evk_label_left', !empty($_POST['evk_group_label_left']) ? 1 : 0);
 
     $add_label = sanitize_text_field($_POST['evk_group_add_label'] ?? '');
     if ($add_label) update_post_meta($post_id, '_evk_add_label', $add_label);

@@ -2,6 +2,24 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.63.0] — 2026-07-20
+
+### Dodane
+
+- **Opcja grupy „Etykieta z lewej"** — pola grupy renderują się z etykietą po lewej, a inputy
+  wyrównane do wspólnej kolumny (nie rozjeżdżają się), zamiast etykiety nad polem. Działa
+  w metaboksie wpisu, na termach/profilu i stronach ustawień; na wąskich ekranach wraca do
+  etykiety nad polem. Szerokość kolumny etykiety regulowana w **Narzędzia → Wygląd pól**
+  (token `--evk-label-col`, domyślnie 160px). (`includes/builder.php`, `includes/metabox.php`,
+  `includes/settings.php`, `includes/field-groups.php`, `includes/tools.php`, `assets/admin.css`)
+
+### Zmienione
+
+- **Uporządkowany ekran typów treści** — zaawansowane ustawienia rozbite z jednego zbitego
+  bloku na trzy czytelne sekcje: **Etykiety / przyciski**, **Tytuł, slug i lista**,
+  **Ochrona danych**; checkboxy z opisami wyrównane w jednej linii. (`includes/cpt.php`,
+  `assets/evk-admin.css`)
+
 ## [1.62.4] — 2026-07-20
 
 ### Naprawione

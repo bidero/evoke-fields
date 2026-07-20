@@ -232,7 +232,10 @@ function evk_rep_render_option_group(string $gk, array $group): void {
         $rows = array_values($stored);
         evk_rep_render_repeater_widget('evk_opt[' . $gk . ']', $fields, $rows, $group['title_field'] ?? '', 0, !empty($group['collapsed']));
     } else {
+        $ll = !empty($group['label_left']);
+        if ($ll) echo '<div class="evk-label-left">';
         evk_rep_render_field_list($fields, ['mode' => 'option', 'name_base' => 'evk_opt[' . $gk . ']', 'values' => $stored, 'depth' => -1, 'uid' => 'o_' . $gk]);
+        if ($ll) echo '</div>';
     }
 }
 

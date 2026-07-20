@@ -94,6 +94,7 @@ function evk_tools_export_groups(): array {
             'collapsed'   => (bool) get_post_meta($p->ID, '_evk_collapsed', true),
             'seamless'    => (bool) get_post_meta($p->ID, '_evk_seamless', true),
             'hide_title'  => (bool) get_post_meta($p->ID, '_evk_hide_title', true),
+            'label_left'  => (bool) get_post_meta($p->ID, '_evk_label_left', true),
             'fields'      => $fields,
         ];
         $al = get_post_meta($p->ID, '_evk_add_label', true);
@@ -238,6 +239,9 @@ function evk_tools_run_import(array $data, bool $overwrite, ?array $parts = null
         if (array_key_exists('hide_title', $g) || !$existing) {
             update_post_meta($pid, '_evk_hide_title', !empty($g['hide_title']) ? 1 : 0);
         }
+        if (array_key_exists('label_left', $g) || !$existing) {
+            update_post_meta($pid, '_evk_label_left', !empty($g['label_left']) ? 1 : 0);
+        }
         if (!empty($g['add_label']))   update_post_meta($pid, '_evk_add_label', sanitize_text_field($g['add_label']));
         else                           delete_post_meta($pid, '_evk_add_label');
         if (!empty($g['title_field'])) update_post_meta($pid, '_evk_title_field', sanitize_key($g['title_field']));
@@ -336,6 +340,7 @@ add_action('admin_init', function () {
 function evk_rep_style_token_defs(): array {
     return [
         'label_size'     => ['label' => 'Wielkość czcionki etykiety',     'var' => '--evk-label-size',     'def' => 13, 'min' => 9,  'max' => 20],
+        'label_col'      => ['label' => 'Szerokość etykiety (etykieta z lewej)', 'var' => '--evk-label-col', 'def' => 160, 'min' => 80, 'max' => 320],
         'input_size'     => ['label' => 'Wielkość czcionki tekstu w polach', 'var' => '--evk-input-size',   'def' => 14, 'min' => 10, 'max' => 20],
         'label_gap'      => ['label' => 'Odstęp pod etykietą',            'var' => '--evk-label-gap',      'def' => 7,  'min' => 0,  'max' => 24],
         'heading_top'    => ['label' => 'Odstęp nad nagłówkiem',          'var' => '--evk-heading-top',    'def' => 16, 'min' => 0,  'max' => 48],
