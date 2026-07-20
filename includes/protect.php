@@ -180,17 +180,31 @@ add_filter('register_post_type_args', function ($args, $post_type) {
     return $args;
 }, 20, 2);
 
-/** Zwróć prawdziwe 404 (ukrywa istnienie; poprawny status; nocache). */
-function evk_protect_send_404(): void {
+/**
+ * Zamień bieżące żądanie w 404 i ODDAJ sterowanie WordPressowi — dzięki temu renderuje
+ * się szablon 404 z motywu / Bricksa (przez normalny template_include), a nie surowy
+ * 404.php. NIE ładujemy tu szablonu i NIE robimy exit; ustawiamy tylko stan zapytania.
+ * Ręczny reset flag + is_404, bo w nowszym WP set_404() nie ustawia 404 dla is_singular.
+ */
+function evk_protect_trigger_404(): void {
     global $wp_query;
-    if ($wp_query) $wp_query->set_404();
+    if ($wp_query instanceof WP_Query) {
+        $wp_query->set_404();
+        $wp_query->is_404              = true;
+        $wp_query->is_single           = false;
+        $wp_query->is_singular         = false;
+        $wp_query->is_page             = false;
+        $wp_query->is_archive          = false;
+        $wp_query->is_post_type_archive = false;
+        $wp_query->post                = null;
+        $wp_query->posts               = [];
+        $wp_query->post_count          = 0;
+        $wp_query->queried_object      = null;
+        $wp_query->queried_object_id   = 0;
+    }
     status_header(404);
     nocache_headers();
     if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
-    $tpl = get_query_template('404');
-    if ($tpl) { include $tpl; }
-    else      { wp_die(esc_html__('Nie znaleziono.', 'evk-repeater'), '', ['response' => 404]); }
-    exit;
 }
 
 /** Wyłącz cache dla autoryzowanego widoku (żeby nie zapisać wersji z danymi). */
@@ -204,12 +218,15 @@ add_action('template_redirect', function () {
     $types = evk_cpt_protected_types();
     if (!$types) return;
 
-    // Kanały RSS nigdy dla chronionych (wyciekałyby tytuł/treść).
+    // Kanały RSS nigdy dla chronionych (wyciekałyby tytuł/treść). Feed nie ma sensownego
+    // szablonu 404 — twardy status + stop.
     if (is_feed()) {
         $obj = get_queried_object();
         $qpt = (array) get_query_var('post_type');
         if (($obj instanceof WP_Post && in_array($obj->post_type, $types, true)) || array_intersect($qpt, $types)) {
-            evk_protect_send_404();
+            status_header(404);
+            nocache_headers();
+            exit;
         }
         return;
     }
@@ -217,11 +234,12 @@ add_action('template_redirect', function () {
     if (is_singular($types)) {
         $pid = (int) get_queried_object_id();
         if (evk_protect_can_view_post($pid)) { evk_protect_nocache(); return; }
-        evk_protect_send_404();
+        evk_protect_trigger_404();
+        return; // dalej renderuje WP/Bricks jako 404
     }
 
     if (is_post_type_archive($types)) {
-        evk_protect_send_404();
+        evk_protect_trigger_404();
     }
 });
 

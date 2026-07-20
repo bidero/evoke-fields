@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.62.3] — 2026-07-20
+
+### Naprawione
+
+- **Chroniony wpis pokazywał surowe 404 motywu zamiast własnego szablonu 404 (Bricks)** —
+  bramka ładowała `get_query_template('404')` i robiła `exit`, omijając `template_include`,
+  przez który Bricks (i motywy blokowe) podstawiają przypisany szablon 404. Teraz bramka
+  tylko **ustawia stan zapytania na 404** (reset flag + `is_404`, bo w nowszym WP `set_404()`
+  nie działa dla `is_singular`) i oddaje sterowanie WordPressowi — renderuje się Twój szablon
+  404 z warunków Bricks. Feedy nadal dostają twardy status 404. (`includes/protect.php`)
+
 ## [1.62.2] — 2026-07-20
 
 ### Zmienione
