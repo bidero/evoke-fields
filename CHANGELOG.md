@@ -2,6 +2,35 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.61.0] — 2026-07-20
+
+### Dodane
+
+- **Pola wrażliwe (ochrona przed wyciekiem, per-pole)** — flaga „Pole wrażliwe" w builderze
+  pola. Wartość renderuje się tylko w kontekście autoryzowanym: **redakcja** (uprawnienie do
+  edycji wpisu) zawsze i wszędzie, a na froncie gość **tylko na stronie tego wpisu** wejściem
+  z pasującym `?key=`. W pętlach/rankingach, na cudzych stronach i w tagach EVK poza
+  autoryzacją zwraca pustkę. Pola niewrażliwe (imię, punkty…) renderują się normalnie dla
+  wszystkich — więc ranking pokazuje dane publiczne, a adres/telefon nie wyciekają. Gating
+  w jednym miejscu (resolver EVK: tagi, pętle, `evk_get_field`). (`includes/protect.php`,
+  `includes/bricks.php`, `includes/builder.php`)
+- **Typ treści „Chroniony" (per-CPT)** — pełna blokada typu: pojedynczy wpis daje prawdziwe
+  **404** bez klucza/uprawnienia; `show_in_rest=false`, poza wyszukiwarką, bez archiwum,
+  usunięty z sitemapy i oEmbed; chronione typy znikają z frontowych pętli gości
+  (`pre_get_posts`, redakcja widzi). (`includes/protect.php`, `includes/cpt.php`)
+- **Klucz dostępu + metabox** — meta `_evk_access_key` (20 znaków URL-safe), generowany przy
+  zapisie wpisu chronionego lub z polem wrażliwym. Metabox „Dostęp (klucz)": link z kluczem,
+  **Kopiuj**, **Przegeneruj** (unieważnia stare linki), **Wyślij na e-mail** — adres ręcznie
+  albo z pola EVK (konfigurowane w CPT). Klucz autoryzuje odsłonięcie danych **tylko tego
+  jednego wpisu**. (`includes/protect.php`, `includes/cpt.php`)
+- Granice wypisane w UI: kod motywu z jawnym `get_post_meta`/`evk_rows`, bezpośredni URL
+  załącznika w polu wrażliwym oraz cache pełnostronicowy są poza zasięgiem ochrony.
+
+### Zmienione
+
+- Podmenu „Import / Eksport CSV" przemianowane na **„Migracja CSV"** (skrócone, nie zwija się
+  w menu). (`includes/import-csv.php`)
+
 ## [1.60.0] — 2026-07-20
 
 ### Dodane

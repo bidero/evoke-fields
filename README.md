@@ -32,7 +32,16 @@ System własnych pól dla WordPressa zintegrowany z **Bricks Builder**: grupy p�
 | Inne | Kolor, Link/przycisk (URL + etykieta + cel), Repeater (pola powtarzalne) |
 | Układ | Zakładka, Akordeon, Koniec akordeonu, Nagłówek, Opis (nie zapisują danych) |
 
-Wspólne opcje pól: szerokość, placeholder, wymagane, prefiks/sufiks, instrukcja + tooltip, wartość domyślna, walidacja (min/max — **egzekwowane też serwerowo**, wzorzec regex, własny komunikat), **logika warunkowa** (pokaż/ukryj wg innych pól, reguły all/any), kolumna w panelu admina.
+Wspólne opcje pól: szerokość, placeholder, wymagane, prefiks/sufiks, instrukcja + tooltip, wartość domyślna, walidacja (min/max — **egzekwowane też serwerowo**, wzorzec regex, własny komunikat), **logika warunkowa** (pokaż/ukryj wg innych pól, reguły all/any), kolumna w panelu admina, **pole wrażliwe** (ochrona przed wyciekiem — patrz „Ochrona danych").
+
+## Ochrona danych (pola wrażliwe / typy chronione)
+
+Dwa niezależne mechanizmy, do użycia osobno lub razem:
+
+- **Pole wrażliwe** (flaga na polu EVK) — wartość renderuje się tylko dla **redakcji** (uprawnienie do edycji wpisu, w każdym kontekście) oraz na froncie **na stronie tego wpisu wejściem z kluczem** (`?key=…`). W pętlach/rankingach, na cudzych stronach i w tagach poza autoryzacją zwraca pustkę. Pola niewrażliwe działają normalnie — ranking pokazuje imię/punkty, a adres/telefon nie wyciekają.
+- **Typ treści „Chroniony"** (opcja CPT) — pełna blokada: pojedynczy wpis daje 404 bez klucza/uprawnienia; poza REST, wyszukiwarką, archiwum, sitemapą i oEmbed; chronione typy znikają z frontowych pętli gości.
+- **Klucz dostępu** (`_evk_access_key`, per-wpis) autoryzuje odsłonięcie danych **tego jednego wpisu**. Metabox „Dostęp (klucz)": kopiuj link, przegeneruj (unieważnia stare), wyślij na e-mail (adres ręcznie lub z pola EVK). Traktuj link jak hasło.
+- **Granice** (żadna wtyczka ich nie domknie): kod motywu z jawnym `get_post_meta($id,…)` / `evk_rows()`, bezpośredni URL załącznika w polu wrażliwym, cache pełnostronicowy (wymaga wykluczenia chronionych URL-i z cache).
 
 ## Tagi dynamiczne (Bricks)
 

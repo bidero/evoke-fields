@@ -104,6 +104,8 @@ function evk_render_custom_post_types_page() {
                         'hide_title'         => isset( $post_type['hide_title'] ) ? 1 : 0,
                         'hide_title_col'     => isset( $post_type['hide_title_col'] ) ? 1 : 0,
                         'rand_slug'          => isset( $post_type['rand_slug'] ) ? 1 : 0,
+                        'protected'          => isset( $post_type['protected'] ) ? 1 : 0,
+                        'protect_email_field'=> sanitize_key( $post_type['protect_email_field'] ?? '' ),
                     );
                 }
             }
@@ -230,6 +232,13 @@ function evk_render_custom_post_types_page() {
                                     <label style="display:block;margin-top:4px;">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][rand_slug]" <?php checked( ! empty( $post_type['rand_slug'] ), 1 ); ?> />
                                         <?php echo esc_html__( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ); ?>
+                                    </label>
+                                    <label style="display:block;margin-top:8px;">
+                                        <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protected]" <?php checked( ! empty( $post_type['protected'] ), 1 ); ?> />
+                                        <?php echo esc_html__( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji (404 dla reszty; poza REST/wyszukiwarką/archiwum/sitemapą)', 'evk-repeater' ); ?>
+                                    </label>
+                                    <label><?php echo esc_html__( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ); ?>
+                                        <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_field]" value="<?php echo esc_attr( $post_type['protect_email_field'] ?? '' ); ?>" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />
                                     </label>
                                 </div>
                             </div>
@@ -372,6 +381,13 @@ function evk_render_custom_post_types_page() {
                                 <label style="display:block;margin-top:4px;">
                                     <input type="checkbox" name="custom_post_types[${index}][rand_slug]" />
                                     <?php echo esc_js( __( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ) ); ?>
+                                </label>
+                                <label style="display:block;margin-top:8px;">
+                                    <input type="checkbox" name="custom_post_types[${index}][protected]" />
+                                    <?php echo esc_js( __( 'Chroniony — wpisy dostępne na froncie tylko z kluczem (link) lub dla redakcji', 'evk-repeater' ) ); ?>
+                                </label>
+                                <label><?php echo esc_js( __( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ) ); ?>
+                                    <input type="text" name="custom_post_types[${index}][protect_email_field]" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />
                                 </label>
                             </div>
                         `;

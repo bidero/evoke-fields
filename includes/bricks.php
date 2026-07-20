@@ -477,7 +477,10 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
         $row    = $top['row']    ?? [];
         $fields = $top['fields'] ?? [];
         if (array_key_exists($key, $row)) {
-            return evk_rep_format_value($fields[$key] ?? ['type' => 'text'], $row[$key], $prop);
+            $f = $fields[$key] ?? ['type' => 'text'];
+            // Pole wrażliwe: w pętli owner = wpis posiadający repeater; gość bez klucza → ''.
+            if (function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($f, (int) ($top['post_id'] ?? 0))) return '';
+            return evk_rep_format_value($f, $row[$key], $prop);
         }
         if (evk_rep_is_builder() && array_key_exists($key, $fields)) {
             return evk_rep_builder_placeholder($fields[$key], $key, $prop);
@@ -490,25 +493,30 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
         $field = $sf['field'];
         $ot    = $sf['object_type'];
 
+        // Pole wrażliwe: term/user/media nie mają bramki kluczem (MVP na wpisach) —
+        // owner=0 → widzi tylko redakcja; front dostaje pustkę (fail-safe).
+        $blocked = function ($owner) use ($field) {
+            return function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($field, (int) $owner);
+        };
         if ($ot === 'term') {
             $tid = evk_rep_current_term_id();
             if ($tid && metadata_exists('term', $tid, $key)) {
-                return evk_rep_format_value($field, get_term_meta($tid, $key, true), $prop);
+                return $blocked(0) ? '' : evk_rep_format_value($field, get_term_meta($tid, $key, true), $prop);
             }
         } elseif ($ot === 'user') {
             $uid = evk_rep_current_user_id_ctx();
             if ($uid && metadata_exists('user', $uid, $key)) {
-                return evk_rep_format_value($field, get_user_meta($uid, $key, true), $prop);
+                return $blocked(0) ? '' : evk_rep_format_value($field, get_user_meta($uid, $key, true), $prop);
             }
         } elseif ($ot === 'media') {
             $aid = evk_rep_current_attachment_id();
             if ($aid && metadata_exists('post', $aid, $key)) {
-                return evk_rep_format_value($field, get_post_meta($aid, $key, true), $prop);
+                return $blocked($aid) ? '' : evk_rep_format_value($field, get_post_meta($aid, $key, true), $prop);
             }
         } else {
             $pid = evk_rep_filter_pid($ctx_pid);
             if ($pid && metadata_exists('post', $pid, $key)) {
-                return evk_rep_format_value($field, get_post_meta($pid, $key, true), $prop);
+                return $blocked($pid) ? '' : evk_rep_format_value($field, get_post_meta($pid, $key, true), $prop);
             }
         }
         if (evk_rep_is_builder()) return evk_rep_builder_placeholder($field, $key, $prop);

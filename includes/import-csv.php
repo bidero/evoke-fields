@@ -305,7 +305,7 @@ add_action('admin_init', function () {
 // =========================================================================
 
 add_action('admin_menu', function () {
-    add_submenu_page('evk-repeater', 'Import / Eksport CSV', 'Import / Eksport CSV', 'manage_options', 'evk-import', 'evk_csv_page');
+    add_submenu_page('evk-repeater', 'Migracja CSV', 'Migracja CSV', 'manage_options', 'evk-import', 'evk_csv_page');
 }, 27);
 
 // =========================================================================

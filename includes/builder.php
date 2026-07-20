@@ -650,6 +650,8 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         $ph = sanitize_text_field($f['placeholder'] ?? '');
         if ($ph !== '') $def['placeholder'] = $ph;
         if (!empty($f['required'])) $def['required'] = true;
+        // Pole wrażliwe — wartość gatowana w resolverze (includes/protect.php).
+        if (!empty($f['sensitive'])) $def['sensitive'] = true;
         $px = sanitize_text_field($f['prefix'] ?? '');
         if ($px !== '') $def['prefix'] = $px;
         $sx = sanitize_text_field($f['suffix'] ?? '');
@@ -1203,6 +1205,9 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 </div>
                 <label class="evk-b-inline-check" style="margin:12px 0 0;">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[required]" value="1" <?php checked($required); ?>> Pole wymagane
+                </label>
+                <label class="evk-b-inline-check" style="margin:10px 0 0;" title="Wartość renderuje się tylko dla redakcji lub na stronie wpisu z kluczem dostępu; w pętlach/rankingach i cudzych stronach zwraca pustkę.">
+                    <input type="checkbox" name="<?php echo esc_attr($base); ?>[sensitive]" value="1" <?php checked(!empty($field['sensitive'])); ?>> Pole wrażliwe (chronione przed wyciekiem)
                 </label>
 
                 <div class="evk-b-validation" style="margin-top:14px;border-top:1px solid #e2e4e7;padding-top:12px;">
