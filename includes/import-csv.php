@@ -16,8 +16,9 @@ if (!defined('ABSPATH')) exit;
  * nazwie i sideloadu obrazów (planowane jako kolejne iteracje).
  */
 
-const EVK_CSV_TIME_BUDGET = 20;   // sekundy na jedną porcję (limit czasu hostingu)
-const EVK_CSV_MAX_CHUNK   = 2000; // twardy limit wierszy na porcję (pamięć/częstość redirectów)
+const EVK_CSV_TIME_BUDGET = 20;   // sekundy na porcję w fallbacku POST (limit czasu hostingu)
+const EVK_CSV_AJAX_BUDGET = 3;    // sekundy na porcję w trybie AJAX (płynny, częsty pasek)
+const EVK_CSV_MAX_CHUNK   = 2000; // twardy limit wierszy na porcję (pamięć)
 
 // =========================================================================
 // TYPY / HELPERY (czyste — testowalne bez WP)
@@ -352,17 +353,16 @@ function evk_csv_count_rows(string $file, string $delim): int {
 // KROK 3 — PRZETWARZANIE PORCJI (ze wznowieniem)
 // =========================================================================
 
-add_action('admin_init', function () {
-    if (empty($_POST['evk_csv_process'])) return;
-    if (!current_user_can('manage_options')) return;
-    check_admin_referer('evk_csv', 'evk_csv_nonce');
-
+/**
+ * Przetwórz jedną porcję (do $budget sekund / EVK_CSV_MAX_CHUNK wierszy) z aktywnej sesji.
+ * Zwraca ['ok'=>bool, 'error'=>string, 'done'=>bool, 'offset'=>int, 'total'=>int, 'stats'=>array].
+ * Wspólne dla ścieżki AJAX (płynny pasek) i POST (fallback bez JS).
+ */
+function evk_csv_process_chunk(int $budget): array {
     $s = evk_csv_get_session();
     $path = !empty($s['file']) ? evk_csv_file_path((string) $s['file']) : '';
     if ($path === '' || ($s['step'] ?? '') !== 'run') {
-        evk_csv_notice('error', 'Brak aktywnego importu.');
-        evk_csv_clear_session(false);
-        evk_csv_redirect();
+        return ['ok' => false, 'error' => 'Brak aktywnego importu.'];
     }
 
     $delim  = (string) $s['delimiter'];
@@ -371,7 +371,7 @@ add_action('admin_init', function () {
     $total  = (int) ($s['total'] ?? 0);
 
     $fh = fopen($path, 'r');
-    if (!$fh) { evk_csv_notice('error', 'Nie udało się otworzyć pliku importu.'); evk_csv_redirect(); }
+    if (!$fh) return ['ok' => false, 'error' => 'Nie udało się otworzyć pliku importu.'];
     fgetcsv($fh, 0, $delim); // pomiń nagłówek
 
     // Przewiń do offsetu (pomijając puste linie tak samo jak licznik).
@@ -391,13 +391,34 @@ add_action('admin_init', function () {
         $offset++;
         $processed++;
         if ($processed >= EVK_CSV_MAX_CHUNK) break;
-        if ((time() - $start) > EVK_CSV_TIME_BUDGET) break;
+        if ((time() - $start) >= $budget) break;
     }
     fclose($fh);
 
     $s['offset'] = $offset;
-    if ($offset >= $total) $s['step'] = 'done';
+    $done = $offset >= $total;
+    if ($done) $s['step'] = 'done';
     evk_csv_set_session($s);
+
+    return ['ok' => true, 'error' => '', 'done' => $done, 'offset' => $offset, 'total' => $total, 'stats' => (array) $s['stats']];
+}
+
+// AJAX: płynny pasek postępu bez przeładowań całej strony.
+add_action('wp_ajax_evk_csv_process', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(['error' => 'Brak uprawnień.'], 403);
+    if (!check_ajax_referer('evk_csv_ajax', 'nonce', false)) wp_send_json_error(['error' => 'Nieprawidłowy token.'], 400);
+    $r = evk_csv_process_chunk(EVK_CSV_AJAX_BUDGET);
+    if (empty($r['ok'])) wp_send_json_error(['error' => $r['error'] ?? 'Błąd importu.'], 400);
+    wp_send_json_success($r);
+});
+
+// Fallback bez JS: przetwarzanie przez POST + redirect (większa porcja, mniej przeładowań).
+add_action('admin_init', function () {
+    if (empty($_POST['evk_csv_process'])) return;
+    if (!current_user_can('manage_options')) return;
+    check_admin_referer('evk_csv', 'evk_csv_nonce');
+    $r = evk_csv_process_chunk(EVK_CSV_TIME_BUDGET);
+    if (empty($r['ok'])) { evk_csv_notice('error', $r['error'] ?? 'Błąd importu.'); evk_csv_clear_session(false); }
     evk_csv_redirect();
 });
 
@@ -761,38 +782,105 @@ function evk_csv_render_run(array $s): void {
     $st    = (array) ($s['stats'] ?? []);
     $finished = ($s['step'] ?? '') === 'done';
     $pct = $total > 0 ? min(100, (int) round($done / $total * 100)) : 100;
+    $reset_url = esc_url(add_query_arg(['page' => 'evk-import', 'reset' => 1], admin_url('admin.php')));
     ?>
-    <div class="evk-settings-group">
-        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-database-import" style="vertical-align:text-bottom;color:#2563eb;"></span> Krok 3 — import<?php echo $finished ? ' (zakończony)' : ' w toku'; ?></h2>
+    <div class="evk-settings-group" id="evk-csv-run"
+         data-total="<?php echo (int) $total; ?>"
+         data-ajax="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
+         data-nonce="<?php echo esc_attr(wp_create_nonce('evk_csv_ajax')); ?>"
+         data-reset="<?php echo $reset_url; ?>">
+        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-database-import" style="vertical-align:text-bottom;color:#2563eb;"></span> Krok 3 — import <span id="evk-csv-state"><?php echo $finished ? '(zakończony)' : 'w toku…'; ?></span></h2>
         <div style="background:#e2e8f0;border-radius:8px;height:22px;overflow:hidden;max-width:600px;">
-            <div style="background:<?php echo $finished ? '#16a34a' : '#2563eb'; ?>;height:100%;width:<?php echo (int) $pct; ?>%;transition:width .3s;"></div>
+            <div id="evk-csv-bar" style="background:<?php echo $finished ? '#16a34a' : '#2563eb'; ?>;height:100%;width:<?php echo (int) $pct; ?>%;transition:width .25s;"></div>
         </div>
-        <p style="margin:8px 0;color:#475569;"><?php echo (int) $done; ?> / <?php echo (int) $total; ?> wierszy (<?php echo (int) $pct; ?>%) —
-            utworzono <strong><?php echo (int) ($st['created'] ?? 0); ?></strong>,
-            zaktualizowano <strong><?php echo (int) ($st['updated'] ?? 0); ?></strong>,
-            pominięto <strong><?php echo (int) ($st['skipped'] ?? 0); ?></strong>.</p>
+        <p style="margin:8px 0;color:#475569;">
+            <span id="evk-csv-done"><?php echo (int) $done; ?></span> / <span id="evk-csv-total"><?php echo (int) $total; ?></span> wierszy
+            (<span id="evk-csv-pct"><?php echo (int) $pct; ?></span>%) —
+            utworzono <strong id="evk-csv-created"><?php echo (int) ($st['created'] ?? 0); ?></strong>,
+            zaktualizowano <strong id="evk-csv-updated"><?php echo (int) ($st['updated'] ?? 0); ?></strong>,
+            pominięto <strong id="evk-csv-skipped"><?php echo (int) ($st['skipped'] ?? 0); ?></strong>.
+        </p>
 
-        <?php if (!empty($st['errors'])): ?>
-        <details style="margin:8px 0;"><summary style="cursor:pointer;color:#b91c1c;">Błędy (<?php echo count($st['errors']); ?>)</summary>
-            <ul style="margin:6px 0 0 18px;list-style:disc;color:#b91c1c;font-size:12px;">
-                <?php foreach ($st['errors'] as $e): ?><li><?php echo esc_html($e); ?></li><?php endforeach; ?>
-            </ul>
-        </details>
-        <?php endif; ?>
+        <div id="evk-csv-errors" style="<?php echo empty($st['errors']) ? 'display:none;' : ''; ?>margin:8px 0;">
+            <details><summary style="cursor:pointer;color:#b91c1c;">Błędy (<span id="evk-csv-errcount"><?php echo count((array) ($st['errors'] ?? [])); ?></span>)</summary>
+                <ul id="evk-csv-errlist" style="margin:6px 0 0 18px;list-style:disc;color:#b91c1c;font-size:12px;">
+                    <?php foreach ((array) ($st['errors'] ?? []) as $e): ?><li><?php echo esc_html($e); ?></li><?php endforeach; ?>
+                </ul>
+            </details>
+        </div>
 
-        <?php if ($finished): ?>
+        <div id="evk-csv-done-box" style="<?php echo $finished ? '' : 'display:none;'; ?>">
             <p style="color:#166534;"><span class="dashicons dashicons-yes-alt" style="vertical-align:text-bottom;"></span> Import zakończony.</p>
-            <a href="<?php echo esc_url(add_query_arg(['page' => 'evk-import', 'reset' => 1], admin_url('admin.php'))); ?>" class="button button-primary">Nowy import</a>
-        <?php else: ?>
-            <form method="post" id="evk-csv-continue">
+            <a href="<?php echo $reset_url; ?>" class="button button-primary">Nowy import</a>
+        </div>
+
+        <?php if (!$finished): ?>
+        <div id="evk-csv-running">
+            <p style="color:#64748b;margin:6px 0;"><span class="spinner is-active" style="float:none;margin:0 6px 0 0;"></span> Przetwarzanie w toku — nie zamykaj tej karty.</p>
+            <a href="<?php echo $reset_url; ?>" class="button">Przerwij</a>
+        </div>
+        <!-- Fallback bez JS: ręczne porcjowanie przez POST. -->
+        <noscript>
+            <form method="post" style="margin-top:10px;">
                 <?php wp_nonce_field('evk_csv', 'evk_csv_nonce'); ?>
-                <button type="submit" name="evk_csv_process" value="1" class="button button-primary"><span class="dashicons dashicons-controls-play" style="vertical-align:text-bottom;"></span> <?php echo $done > 0 ? 'Kontynuuj' : 'Przetwarzaj'; ?></button>
-                <a href="<?php echo esc_url(add_query_arg(['page' => 'evk-import', 'reset' => 1], admin_url('admin.php'))); ?>" class="button">Przerwij</a>
+                <button type="submit" name="evk_csv_process" value="1" class="button button-primary">Przetwórz kolejną porcję</button>
             </form>
-            <script>/* Auto-kontynuacja porcji (fallback: przycisk wyżej). */
-            setTimeout(function(){ var f=document.getElementById('evk-csv-continue'); if(f) f.submit(); }, 400);</script>
+        </noscript>
         <?php endif; ?>
     </div>
+
+    <?php if (!$finished): ?>
+    <script>
+    (function () {
+        var box = document.getElementById('evk-csv-run');
+        if (!box) return;
+        var ajax = box.getAttribute('data-ajax'), nonce = box.getAttribute('data-nonce');
+        var elBar = document.getElementById('evk-csv-bar'), elDone = document.getElementById('evk-csv-done'),
+            elTot = document.getElementById('evk-csv-total'), elPct = document.getElementById('evk-csv-pct'),
+            elC = document.getElementById('evk-csv-created'), elU = document.getElementById('evk-csv-updated'),
+            elS = document.getElementById('evk-csv-skipped'), elState = document.getElementById('evk-csv-state'),
+            errBox = document.getElementById('evk-csv-errors'), errCount = document.getElementById('evk-csv-errcount'),
+            errList = document.getElementById('evk-csv-errlist'), running = document.getElementById('evk-csv-running'),
+            doneBox = document.getElementById('evk-csv-done-box');
+
+        function render(d) {
+            var total = d.total || 0, done = d.offset || 0, st = d.stats || {};
+            var pct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 100;
+            elBar.style.width = pct + '%';
+            elDone.textContent = done; elTot.textContent = total; elPct.textContent = pct;
+            elC.textContent = st.created || 0; elU.textContent = st.updated || 0; elS.textContent = st.skipped || 0;
+            var errs = st.errors || [];
+            if (errs.length) {
+                errBox.style.display = ''; errCount.textContent = errs.length;
+                errList.innerHTML = errs.map(function (e) { var li = document.createElement('li'); li.textContent = e; return li.outerHTML; }).join('');
+            }
+        }
+        function finish() {
+            elBar.style.background = '#16a34a';
+            elState.textContent = '(zakończony)';
+            if (running) running.style.display = 'none';
+            if (doneBox) doneBox.style.display = '';
+        }
+        function fail(msg) {
+            elState.textContent = '— błąd';
+            if (running) running.innerHTML = '<p style="color:#b91c1c;">Import przerwany: ' + (msg || 'błąd serwera') +
+                '. <a href="' + box.getAttribute('data-reset') + '">Zacznij od nowa</a>.</p>';
+        }
+        function tick() {
+            var body = new URLSearchParams(); body.append('action', 'evk_csv_process'); body.append('nonce', nonce);
+            fetch(ajax, { method: 'POST', credentials: 'same-origin', body: body })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res || !res.success) { fail(res && res.data && res.data.error); return; }
+                    render(res.data);
+                    if (res.data.done) finish(); else setTimeout(tick, 60);
+                })
+                .catch(function () { fail(); });
+        }
+        setTimeout(tick, 200);
+    })();
+    </script>
+    <?php endif; ?>
     <?php
 }
 

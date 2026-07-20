@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.57.1] — 2026-07-20
+
+### Naprawione
+
+- **Import CSV migał i nie pokazywał postępu** — przetwarzanie porcji przeładowywało całą
+  stronę (auto-submit formularza) przy porcji do 20 s / 2000 wierszy, więc mniejsze pliki
+  kończyły się w jednym przeładowaniu bez widocznego paska. Przetwarzanie działa teraz przez
+  **AJAX** (`admin-ajax`, porcja 3 s): pasek postępu i liczniki aktualizują się w miejscu,
+  bez przeładowań, ze spinnerem. Zachowany fallback bez JS (`<noscript>` → ręczne porcje
+  przez POST). Logika porcji wydzielona do `evk_csv_process_chunk()`. (`includes/import-csv.php`)
+
 ## [1.57.0] — 2026-07-20
 
 ### Dodane
