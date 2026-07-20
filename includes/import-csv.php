@@ -174,11 +174,138 @@ function evk_csv_evk_targets(string $post_type): array {
 }
 
 // =========================================================================
+// EKSPORT WARTOŚCI → CSV (symetryczny do importu; pełny round-trip)
+// =========================================================================
+
+/**
+ * Kolumny eksportu dla typu treści (uporządkowane): rdzeń → pola EVK → taksonomie.
+ * Nagłówki = etykiety, które import auto-mapuje po nazwie (round-trip). Rdzeń używa
+ * krótkich nazw ('ID','Tytuł','Zajawka','Kolejność'…) rozpoznawanych przez auto-mapę.
+ * Zwraca [ target => label ].
+ */
+function evk_csv_export_targets(string $post_type): array {
+    $out = [
+        'core:id'         => 'ID',
+        'core:title'      => 'Tytuł',
+        'core:content'    => 'Treść',
+        'core:excerpt'    => 'Zajawka',
+        'core:status'     => 'Status',
+        'core:slug'       => 'Slug',
+        'core:date'       => 'Data',
+        'core:menu_order' => 'Kolejność',
+    ];
+    foreach (evk_csv_evk_targets($post_type) as $k => $d) $out[$k] = $d['label'];
+    foreach (evk_csv_tax_targets($post_type) as $k => $l) $out[$k] = $l;
+    return $out;
+}
+
+/** Wartość pola EVK do komórki CSV (raw z mety; checkbox znormalizowany do 1/0). */
+function evk_csv_export_field_value(string $type, $v): string {
+    if ($type === 'checkbox') return (!empty($v) && $v !== '0') ? '1' : '0';
+    return is_scalar($v) ? (string) $v : '';
+}
+
+/** Wartość jednej komórki eksportu dla wpisu i celu. */
+function evk_csv_export_cell(WP_Post $post, string $target, array $evk_defs): string {
+    switch ($target) {
+        case 'core:id':         return (string) $post->ID;
+        case 'core:title':      return (string) $post->post_title;
+        case 'core:content':    return (string) $post->post_content;
+        case 'core:excerpt':    return (string) $post->post_excerpt;
+        case 'core:status':     return (string) $post->post_status;
+        case 'core:slug':       return (string) $post->post_name;
+        case 'core:date':       return (string) $post->post_date;
+        case 'core:menu_order': return (string) (int) $post->menu_order;
+    }
+    if (strpos($target, 'tax:') === 0) {
+        $tax   = substr($target, 4);
+        $terms = wp_get_object_terms($post->ID, $tax, ['fields' => 'names']);
+        return is_wp_error($terms) ? '' : implode('|', $terms);
+    }
+    if (strpos($target, 'evk:') === 0 && isset($evk_defs[$target])) {
+        $key = substr($target, 4);
+        return evk_csv_export_field_value($evk_defs[$target]['type'], get_post_meta($post->ID, $key, true));
+    }
+    return '';
+}
+
+// Handler eksportu — streamuje CSV bez trzymania wszystkiego w pamięci.
+add_action('admin_init', function () {
+    if (empty($_POST['evk_csv_export'])) return;
+    if (!current_user_can('manage_options')) return;
+    check_admin_referer('evk_csv_export', 'evk_csv_export_nonce');
+
+    $post_type = sanitize_key($_POST['evk_csv_export_pt'] ?? '');
+    if ($post_type === '' || !post_type_exists($post_type)) {
+        evk_csv_notice('error', 'Wybierz prawidłowy typ treści do eksportu.');
+        evk_csv_redirect();
+    }
+
+    $all_targets = evk_csv_export_targets($post_type);
+    $chosen      = (array) ($_POST['evk_csv_export_cols'] ?? []);
+    $cols        = [];
+    foreach ($all_targets as $target => $label) {
+        if (in_array($target, $chosen, true)) $cols[$target] = $label;
+    }
+    if (!$cols) { evk_csv_notice('error', 'Zaznacz co najmniej jedną kolumnę do eksportu.'); evk_csv_redirect(); }
+
+    $enc    = in_array($_POST['evk_csv_export_enc'] ?? '', ['UTF-8', 'Windows-1250', 'ISO-8859-2'], true) ? $_POST['evk_csv_export_enc'] : 'UTF-8';
+    $delim  = evk_csv_delim_char((string) ($_POST['evk_csv_export_delim'] ?? 'comma'));
+    $bom    = !empty($_POST['evk_csv_export_bom']) && $enc === 'UTF-8';
+    $status = ($_POST['evk_csv_export_status'] ?? 'any') === 'publish' ? 'publish' : 'any';
+
+    $evk_defs = evk_csv_evk_targets($post_type); // do wartości pól EVK
+
+    $ids = get_posts([
+        'post_type'     => $post_type,
+        'post_status'   => $status,
+        'numberposts'   => -1,
+        'fields'        => 'ids',
+        'orderby'       => 'ID',
+        'order'         => 'ASC',
+        'no_found_rows' => true,
+    ]);
+
+    nocache_headers();
+    header('Content-Type: text/csv; charset=' . $enc);
+    header('Content-Disposition: attachment; filename=evk-' . $post_type . '-' . gmdate('Ymd-His') . '.csv');
+    @set_time_limit(0);
+    while (ob_get_level() > 0) ob_end_clean(); // czysty strumień (bez buforów WP)
+
+    $out = fopen('php://output', 'w');
+    if ($bom) fwrite($out, "\xEF\xBB\xBF"); // Excel rozpozna UTF-8
+
+    // Konwersja komórki do docelowego kodowania (dane trzymamy w UTF-8).
+    $conv = function (string $s) use ($enc): string {
+        if ($enc === 'UTF-8' || !function_exists('mb_convert_encoding')) return $s;
+        return mb_convert_encoding($s, $enc, 'UTF-8');
+    };
+
+    fputcsv($out, array_map($conv, array_values($cols)), $delim);
+
+    $i = 0;
+    foreach (array_chunk($ids, 200) as $chunk) {
+        if (function_exists('_prime_post_caches')) _prime_post_caches($chunk, true, true);
+        foreach ($chunk as $pid) {
+            $post = get_post($pid);
+            if (!$post) continue;
+            $row = [];
+            foreach ($cols as $target => $label) $row[] = $conv(evk_csv_export_cell($post, $target, $evk_defs));
+            fputcsv($out, $row, $delim);
+        }
+        // Meta/term cache rośnie z każdą paczką — zrzucaj, by nie puchła pamięć przy dużych zbiorach.
+        if ((++$i % 5) === 0) { wp_cache_flush(); flush(); }
+    }
+    fclose($out);
+    exit;
+});
+
+// =========================================================================
 // MENU + ENQUEUE
 // =========================================================================
 
 add_action('admin_menu', function () {
-    add_submenu_page('evk-repeater', 'Import CSV', 'Import CSV', 'manage_options', 'evk-import', 'evk_csv_page');
+    add_submenu_page('evk-repeater', 'Import / Eksport CSV', 'Import / Eksport CSV', 'manage_options', 'evk-import', 'evk_csv_page');
 }, 27);
 
 // =========================================================================
@@ -611,7 +738,7 @@ function evk_csv_page(): void {
     $step = $s['step'] ?? 'upload';
     ?>
     <div class="wrap evk-b-wrap">
-        <h1><span class="dashicons dashicons-database-import"></span> Import CSV</h1>
+        <h1><span class="dashicons dashicons-database-import"></span> Import / Eksport CSV</h1>
         <?php if ($notice): ?>
             <div class="notice notice-<?php echo in_array($notice['type'], ['error', 'warning'], true) ? esc_attr($notice['type']) : 'success'; ?> is-dismissible"><p><?php echo esc_html($notice['msg']); ?></p></div>
         <?php endif; ?>
@@ -626,7 +753,7 @@ function evk_csv_page(): void {
         <?php
         if ($step === 'map' && !empty($s['headers']))      evk_csv_render_map($s);
         elseif (in_array($step, ['run', 'done'], true))    evk_csv_render_run($s);
-        else                                               evk_csv_render_upload();
+        else { evk_csv_render_upload(); evk_csv_render_export(); }
         ?>
     </div>
     <?php
@@ -663,6 +790,93 @@ function evk_csv_render_upload(): void {
     <?php
 }
 
+function evk_csv_render_export(): void {
+    $pts = [];
+    foreach (get_post_types(['show_ui' => true], 'objects') as $pt) {
+        if (in_array($pt->name, ['attachment', 'evk_field_group'], true)) continue;
+        $pts[$pt->name] = $pt->labels->singular_name ?: $pt->name;
+    }
+    // Wybór typu (GET ?ept=) odświeża listę kolumn; domyślnie pierwszy.
+    $sel = sanitize_key($_GET['ept'] ?? (array_key_first($pts) ?: 'post'));
+    if (!isset($pts[$sel])) $sel = array_key_first($pts) ?: 'post';
+    $targets = evk_csv_export_targets($sel);
+    ?>
+    <div class="evk-settings-group">
+        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-database-export" style="vertical-align:text-bottom;color:#2563eb;"></span> Eksport wartości do CSV</h2>
+        <p style="margin-top:0;color:#475569;">Pobierz wartości wpisów (rdzeń + proste pola EVK + taksonomie po nazwie) jako CSV.
+            Nagłówki są tak dobrane, aby ten sam plik dało się z powrotem <strong>zaimportować</strong> (auto-mapowanie po nazwie kolumny).</p>
+
+        <form method="get" style="margin-bottom:10px;">
+            <input type="hidden" name="page" value="evk-import">
+            <label><strong>Typ treści:</strong>
+                <select name="ept" onchange="this.form.submit()">
+                    <?php foreach ($pts as $ptk => $ptl): ?>
+                    <option value="<?php echo esc_attr($ptk); ?>" <?php selected($sel, $ptk); ?>><?php echo esc_html($ptl); ?> (<?php echo esc_html($ptk); ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <span class="description">Zmiana typu odświeża listę kolumn.</span>
+        </form>
+
+        <form method="post">
+            <?php wp_nonce_field('evk_csv_export', 'evk_csv_export_nonce'); ?>
+            <input type="hidden" name="evk_csv_export_pt" value="<?php echo esc_attr($sel); ?>">
+
+            <div style="margin:8px 0;">
+                <label style="font-weight:600;">Kolumny do eksportu</label>
+                <p style="margin:4px 0 6px;">
+                    <a href="#" class="evk-csv-exp-all" data-on="1">zaznacz wszystkie</a> ·
+                    <a href="#" class="evk-csv-exp-all" data-on="0">odznacz wszystkie</a>
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 16px;max-width:900px;">
+                    <?php foreach ($targets as $target => $label): ?>
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                        <input type="checkbox" name="evk_csv_export_cols[]" value="<?php echo esc_attr($target); ?>" checked>
+                        <?php echo esc_html($label); ?>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <p style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-top:12px;">
+                <label>Zakres<br>
+                    <select name="evk_csv_export_status">
+                        <option value="any">Wszystkie (poza koszem)</option>
+                        <option value="publish">Tylko opublikowane</option>
+                    </select>
+                </label>
+                <label>Separator<br>
+                    <select name="evk_csv_export_delim">
+                        <option value="comma">Przecinek ( , )</option>
+                        <option value="semicolon">Średnik ( ; ) — Excel PL</option>
+                        <option value="tab">Tabulator</option>
+                    </select>
+                </label>
+                <label>Kodowanie<br>
+                    <select name="evk_csv_export_enc">
+                        <option value="UTF-8">UTF-8</option>
+                        <option value="Windows-1250">Windows-1250</option>
+                        <option value="ISO-8859-2">ISO-8859-2</option>
+                    </select>
+                </label>
+                <label style="display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="evk_csv_export_bom" value="1" checked> BOM (UTF-8, dla Excela)</label>
+            </p>
+
+            <button type="submit" name="evk_csv_export" value="1" class="button button-primary"><span class="dashicons dashicons-download" style="vertical-align:text-bottom;"></span> Pobierz CSV</button>
+        </form>
+    </div>
+    <script>
+    document.querySelectorAll('.evk-csv-exp-all').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            e.preventDefault();
+            var on = a.getAttribute('data-on') === '1';
+            a.closest('form').querySelectorAll('input[name="evk_csv_export_cols[]"]').forEach(function (c) { c.checked = on; });
+        });
+    });
+    </script>
+    <?php
+}
+
 function evk_csv_render_map(array $s): void {
     $headers = (array) $s['headers'];
     $sample  = (array) ($s['sample'] ?? []);
@@ -682,7 +896,7 @@ function evk_csv_render_map(array $s): void {
     // Auto-dopasowanie kolumny → cel po nazwie nagłówka (etykieta/klucz).
     $auto = function (string $header) use ($core, $tax, $evk): string {
         $h = mb_strtolower(trim($header));
-        $map = ['tytuł' => 'core:title', 'title' => 'core:title', 'treść' => 'core:content', 'content' => 'core:content', 'status' => 'core:status', 'slug' => 'core:slug', 'data' => 'core:date', 'id' => 'core:id'];
+        $map = ['tytuł' => 'core:title', 'title' => 'core:title', 'treść' => 'core:content', 'content' => 'core:content', 'status' => 'core:status', 'slug' => 'core:slug', 'data' => 'core:date', 'id' => 'core:id', 'zajawka' => 'core:excerpt', 'excerpt' => 'core:excerpt', 'kolejność' => 'core:menu_order', 'menu_order' => 'core:menu_order'];
         if (isset($map[$h])) return $map[$h];
         foreach ($evk as $k => $d) { if (mb_strtolower($d['label']) === $h || 'evk:' . $h === $k) return $k; }
         foreach ($tax as $k => $l) { if (mb_strtolower($l) === $h) return $k; }

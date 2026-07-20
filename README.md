@@ -90,6 +90,10 @@ evk_rep_recalc( int $object_id, string $meta_type = 'post' );        // przelicz
 evk_rep_recalc_options(): int;                                       // przelicz pola calc stron ustawień
 ```
 
+## Import / Eksport CSV
+
+**Evoke FIELDS → Import / Eksport CSV**. **Import**: upload → mapowanie kolumn (rdzeń wpisu, taksonomie po nazwie, proste pola EVK) → tworzenie/aktualizacja z kluczem dopasowania; przetwarzanie porcjami przez AJAX (pasek postępu), po imporcie przeliczają się pola calc i uzupełnia „tytuł z pola". **Eksport**: wybór typu treści, kolumn, zakresu, separatora/kodowania (+ BOM dla Excela); plik streamowany. Nagłówki eksportu są zgodne z auto-mapowaniem importu — pełny round-trip (eksport → arkusz → import).
+
 ## Narzędzia
 
 **Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania, **import selektywny** wg sekcji) · **Kopie zapasowe konfiguracji** (auto-zrzut przy każdej zmianie struktury do chronionego katalogu w `uploads`, rotacja 30 kopii; ręczna kopia, przywracanie, pobieranie) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.

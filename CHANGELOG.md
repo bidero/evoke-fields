@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.60.0] — 2026-07-20
+
+### Dodane
+
+- **Eksport wartości do CSV** (Import / Eksport CSV → „Eksport wartości do CSV") —
+  symetryczny do importu: wybierasz typ treści i kolumny (rdzeń wpisu, proste pola EVK,
+  taksonomie po nazwie), zakres (wszystkie / opublikowane), separator, kodowanie i BOM dla
+  Excela. Plik streamowany bezpośrednio (paczki po 200 wpisów, zrzut cache co 1000 —
+  obsługuje duże zbiory bez wyczerpania pamięci). Nagłówki dobrane tak, aby ten sam plik
+  dało się **z powrotem zaimportować** (auto-mapowanie po nazwie kolumny → pełny round-trip:
+  eksport → edycja w arkuszu → import). Podmenu przemianowane na „Import / Eksport CSV".
+  Auto-mapowanie importu rozpoznaje teraz dodatkowo „Zajawka" i „Kolejność".
+  (`includes/import-csv.php`)
+
 ## [1.59.0] — 2026-07-20
 
 ### Dodane
