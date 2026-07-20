@@ -247,7 +247,7 @@ function evk_render_custom_post_types_page() {
                                     </label>
                                     <label><?php echo esc_html__( 'E-mail z linkiem — treść', 'evk-repeater' ); ?>
                                         <textarea name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_body]" rows="4" placeholder="Link dostępowy do „{title}”:&#10;&#10;{url}"><?php echo esc_textarea( $post_type['protect_email_body'] ?? '' ); ?></textarea>
-                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Puste = domyślna treść. Znaczniki: {title} tytuł wpisu, {url} link z kluczem, {site} nazwa witryny.', 'evk-repeater' ); ?></span>
+                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Puste = domyślna treść. Znaczniki: {title} tytuł, {url} link z kluczem, {site} nazwa witryny — oraz dowolny klucz pola EVK z wpisu, np. {imie} {nazwisko} {rok_urodzenia}.', 'evk-repeater' ); ?></span>
                                     </label>
                                 </div>
                             </div>
@@ -403,7 +403,7 @@ function evk_render_custom_post_types_page() {
                                 </label>
                                 <label><?php echo esc_js( __( 'E-mail z linkiem — treść', 'evk-repeater' ) ); ?>
                                     <textarea name="custom_post_types[${index}][protect_email_body]" rows="4" placeholder="Link dostępowy do {title}: {url}"></textarea>
-                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Puste = domyślna treść. Znaczniki: {title}, {url}, {site}.', 'evk-repeater' ) ); ?></span>
+                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Puste = domyślna treść. Znaczniki: {title}, {url}, {site} oraz klucze pól EVK, np. {imie} {nazwisko}.', 'evk-repeater' ) ); ?></span>
                                 </label>
                             </div>
                         `;

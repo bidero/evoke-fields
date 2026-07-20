@@ -388,9 +388,31 @@ add_action('wp_ajax_evk_protect_regen', function () {
 });
 
 /**
+ * Podstawia znaczniki {…} w szablonie wartościami wpisu.
+ * Wbudowane: {title} tytuł, {url}/{link} link z kluczem, {site} nazwa witryny.
+ * Dowolny inny {klucz} = wartość pola EVK / mety tego wpisu (np. {imie}, {rok_urodzenia}).
+ * Wołane w kontekście redakcji (metabox/AJAX), więc pola wrażliwe też się rozwijają.
+ * Nieznane / puste pola → pusty ciąg.
+ */
+function evk_protect_email_fill(string $tpl, int $post_id, string $title, string $url): string {
+    return preg_replace_callback('/\{([a-zA-Z0-9_]+)\}/', function ($m) use ($post_id, $title, $url) {
+        $k = strtolower($m[1]);
+        if ($k === 'title')             return $title;
+        if ($k === 'url' || $k === 'link') return $url;
+        if ($k === 'site')              return (string) get_bloginfo('name');
+        // Pole EVK (formatowane jak tag dynamiczny) → meta surowa → pusto.
+        if (function_exists('evk_get_field')) {
+            $v = evk_get_field($m[1], $post_id);
+            if (is_scalar($v) && (string) $v !== '') return (string) $v;
+        }
+        $mv = get_post_meta($post_id, $m[1], true);
+        return is_scalar($mv) ? (string) $mv : '';
+    }, $tpl);
+}
+
+/**
  * Temat + treść e-maila z linkiem. Szablon z ustawień CPT (protect_email_subject /
- * protect_email_body) z placeholderami; puste = sensowne domyślne.
- * Placeholdery: {title} tytuł wpisu, {url}/{link} link z kluczem, {site} nazwa witryny.
+ * protect_email_body); puste = sensowne domyślne. Znaczniki jak w evk_protect_email_fill().
  */
 function evk_protect_email_template(int $post_id): array {
     $cfg     = function_exists('evk_cpt_config') ? evk_cpt_config((string) get_post_type($post_id)) : [];
@@ -403,13 +425,10 @@ function evk_protect_email_template(int $post_id): array {
     if ($subject === '') $subject = 'Dostęp: {title}';
     if ($body === '')    $body = "Link dostępowy do „{title}\":\n\n{url}\n\nTraktuj ten link jak hasło — nie udostępniaj osobom niepowołanym.";
 
-    $repl = [
-        '{title}' => $title,
-        '{url}'   => $url,
-        '{link}'  => $url,
-        '{site}'  => get_bloginfo('name'),
+    return [
+        evk_protect_email_fill($subject, $post_id, $title, $url),
+        evk_protect_email_fill($body, $post_id, $title, $url),
     ];
-    return [strtr($subject, $repl), strtr($body, $repl)];
 }
 
 add_action('wp_ajax_evk_protect_send', function () {

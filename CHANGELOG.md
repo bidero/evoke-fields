@@ -2,6 +2,16 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.62.1] — 2026-07-20
+
+### Zmienione
+
+- **Szablon e-maila z linkiem obsługuje teraz dowolny klucz pola EVK z wpisu** — obok
+  `{title}` / `{url}` / `{link}` / `{site}` można wstawić `{imie}`, `{nazwisko}`,
+  `{rok_urodzenia}` itd. (wartości pól tego wpisu). Przydatne, gdy tytuł jest ukryty lub
+  wyliczany. Rozwijane w kontekście redakcji, więc obejmuje też pola wrażliwe; nieznane /
+  puste znaczniki → pusty ciąg. (`includes/protect.php`, `includes/cpt.php`)
+
 ## [1.62.0] — 2026-07-20
 
 ### Dodane
