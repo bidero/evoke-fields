@@ -228,8 +228,12 @@ function evk_backups_render_section(): void {
     $list = evk_backups_list();
     $info = evk_backups_dir_info();
     ?>
-    <div class="evk-settings-group">
-        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-backup" style="vertical-align:text-bottom;color:#2563eb;"></span> Kopie zapasowe konfiguracji</h2>
+    <details class="evk-settings-group evk-acc-group">
+        <summary class="evk-settings-group-title" style="cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <span class="dashicons dashicons-backup" style="color:#2563eb;"></span>
+            <span>Kopie zapasowe konfiguracji</span>
+            <span class="dashicons dashicons-arrow-down-alt2 evk-acc-chevron" style="margin-left:auto;transition:transform .2s;"></span>
+        </summary>
         <div>
             <p style="margin-top:0;color:#475569;">
                 Przy każdej zmianie struktury (grupy pól, typy treści, taksonomie, strony ustawień)
@@ -292,6 +296,11 @@ function evk_backups_render_section(): void {
                 </table>
             <?php endif; ?>
         </div>
-    </div>
+    </details>
+    <style>
+    .evk-acc-group > summary{list-style:none;}
+    .evk-acc-group > summary::-webkit-details-marker{display:none;}
+    .evk-acc-group[open] > summary .evk-acc-chevron{transform:rotate(180deg);}
+    </style>
     <?php
 }

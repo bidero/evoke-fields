@@ -2,6 +2,13 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.64.3] — 2026-07-20
+
+### Zmienione
+
+- Sekcja **Narzędzia → Kopie zapasowe konfiguracji** to teraz akordeon **zwinięty na start**
+  (mniej szumu na stronie Narzędzia; rozwijasz klikając nagłówek). (`includes/backups.php`)
+
 ## [1.64.2] — 2026-07-20
 
 ### Zmienione
