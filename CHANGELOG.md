@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.64.0] — 2026-07-20
+
+### Zmienione
+
+- **Przebudowa ekranu typów treści — lepsze wykorzystanie szerokości.** Górny wiersz
+  (nazwa / slug / dashicon) wypełnia teraz 100% szerokości w proporcjach (nazwa najszersza),
+  zamiast zostawiać pustą przestrzeń po prawej (wcześniej pełnoszerokościowy blok
+  „zaawansowane" blokował zwijanie pustych kolumn siatki). Przełącznik „Ustawienia
+  zaawansowane" to teraz **ikonka (koło zębate) na końcu wiersza pól** — po rozwinięciu
+  sekcje **Etykiety / przyciski**, **Tytuł, slug i lista**, **Ochrona danych** układają się
+  w responsywną siatkę wielokolumnową (sekcja e-mail na całą szerokość). Ekran taksonomii
+  bez zmian. (`includes/cpt.php`, `assets/evk-admin.css`)
+
 ## [1.63.0] — 2026-07-20
 
 ### Dodane

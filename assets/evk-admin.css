@@ -447,12 +447,30 @@ h1.evk-settings-tabs.nav-tab-wrapper {
 .evk-admin .evk-row-actions .remove-taxonomy:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 .evk-admin .evk-row-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
 
-/* Ciało karty — siatka pól */
+/* Ciało karty — siatka pól (taksonomie: .field-group w kolumnach). */
 .evk-admin .evk-row-body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     padding: 18px 16px;
+}
+/* Typy treści: blok — górny wiersz pól + panel zaawansowany pod spodem. */
+.evk-admin .custom-post-type-row > .evk-row-body {
+    display: block;
+}
+/* Górny wiersz: nazwa (najszersza) · slug · dashicon · ikonka „zaawansowane" na końcu.
+   Proporcje wypełniają 100% szerokości (koniec z pustą przestrzenią po prawej). */
+.evk-admin .evk-cpt-top {
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.5fr) minmax(0, 1.3fr) auto;
+    gap: 16px;
+    align-items: end;
+}
+.evk-admin .evk-cpt-top .post-type-name,
+.evk-admin .evk-cpt-top .post-type-slug,
+.evk-admin .evk-cpt-top .post-type-icon { min-width: 0; }
+@media (max-width: 782px) {
+    .evk-admin .evk-cpt-top { grid-template-columns: 1fr auto; }
 }
 .evk-admin .custom-post-type-row.collapsed .evk-row-body,
 .evk-admin .taxonomy-row.collapsed .evk-row-body { display: none; }
@@ -506,21 +524,36 @@ h1.evk-settings-tabs.nav-tab-wrapper {
 .evk-admin .taxonomy-row .checkbox-container { margin-top: 2px; }
 
 /* Typy treści: sekcja „obsługiwane funkcje" */
-.evk-admin .advanced-settings-wrap { grid-column: 1 / -1; padding-left: 0; margin-top: 2px; }
+.evk-admin .advanced-settings-wrap { margin-top: 14px; }
+/* Przełącznik zaawansowanych — kwadratowa ikonka na końcu górnego wiersza. */
 .evk-admin .toggle-advanced-btn {
-    background: none; border: 0; padding: 4px 0; margin: 0 0 4px; cursor: pointer;
-    font-size: 13px; font-weight: 600; color: #2563eb;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; padding: 0; cursor: pointer;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    color: #64748b; transition: background .15s, color .15s, border-color .15s, transform .15s;
 }
-.evk-admin .toggle-advanced-btn:hover { color: #1d4ed8; }
+.evk-admin .toggle-advanced-btn:hover { background: #eef2f7; color: #1d4ed8; border-color: #cbd5e1; }
+.evk-admin .toggle-advanced-btn.is-open { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.evk-admin .toggle-advanced-btn.is-open .dashicons { transform: rotate(45deg); }
+.evk-admin .toggle-advanced-btn .dashicons { font-size: 18px; width: 18px; height: 18px; line-height: 1; transition: transform .2s; }
 .evk-admin .supports-section {
     display: flex; flex-wrap: wrap; gap: 12px 20px;
-    padding: 14px; margin-top: 6px; background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;
+    padding: 16px; background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;
 }
 .evk-admin .supports-section > label {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 13px; font-weight: 500; color: #374151; min-width: 0;
 }
-.evk-admin .supports-section .evk-cpt-labels { flex: 1 0 100%; margin-top: 6px; }
+/* Sekcje (Etykiety / Tytuł i lista / Ochrona) w responsywnej siatce — wypełniają szerokość. */
+.evk-admin .evk-cpt-sections {
+    flex: 1 0 100%;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px 28px; margin-top: 12px; padding-top: 14px; border-top: 1px dashed #d7dde7;
+}
+.evk-admin .evk-cpt-sections .evk-cpt-labels { margin-top: 0; padding-top: 0; border-top: 0; }
+.evk-admin .evk-cpt-sections .evk-cpt-labels > label { max-width: none; }
+/* Sekcja z e-mailem (textarea) ma najwięcej treści — niech zajmie całą szerokość siatki. */
+.evk-admin .evk-cpt-sections .evk-cpt-labels:last-child { grid-column: 1 / -1; }
 
 /* Przyciski „Dodaj …" — ghost (dashed), spójne z resztą wtyczki */
 .evk-admin #add-custom-post-type-row,

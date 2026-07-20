@@ -168,6 +168,7 @@ function evk_render_custom_post_types_page() {
                             </div>
                         </div>
                         <div class="evk-row-body">
+                        <div class="evk-cpt-top">
                         <div class="post-type-name">
                             <label><?php echo esc_html__( 'Nazwa typu treści', 'evk-repeater' ); ?></label><br>
                             <input type="text" class="evk-row-name" name="custom_post_types[<?php echo esc_attr( $index ); ?>][name]" placeholder="<?php echo esc_attr__( 'Nazwa typu treści', 'evk-repeater' ); ?>" value="<?php echo esc_attr( $post_type['name'] ); ?>" />
@@ -184,9 +185,10 @@ function evk_render_custom_post_types_page() {
                                 <span class="dashicon-btn-label"><?php echo esc_html( str_replace( 'dashicons-', '', $post_type['dashicon'] ) ); ?></span>
                             </button>
                         </div>
+                        <button type="button" class="toggle-advanced-btn" title="<?php echo esc_attr__( 'Ustawienia zaawansowane', 'evk-repeater' ); ?>" aria-label="<?php echo esc_attr__( 'Ustawienia zaawansowane', 'evk-repeater' ); ?>"><span class="dashicons dashicons-admin-generic"></span></button>
+                        </div><!-- /.evk-cpt-top -->
                         <!-- Supports Section -->
                         <div class="advanced-settings-wrap">
-                            <button type="button" class="toggle-advanced-btn">Ustawienia zaawansowane ▼</button>
                             <div class="supports-section" style="display:none;">
                                 <?php foreach ( $available_supports as $key => $label ) : ?>
                                     <label>
@@ -205,6 +207,7 @@ function evk_render_custom_post_types_page() {
                                     <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][private]" <?php checked( isset($post_type['private']) && $post_type['private'], 1 ); ?> />
                                     <?php echo esc_html__( 'Prywatny', 'evk-repeater' ); ?>
                                 </label>
+                                <div class="evk-cpt-sections">
                                 <div class="evk-cpt-labels">
                                     <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Etykiety / przyciski', 'evk-repeater' ); ?> <span><?php echo esc_html__( '(opcjonalne — domyślnie z nazwy)', 'evk-repeater' ); ?></span></p>
                                     <label><?php echo esc_html__( 'Nazwa (l. pojedyncza)', 'evk-repeater' ); ?>
@@ -256,6 +259,7 @@ function evk_render_custom_post_types_page() {
                                         <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Puste = domyślna treść. Znaczniki: {title} tytuł, {url} link z kluczem, {site} nazwa witryny — oraz dowolny klucz pola EVK z wpisu, np. {imie} {nazwisko} {rok_urodzenia}.', 'evk-repeater' ); ?></span>
                                     </label>
                                 </div>
+                                </div><!-- /.evk-cpt-sections -->
                             </div>
                         </div>
                         <!-- End of Supports Section -->
@@ -367,6 +371,7 @@ function evk_render_custom_post_types_page() {
                             </label>
                         `;
                         inner += `
+                            <div class="evk-cpt-sections">
                             <div class="evk-cpt-labels">
                                 <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Etykiety / przyciski', 'evk-repeater' ); ?> <span><?php echo esc_html__( '(opcjonalne — domyślnie z nazwy)', 'evk-repeater' ); ?></span></p>
                                 <label><?php echo esc_html__( 'Nazwa (l. pojedyncza)', 'evk-repeater' ); ?>
@@ -418,11 +423,11 @@ function evk_render_custom_post_types_page() {
                                     <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Puste = domyślna treść. Znaczniki: {title}, {url}, {site} oraz klucze pól EVK, np. {imie} {nazwisko}.', 'evk-repeater' ) ); ?></span>
                                 </label>
                             </div>
+                            </div>
                         `;
                     }
                 }
                 return `<div class="advanced-settings-wrap">
-                    <button type="button" class="toggle-advanced-btn">Ustawienia zaawansowane ▼</button>
                     <div class="supports-section" style="display:none;">${inner}</div>
                 </div>`;
             }
@@ -442,6 +447,7 @@ function evk_render_custom_post_types_page() {
                         </div>
                     </div>
                     <div class="evk-row-body">
+                    <div class="evk-cpt-top">
                     <div class="post-type-name">
                         <label><?php echo esc_html__( 'Nazwa typu treści', 'evk-repeater' ); ?></label><br>
                         <input type="text" class="evk-row-name" name="custom_post_types[${newIndex}][name]" placeholder="<?php echo esc_attr__( 'Nazwa typu treści', 'evk-repeater' ); ?>" />
@@ -457,6 +463,8 @@ function evk_render_custom_post_types_page() {
                             <span class="dashicons dashicons-admin-page"></span>
                             <span class="dashicon-btn-label">admin-page</span>
                         </button>
+                    </div>
+                    <button type="button" class="toggle-advanced-btn" title="<?php echo esc_attr( esc_js( __( 'Ustawienia zaawansowane', 'evk-repeater' ) ) ); ?>" aria-label="<?php echo esc_attr( esc_js( __( 'Ustawienia zaawansowane', 'evk-repeater' ) ) ); ?>"><span class="dashicons dashicons-admin-generic"></span></button>
                     </div>
                     <!-- Supports Section -->
                     ${generateSupportsHTML(newIndex)}
@@ -489,12 +497,13 @@ function evk_render_custom_post_types_page() {
 
                 const advBtn = event.target.closest('.toggle-advanced-btn');
                 if (advBtn) {
-                    const section = advBtn.nextElementSibling;
-                    const isHidden = section.style.display === 'none';
+                    // Ikonka w górnym wierszu — panel .supports-section jest w tej samej karcie.
+                    const row = advBtn.closest('.custom-post-type-row');
+                    const section = row && row.querySelector('.supports-section');
+                    if (!section) return;
+                    const isHidden = section.style.display === 'none' || section.style.display === '';
                     section.style.display = isHidden ? 'flex' : 'none';
-                    advBtn.textContent = isHidden
-                        ? '<?php echo esc_js( __( 'Ustawienia zaawansowane ▲', 'evk-repeater' ) ); ?>'
-                        : '<?php echo esc_js( __( 'Ustawienia zaawansowane ▼', 'evk-repeater' ) ); ?>';
+                    advBtn.classList.toggle('is-open', isHidden);
                 }
             });
 
