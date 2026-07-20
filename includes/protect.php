@@ -321,8 +321,9 @@ function evk_protect_metabox(\WP_Post $post): void {
     .evk-protect-actions .evk-protect-copy{flex:1;justify-content:center;}
     .evk-protect-actions .button .dashicons,.evk-protect-send-row .button .dashicons{font-size:16px;width:16px;height:16px;line-height:1;}
     .evk-protect-sep{border-top:1px solid #e2e8f0;margin:14px 0;}
-    .evk-protect-send-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
-    .evk-protect-msg{font-size:12px;}
+    .evk-protect-send-row{margin-top:8px;}
+    .evk-protect-send-row .evk-protect-send{width:100%;justify-content:center;}
+    .evk-protect-msg{display:block;text-align:center;font-size:12px;min-height:16px;margin-top:6px;}
     </style>
     <script>
     (function () {

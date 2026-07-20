@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.62.2] — 2026-07-20
+
+### Zmienione
+
+- Przycisk „Wyślij" w metaboksie „Dostęp (klucz)" na **całą szerokość poniżej** pola e-mail
+  (pole zachowuje pełną szerokość dla długich adresów; spójnie z „Kopiuj link"); komunikat
+  statusu wyśrodkowany pod przyciskiem. (`includes/protect.php`)
+
 ## [1.62.1] — 2026-07-20
 
 ### Zmienione
