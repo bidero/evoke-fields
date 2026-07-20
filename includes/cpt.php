@@ -158,7 +158,7 @@ function evk_render_custom_post_types_page() {
             <div id="custom-post-type-settings">
                 <p><?php echo esc_html__( 'Zdefiniuj typy treści: nazwa, slug (maks. 20 znaków), widoczność, ikona i obsługiwane funkcje:', 'evk-repeater' ); ?></p>
                 <?php foreach ( $custom_post_types as $index => $post_type ) : ?>
-                    <div class="custom-post-type-row" data-index="<?php echo esc_attr( $index ); ?>">
+                    <div class="custom-post-type-row collapsed" data-index="<?php echo esc_attr( $index ); ?>">
                         <div class="evk-row-head">
                             <span class="evk-row-handle dashicons dashicons-menu" title="<?php echo esc_attr__( 'Przeciągnij', 'evk-repeater' ); ?>"></span>
                             <span class="evk-row-caret dashicons dashicons-arrow-down-alt2"></span>
@@ -190,6 +190,8 @@ function evk_render_custom_post_types_page() {
                         <!-- Supports Section -->
                         <div class="advanced-settings-wrap">
                             <div class="supports-section" style="display:none;">
+                                <div class="evk-cpt-features">
+                                <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Funkcje i widoczność', 'evk-repeater' ); ?></p>
                                 <?php foreach ( $available_supports as $key => $label ) : ?>
                                     <label>
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][supports][<?php echo esc_attr( $key ); ?>]" <?php checked( in_array( $key, $post_type['supports'], true ), true ); ?> />
@@ -207,6 +209,7 @@ function evk_render_custom_post_types_page() {
                                     <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][private]" <?php checked( isset($post_type['private']) && $post_type['private'], 1 ); ?> />
                                     <?php echo esc_html__( 'Prywatny', 'evk-repeater' ); ?>
                                 </label>
+                                </div><!-- /.evk-cpt-features -->
                                 <div class="evk-cpt-sections">
                                 <div class="evk-cpt-labels">
                                     <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Etykiety / przyciski', 'evk-repeater' ); ?> <span><?php echo esc_html__( '(opcjonalne — domyślnie z nazwy)', 'evk-repeater' ); ?></span></p>
@@ -342,7 +345,7 @@ function evk_render_custom_post_types_page() {
             }
 
             function generateSupportsHTML(index) {
-                let inner = '';
+                let inner = '<div class="evk-cpt-features"><p class="evk-cpt-labels-title"><?php echo esc_js( __( 'Funkcje i widoczność', 'evk-repeater' ) ); ?></p>';
                 for (const [key, label] of Object.entries(availableSupports)) {
                     const isChecked = key !== 'comments';
                     inner += `
@@ -371,6 +374,7 @@ function evk_render_custom_post_types_page() {
                             </label>
                         `;
                         inner += `
+                            </div>
                             <div class="evk-cpt-sections">
                             <div class="evk-cpt-labels">
                                 <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Etykiety / przyciski', 'evk-repeater' ); ?> <span><?php echo esc_html__( '(opcjonalne — domyślnie z nazwy)', 'evk-repeater' ); ?></span></p>
@@ -502,7 +506,7 @@ function evk_render_custom_post_types_page() {
                     const section = row && row.querySelector('.supports-section');
                     if (!section) return;
                     const isHidden = section.style.display === 'none' || section.style.display === '';
-                    section.style.display = isHidden ? 'flex' : 'none';
+                    section.style.display = isHidden ? 'block' : 'none';
                     advBtn.classList.toggle('is-open', isHidden);
                 }
             });

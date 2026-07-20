@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.64.1] — 2026-07-20
+
+### Zmienione
+
+- **Dopracowany ekran typów treści** — grupy opcji w zaawansowanych ujęte w **jasne karty**
+  (Funkcje i widoczność · Etykiety / przyciski · Tytuł, slug i lista · Ochrona danych),
+  ułożone w responsywną siatkę; dopasowane szerokości pól (nazwa najszersza w górnym wierszu,
+  dashicon węższy; inputy w kartach wypełniają kolumnę). **Typy treści startują zwinięte**
+  (mniej bałaganu przy wielu typach; nowo dodawany typ jest rozwinięty do wypełnienia).
+  (`includes/cpt.php`, `assets/evk-admin.css`)
+
 ## [1.64.0] — 2026-07-20
 
 ### Zmienione

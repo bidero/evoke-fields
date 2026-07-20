@@ -462,7 +462,7 @@ h1.evk-settings-tabs.nav-tab-wrapper {
    Proporcje wypełniają 100% szerokości (koniec z pustą przestrzenią po prawej). */
 .evk-admin .evk-cpt-top {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.5fr) minmax(0, 1.3fr) auto;
+    grid-template-columns: minmax(0, 2.6fr) minmax(0, 1.6fr) minmax(160px, 1fr) auto;
     gap: 16px;
     align-items: end;
 }
@@ -536,23 +536,31 @@ h1.evk-settings-tabs.nav-tab-wrapper {
 .evk-admin .toggle-advanced-btn.is-open { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
 .evk-admin .toggle-advanced-btn.is-open .dashicons { transform: rotate(45deg); }
 .evk-admin .toggle-advanced-btn .dashicons { font-size: 18px; width: 18px; height: 18px; line-height: 1; transition: transform .2s; }
-.evk-admin .supports-section {
-    display: flex; flex-wrap: wrap; gap: 12px 20px;
-    padding: 16px; background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;
+/* Panel zaawansowany = kontener na jasne karty (funkcje + grupy opcji). */
+.evk-admin .supports-section { display: block; padding: 0; background: none; border: 0; }
+
+/* Jasna karta „Funkcje i widoczność" (przełączniki wsparcia/widoczności). */
+.evk-admin .evk-cpt-features {
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center;
+    background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px; padding: 14px 16px;
 }
-.evk-admin .supports-section > label {
+.evk-admin .evk-cpt-features .evk-cpt-labels-title { flex: 1 0 100%; margin: 0 0 2px; }
+.evk-admin .evk-cpt-features > label {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 13px; font-weight: 500; color: #374151; min-width: 0;
 }
-/* Sekcje (Etykiety / Tytuł i lista / Ochrona) w responsywnej siatce — wypełniają szerokość. */
+
+/* Grupy opcji jako jasne karty w responsywnej siatce (wypełniają szerokość). */
 .evk-admin .evk-cpt-sections {
-    flex: 1 0 100%;
     display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 18px 28px; margin-top: 12px; padding-top: 14px; border-top: 1px dashed #d7dde7;
+    gap: 16px; margin-top: 14px;
 }
-.evk-admin .evk-cpt-sections .evk-cpt-labels { margin-top: 0; padding-top: 0; border-top: 0; }
+.evk-admin .evk-cpt-sections .evk-cpt-labels {
+    background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;
+    padding: 14px 16px; margin-top: 0; border-top: 1px solid #eef0f2;
+}
 .evk-admin .evk-cpt-sections .evk-cpt-labels > label { max-width: none; }
-/* Sekcja z e-mailem (textarea) ma najwięcej treści — niech zajmie całą szerokość siatki. */
+/* Karta z e-mailem (textarea) — najwięcej treści → cała szerokość siatki. */
 .evk-admin .evk-cpt-sections .evk-cpt-labels:last-child { grid-column: 1 / -1; }
 
 /* Przyciski „Dodaj …" — ghost (dashed), spójne z resztą wtyczki */
