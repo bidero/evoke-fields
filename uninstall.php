@@ -32,6 +32,21 @@ $options = [
     'evk_tools_recalc_progress',
     'evk_rep_style_tokens',
 ];
+
+// Katalog automatycznych kopii konfiguracji (uploads/evk-backups-*) — usuń pliki + folder.
+$backups_dir = get_option('evk_backups_dir');
+if (is_string($backups_dir) && strpos($backups_dir, 'evk-backups-') === 0) {
+    $up = wp_get_upload_dir();
+    if (empty($up['error']) && !empty($up['basedir'])) {
+        $dir = trailingslashit($up['basedir']) . $backups_dir;
+        foreach ((array) glob(trailingslashit($dir) . '*') as $f) {
+            if (is_file($f)) @unlink($f);
+        }
+        @rmdir($dir);
+    }
+}
+$options[] = 'evk_backups_dir';
+
 foreach ($options as $opt) {
     delete_option($opt);
 }

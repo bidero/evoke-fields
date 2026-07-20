@@ -92,7 +92,7 @@ evk_rep_recalc_options(): int;                                       // przelicz
 
 ## Narzędzia
 
-**Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
+**Eksport/Import** (JSON: grupy — z lokalizacją, CPT, taksonomie, strony ustawień, wartości opcji; merge po slugu/kluczu, opcja nadpisywania, **import selektywny** wg sekcji) · **Kopie zapasowe konfiguracji** (auto-zrzut przy każdej zmianie struktury do chronionego katalogu w `uploads`, rotacja 30 kopii; ręczna kopia, przywracanie, pobieranie) · **Przelicz pola obliczeniowe** (hurtowo — wpisy / strony ustawień / termy / użytkownicy, ze wznowieniem po limicie czasu hostingu) · **Wygląd pól** (tokeny stylów: wielkość/odstęp etykiety, odstęp nagłówka, padding pola) · **Czyszczenie osieroconych kluczy**.
 
 ## CPT i taksonomie
 

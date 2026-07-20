@@ -16,6 +16,10 @@ if (!defined('ABSPATH')) exit;
 
 const EVK_TOOLS_OPT_PREFIX = 'evk_rep_opt_';
 
+// Wersja formatu eksportu/importu. Podbij, gdy zmieni się KSZTAŁT danych (nie treść).
+// Import z wyższą wartością → best-effort + ostrzeżenie.
+const EVK_TOOLS_SCHEMA_VERSION = 1;
+
 // =========================================================================
 // MENU
 // =========================================================================
@@ -115,7 +119,7 @@ function evk_tools_export_option_values(): array {
 function evk_tools_build_export(): array {
     return [
         'plugin'         => 'evoke-fields',
-        'schema_version' => 1,
+        'schema_version' => EVK_TOOLS_SCHEMA_VERSION,
         'plugin_version' => EVK_REP_VERSION,
         'exported_at'    => gmdate('c'),
         'site_url'       => home_url(),
@@ -173,11 +177,27 @@ function evk_tools_merge_by_slug(array $existing, array $incoming, bool $overwri
     return array_values($by);
 }
 
-function evk_tools_run_import(array $data, bool $overwrite): array {
+/** Sekcje możliwe do (nie)zaznaczenia przy imporcie — źródło prawdy dla UI i handlera. */
+function evk_tools_import_parts(): array {
+    return [
+        'groups'         => 'Grupy pól',
+        'post_types'     => 'Typy treści (CPT)',
+        'taxonomies'     => 'Taksonomie',
+        'settings_pages' => 'Strony ustawień',
+        'option_values'  => 'Wartości stron ustawień',
+    ];
+}
+
+/**
+ * @param array|null $parts Które sekcje importować. null = wszystkie (używane przy
+ *                          przywracaniu kopii zapasowej). Inaczej: [klucz => bool].
+ */
+function evk_tools_run_import(array $data, bool $overwrite, ?array $parts = null): array {
     $created = $updated = $skipped = 0;
+    $want = function (string $k) use ($parts): bool { return $parts === null || !empty($parts[$k]); };
 
     // ── Grupy pól (per klucz) ──
-    foreach ((array) ($data['groups'] ?? []) as $g) {
+    if ($want('groups')) foreach ((array) ($data['groups'] ?? []) as $g) {
         if (!is_array($g) || empty($g['key'])) continue;
         $key = sanitize_key($g['key']);
         if ($key === '') continue;
@@ -225,19 +245,19 @@ function evk_tools_run_import(array $data, bool $overwrite): array {
     }
 
     // ── CPT / taksonomie (merge po slugu) ──
-    if (isset($data['post_types']) && is_array($data['post_types'])) {
+    if ($want('post_types') && isset($data['post_types']) && is_array($data['post_types'])) {
         $merged = evk_tools_merge_by_slug((array) get_option('evk_custom_post_types', []), $data['post_types'], $overwrite);
         update_option('evk_custom_post_types', $merged);
         evk_rep_schedule_rewrite_flush();
     }
-    if (isset($data['taxonomies']) && is_array($data['taxonomies'])) {
+    if ($want('taxonomies') && isset($data['taxonomies']) && is_array($data['taxonomies'])) {
         $merged = evk_tools_merge_by_slug((array) get_option('evk_taxonomies', []), $data['taxonomies'], $overwrite);
         update_option('evk_taxonomies', $merged);
         evk_rep_schedule_rewrite_flush();
     }
 
     // ── Strony ustawień (mapa keyed po slugu) ──
-    if (isset($data['settings_pages']) && is_array($data['settings_pages'])) {
+    if ($want('settings_pages') && isset($data['settings_pages']) && is_array($data['settings_pages'])) {
         $pages = (array) get_option('evk_rep_settings_pages', []);
         foreach ($data['settings_pages'] as $slug => $page) {
             $slug = sanitize_title((string) $slug);
@@ -249,7 +269,7 @@ function evk_tools_run_import(array $data, bool $overwrite): array {
     }
 
     // ── Wartości stron opcji (per opcja) ──
-    foreach ((array) ($data['option_values'] ?? []) as $name => $val) {
+    if ($want('option_values')) foreach ((array) ($data['option_values'] ?? []) as $name => $val) {
         if (strpos((string) $name, EVK_TOOLS_OPT_PREFIX) !== 0) continue;
         if (get_option($name, null) !== null && !$overwrite) continue;
         update_option($name, $val, false); // autoload=false — jak zapis w settings.php
@@ -279,13 +299,32 @@ add_action('admin_init', function () {
         evk_tools_set_notice('error', 'To nie jest prawidłowy plik eksportu Evoke FIELDS.');
         evk_tools_redirect();
     }
+    // Format nowszy niż obsługiwany (EVK_TOOLS_SCHEMA_VERSION) — importujemy best-effort,
+    // ale ostrzegamy: mogą pojawić się pola, których ta wersja jeszcze nie rozumie.
+    $sv       = (int) ($data['schema_version'] ?? 1);
+    $sv_warn  = $sv > EVK_TOOLS_SCHEMA_VERSION;
+
+    // Sekcje do zaimportowania (checkboxy). Brak klucza „parts" = zgodność wstecz (wszystko).
+    $sel = isset($_POST['evk_import_parts']) && is_array($_POST['evk_import_parts']) ? $_POST['evk_import_parts'] : null;
+    if ($sel === null) {
+        $parts = null; // wszystko
+    } else {
+        $parts = [];
+        foreach (array_keys(evk_tools_import_parts()) as $pk) $parts[$pk] = !empty($sel[$pk]);
+        if (!array_filter($parts)) {
+            evk_tools_set_notice('error', 'Zaznacz co najmniej jedną sekcję do zaimportowania.');
+            evk_tools_redirect();
+        }
+    }
 
     $overwrite = !empty($_POST['evk_import_overwrite']);
-    $r = evk_tools_run_import($data, $overwrite);
-    evk_tools_set_notice('success', sprintf(
-        'Import zakończony: utworzono %d, zaktualizowano %d, pominięto %d grup. Konfiguracja CPT / taksonomii / stron i wartości opcji scalona. Odśwież, aby menu się zaktualizowało.',
+    $r = evk_tools_run_import($data, $overwrite, $parts);
+    $msg = sprintf(
+        'Import zakończony: utworzono %d, zaktualizowano %d, pominięto %d grup. Odśwież, aby menu się zaktualizowało.',
         $r['created'], $r['updated'], $r['skipped']
-    ));
+    );
+    if ($sv_warn) $msg .= ' Uwaga: plik pochodzi z nowszej wersji formatu (schema ' . $sv . ' > ' . EVK_TOOLS_SCHEMA_VERSION . ') — część danych mogła nie zostać rozpoznana.';
+    evk_tools_set_notice($sv_warn ? 'warning' : 'success', $msg);
     evk_tools_redirect();
 });
 
@@ -642,6 +681,17 @@ function evk_tools_page(): void {
                 <form method="post" enctype="multipart/form-data">
                     <?php wp_nonce_field('evk_tools_import', 'evk_tools_nonce'); ?>
                     <p><input type="file" name="evk_import_file" accept="application/json,.json" required></p>
+                    <fieldset style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:0 0 12px;">
+                        <legend style="font-size:12px;font-weight:600;color:#334155;padding:0 6px;">Importuj sekcje</legend>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px 20px;">
+                        <?php foreach (evk_tools_import_parts() as $pk => $plabel): ?>
+                            <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                                <input type="checkbox" name="evk_import_parts[<?php echo esc_attr($pk); ?>]" value="1" checked>
+                                <?php echo esc_html($plabel); ?>
+                            </label>
+                        <?php endforeach; ?>
+                        </div>
+                    </fieldset>
                     <p><label class="evk-switch-wrap">
                         <span class="evk-switch"><input type="checkbox" name="evk_import_overwrite" value="1"><span class="evk-switch-slider"></span></span>
                         <span class="evk-switch-label">Nadpisuj istniejące elementy</span>
@@ -652,6 +702,8 @@ function evk_tools_page(): void {
                 </form>
             </div>
         </div>
+
+        <?php if (function_exists('evk_backups_render_section')) evk_backups_render_section(); ?>
 
         <!-- PRZELICZANIE PÓL OBLICZENIOWYCH -->
         <div class="evk-settings-group">

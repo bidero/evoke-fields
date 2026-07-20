@@ -2,6 +2,25 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.55.0] — 2026-07-20
+
+### Dodane
+
+- **Automatyczne kopie zapasowe konfiguracji** — przy każdej zmianie struktury (grupy pól,
+  typy treści, taksonomie, strony ustawień) wtyczka zapisuje pełny eksport JSON do
+  chronionego katalogu `uploads/evk-backups-<hash>/` (index.php + .htaccess + web.config,
+  losowy sufiks nazwy). Trzyma do 30 ostatnich (rotacja najstarszych). Zrzut robiony raz
+  na żądanie (na `shutdown`), więc masowa operacja = jedna kopia z finalnym stanem.
+  Nowa sekcja **Narzędzia → Kopie zapasowe**: ręczna kopia, przywracanie (import z
+  nadpisaniem wszystkich sekcji; stan sprzed przywrócenia zapisywany jako nowa kopia),
+  pobieranie i usuwanie. Nazwa pliku walidowana ścisłym wzorcem (ochrona przed path
+  traversal). (`includes/backups.php`, `includes/tools.php`, `evk-repeater.php`,
+  `uninstall.php`)
+- **Import selektywny** — przy imporcie można zaznaczyć, które sekcje wgrać (grupy pól /
+  typy treści / taksonomie / strony ustawień / wartości opcji); domyślnie wszystkie.
+  Format eksportu ma teraz sprawdzaną wersję schematu (`EVK_TOOLS_SCHEMA_VERSION`): plik
+  z nowszej wersji jest importowany best-effort z ostrzeżeniem. (`includes/tools.php`)
+
 ## [1.54.0] — 2026-07-19
 
 ### Dodane
