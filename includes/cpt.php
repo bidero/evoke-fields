@@ -102,6 +102,7 @@ function evk_render_custom_post_types_page() {
                         // Klucz pola ALBO szablon z kluczy ({imie} {nazwisko}) — dlatego nie sanitize_key.
                         'title_field'        => sanitize_text_field( $post_type['title_field'] ?? '' ),
                         'hide_title'         => isset( $post_type['hide_title'] ) ? 1 : 0,
+                        'hide_title_col'     => isset( $post_type['hide_title_col'] ) ? 1 : 0,
                         'rand_slug'          => isset( $post_type['rand_slug'] ) ? 1 : 0,
                     );
                 }
@@ -221,6 +222,10 @@ function evk_render_custom_post_types_page() {
                                     <label style="display:block;margin-top:8px;">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][hide_title]" <?php checked( ! empty( $post_type['hide_title'] ), 1 ); ?> />
                                         <?php echo esc_html__( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ); ?>
+                                    </label>
+                                    <label style="display:block;margin-top:4px;">
+                                        <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][hide_title_col]" <?php checked( ! empty( $post_type['hide_title_col'] ), 1 ); ?> />
+                                        <?php echo esc_html__( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ); ?>
                                     </label>
                                     <label style="display:block;margin-top:4px;">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][rand_slug]" <?php checked( ! empty( $post_type['rand_slug'] ), 1 ); ?> />
@@ -359,6 +364,10 @@ function evk_render_custom_post_types_page() {
                                 <label style="display:block;margin-top:8px;">
                                     <input type="checkbox" name="custom_post_types[${index}][hide_title]" />
                                     <?php echo esc_js( __( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ) ); ?>
+                                </label>
+                                <label style="display:block;margin-top:4px;">
+                                    <input type="checkbox" name="custom_post_types[${index}][hide_title_col]" />
+                                    <?php echo esc_js( __( 'Ukryj kolumnę tytułu na liście — pierwsza kolumna EVK przejmie link edycji i akcje wiersza (wymaga pola z włączoną opcją „Kolumna")', 'evk-repeater' ) ); ?>
                                 </label>
                                 <label style="display:block;margin-top:4px;">
                                     <input type="checkbox" name="custom_post_types[${index}][rand_slug]" />

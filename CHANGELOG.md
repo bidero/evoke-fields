@@ -2,6 +2,19 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.59.0] — 2026-07-20
+
+### Dodane
+
+- **Przełącznik „Ukryj kolumnę tytułu na liście"** (per CPT) — kolumna tytułu znika,
+  a **pierwsza kolumna EVK** (wg pozycji) zostaje kolumną główną listy
+  (`list_table_primary_column`): jej wartość jest linkiem do edycji, WP renderuje pod nią
+  akcje wiersza (Edytuj / Szybka edycja / Kosz / Zobacz) i przycisk rozwijania na mobile.
+  Bezpieczniki: typ bez żadnej kolumny EVK zachowuje tytuł (nie da się odciąć od edycji);
+  wartości będące same linkiem (URL / plik / link) nie są owijane drugim linkiem —
+  zagnieżdżone `<a>` przeglądarki rozrywają, a akcje wiersza i tak dają „Edytuj".
+  (`includes/cpt.php`, `includes/admin-columns.php`)
+
 ## [1.58.0] — 2026-07-20
 
 ### Dodane

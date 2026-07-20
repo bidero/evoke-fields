@@ -53,8 +53,8 @@ function evk_rep_column_is_numeric(array $field): bool {
     return in_array($field['type'] ?? '', ['number', 'range', 'calc'], true);
 }
 
-/** Wstawia kolumny evk_col_* do listy kolumn (wg pozycji; null = na końcu). */
-function evk_rep_insert_columns(array $columns, array $list): array {
+/** Sortuje definicje kolumn wg pozycji (null = na końcu). */
+function evk_rep_columns_by_position(array $list): array {
     usort($list, function ($a, $b) {
         $pa = $a['position']; $pb = $b['position'];
         if ($pa === null && $pb === null) return 0;
@@ -62,6 +62,12 @@ function evk_rep_insert_columns(array $columns, array $list): array {
         if ($pb === null) return -1;
         return $pa <=> $pb;
     });
+    return $list;
+}
+
+/** Wstawia kolumny evk_col_* do listy kolumn (wg pozycji; null = na końcu). */
+function evk_rep_insert_columns(array $columns, array $list): array {
+    $list = evk_rep_columns_by_position($list);
     // Domyślny punkt wstawienia dla kolumn bez pozycji = zaraz po kolumnie głównej
     // (title / name / username), żeby były widoczne, a nie doklejone na końcu tabeli.
     $anchor = null;
@@ -178,9 +184,38 @@ add_action('admin_init', function () {
         add_filter("manage_{$pt}_posts_columns", function ($columns) use ($list) {
             return evk_rep_insert_columns($columns, $list);
         });
-        add_action("manage_{$pt}_posts_custom_column", function ($colkey, $post_id) use ($list) {
+
+        // Ukrycie kolumny tytułu (opcja CPT „hide_title_col"): pierwsza kolumna EVK
+        // zostaje kolumną GŁÓWNĄ listy (list_table_primary_column) — WP renderuje w niej
+        // akcje wiersza (Edytuj / Szybka edycja / Kosz) i przycisk rozwijania na mobile,
+        // a my dokładamy link edycji na samej wartości. Iterujemy po $by_pt, więc typ ma
+        // tu zawsze ≥1 kolumnę EVK — bez kolumn tytuł zostaje (bezpiecznik konstrukcyjny).
+        $primary = '';
+        $cpt_cfg = function_exists('evk_cpt_config') ? evk_cpt_config($pt) : [];
+        if (!empty($cpt_cfg['hide_title_col'])) {
+            $sorted  = evk_rep_columns_by_position($list);
+            $primary = 'evk_col_' . $sorted[0]['key'];
+            // Prio 100 — PO wstawieniu kolumn EVK (pozycje liczą się jeszcze z tytułem).
+            add_filter("manage_{$pt}_posts_columns", function ($columns) {
+                unset($columns['title']);
+                return $columns;
+            }, 100);
+            add_filter('list_table_primary_column', function ($default, $screen_id) use ($pt, $primary) {
+                return $screen_id === 'edit-' . $pt ? $primary : $default;
+            }, 10, 2);
+        }
+
+        add_action("manage_{$pt}_posts_custom_column", function ($colkey, $post_id) use ($list, $primary) {
             $h = evk_rep_object_column_html($colkey, $post_id, 'post', $list);
-            if ($h !== '') echo $h;
+            if ($h === '') return;
+            // Kolumna główna: wartość jako link do edycji (jak tytuł). Nie owijamy, gdy
+            // wartość SAMA jest linkiem (url/plik/link) — zagnieżdżone <a> przeglądarki
+            // rozrywają; akcje wiersza i tak dają „Edytuj" pod spodem.
+            if ($primary !== '' && $colkey === $primary && strpos($h, '<a ') === false) {
+                $link = get_edit_post_link($post_id);
+                if ($link) $h = '<strong><a class="row-title" href="' . esc_url($link) . '">' . $h . '</a></strong>';
+            }
+            echo $h;
         }, 10, 2);
 
         $sortable = array_values(array_filter($list, function ($c) { return $c['sortable']; }));
