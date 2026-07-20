@@ -92,7 +92,7 @@
 .evk-cpt-labels-title span{font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;}
 .evk-cpt-labels > label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#374151;max-width:360px;}
 .evk-cpt-labels > label input{border:1px solid #d1d5db;border-radius:6px;}
-.evk-cpt-labels > label textarea{border:1px solid #d1d5db;border-radius:6px;max-width:520px;font-family:inherit;}
+.evk-cpt-labels > label textarea{border:1px solid #d1d5db;border-radius:6px;width:100%;max-width:none;box-sizing:border-box;font-family:inherit;}
 /* Checkbox z opisem: pozioma linia, tekst może się zawijać, checkbox u góry. */
 .evk-cpt-labels > label.evk-cpt-check{flex-direction:row;align-items:flex-start;gap:8px;max-width:560px;font-size:13px;line-height:1.4;}
 .evk-cpt-labels > label.evk-cpt-check input{flex:0 0 auto;margin-top:1px;}
@@ -550,10 +550,13 @@ h1.evk-settings-tabs.nav-tab-wrapper {
     font-size: 13px; font-weight: 500; color: #374151; min-width: 0;
 }
 
-/* Grupy opcji jako jasne karty w responsywnej siatce (wypełniają szerokość). */
+/* Grupy opcji jako jasne karty: 2 kolumny na desktopie, 1 na mobile. */
 .evk-admin .evk-cpt-sections {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: grid; grid-template-columns: 1fr 1fr;
     gap: 16px; margin-top: 14px;
+}
+@media (max-width: 782px) {
+    .evk-admin .evk-cpt-sections { grid-template-columns: 1fr; }
 }
 .evk-admin .evk-cpt-sections .evk-cpt-labels {
     background: #f8fafc; border: 1px solid #eef0f2; border-radius: 10px;

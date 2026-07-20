@@ -2,6 +2,14 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.64.2] — 2026-07-20
+
+### Zmienione
+
+- Ekran typów treści: karty grup opcji w stałej siatce **2 kolumny** (desktop) / **1 kolumna**
+  (mobile), a textarea treści e-maila **wypełnia szerokość karty** (usunięty `max-width`).
+  (`assets/evk-admin.css`)
+
 ## [1.64.1] — 2026-07-20
 
 ### Zmienione
