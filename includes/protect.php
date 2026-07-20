@@ -214,7 +214,11 @@ function evk_protect_nocache(): void {
 }
 
 // Bramka frontu dla typów chronionych.
-add_action('template_redirect', function () {
+// Uwaga: hook 'wp' (prio 1), NIE 'template_redirect' — Bricks/motywy blokowe wybierają
+// aktywny szablon na akcji 'wp' (prio ~10), która odpala się PRZED template_redirect.
+// Ustawiając 404 tutaj (przed nimi), sprawiamy, że wyrenderują przypisany szablon 404.
+add_action('wp', function () {
+    if (is_admin()) return;
     $types = evk_cpt_protected_types();
     if (!$types) return;
 
@@ -241,7 +245,7 @@ add_action('template_redirect', function () {
     if (is_post_type_archive($types)) {
         evk_protect_trigger_404();
     }
-});
+}, 1);
 
 // Chronione typy znikają z frontowych zapytań gości (pętle Bricks, „ostatnie" itd.).
 add_action('pre_get_posts', function ($q) {

@@ -2,6 +2,17 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.62.4] — 2026-07-20
+
+### Naprawione
+
+- **Własny szablon 404 (Bricks) nadal się nie pokazywał** (dot. 1.62.3) — bramka działała na
+  `template_redirect`, ale Bricks (i motywy blokowe) wybierają aktywny szablon już na akcji
+  `wp`, która odpala się **przed** `template_redirect` — więc gdy przełączaliśmy na 404,
+  Bricks miał już wybrany szablon pojedynczego wpisu. Bramka przeniesiona na hook `wp`
+  (priorytet 1), więc stan 404 jest ustawiony **zanim** Bricks wybierze szablon → renderuje
+  się przypisany szablon 404. (`includes/protect.php`)
+
 ## [1.62.3] — 2026-07-20
 
 ### Naprawione
