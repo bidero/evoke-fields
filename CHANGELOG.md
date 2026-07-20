@@ -2,6 +2,21 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.62.0] — 2026-07-20
+
+### Dodane
+
+- **Edytowalny szablon e-maila z linkiem dostępowym** (Typy treści → „E-mail z linkiem —
+  temat / treść") — własny temat i treść wiadomości wysyłanej z metaboxu „Dostęp (klucz)",
+  ze znacznikami `{title}` (tytuł wpisu), `{url}` / `{link}` (link z kluczem), `{site}`
+  (nazwa witryny). Puste = domyślna treść. (`includes/cpt.php`, `includes/protect.php`)
+
+### Zmienione
+
+- **Czytelniejszy metabox „Dostęp (klucz)"** — pełnowymiarowe przyciski z ikonami
+  („Kopiuj link" na całą szerokość, „Przegeneruj", „Wyślij"), wyraźne etykiety, pole linku
+  na monospace z tłem, spójne odstępy i separator. (`includes/protect.php`)
+
 ## [1.61.0] — 2026-07-20
 
 ### Dodane

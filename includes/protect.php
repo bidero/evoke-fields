@@ -275,24 +275,55 @@ function evk_protect_metabox(\WP_Post $post): void {
     wp_nonce_field('evk_protect_' . $pid, 'evk_protect_nonce');
     ?>
     <div class="evk-protect-box" data-post="<?php echo $pid; ?>" data-ajax="<?php echo esc_url(admin_url('admin-ajax.php')); ?>">
-        <p style="margin:0 0 6px;color:#475569;font-size:12px;">
+        <p class="evk-protect-intro">
+            <span class="dashicons dashicons-<?php echo $is_protected ? 'lock' : 'privacy'; ?>"></span>
             <?php echo $is_protected
                 ? 'Ten typ jest chroniony — wpis jest dostępny na froncie tylko przez poniższy link.'
                 : 'Link odsłania pola wrażliwe tego wpisu na jego stronie.'; ?>
         </p>
-        <input type="text" class="evk-protect-url widefat code" readonly value="<?php echo esc_attr($url); ?>" onclick="this.select();" style="font-size:11px;">
-        <p style="margin:8px 0;display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="button button-small evk-protect-copy">Kopiuj link</button>
-            <button type="button" class="button button-small evk-protect-regen">Przegeneruj</button>
-        </p>
-        <hr style="margin:10px 0;">
-        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;">Wyślij link na e-mail</label>
-        <input type="email" class="evk-protect-email widefat" value="<?php echo esc_attr($prefill); ?>" placeholder="adres@e-mail">
-        <p style="margin:6px 0 0;">
-            <button type="button" class="button button-small button-primary evk-protect-send">Wyślij</button>
-            <span class="evk-protect-msg" style="font-size:12px;margin-left:6px;"></span>
-        </p>
+
+        <div class="evk-protect-field">
+            <label class="evk-protect-label">Link dostępowy</label>
+            <input type="text" class="evk-protect-url" readonly value="<?php echo esc_attr($url); ?>" onclick="this.select();">
+        </div>
+        <div class="evk-protect-actions">
+            <button type="button" class="button button-primary evk-protect-copy">
+                <span class="dashicons dashicons-admin-page"></span> Kopiuj link
+            </button>
+            <button type="button" class="button evk-protect-regen">
+                <span class="dashicons dashicons-update"></span> Przegeneruj
+            </button>
+        </div>
+
+        <div class="evk-protect-sep"></div>
+
+        <div class="evk-protect-field">
+            <label class="evk-protect-label">Wyślij link na e-mail</label>
+            <input type="email" class="evk-protect-email" value="<?php echo esc_attr($prefill); ?>" placeholder="adres@e-mail">
+        </div>
+        <div class="evk-protect-send-row">
+            <button type="button" class="button button-primary evk-protect-send">
+                <span class="dashicons dashicons-email-alt"></span> Wyślij
+            </button>
+            <span class="evk-protect-msg"></span>
+        </div>
     </div>
+    <style>
+    #evk_protect .inside{margin:0;padding:12px;}
+    .evk-protect-intro{display:flex;gap:6px;align-items:flex-start;margin:0 0 12px;color:#475569;font-size:12px;line-height:1.5;}
+    .evk-protect-intro .dashicons{color:#2563eb;flex:0 0 auto;font-size:18px;width:18px;height:18px;}
+    .evk-protect-label{display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px;}
+    .evk-protect-field{margin-bottom:10px;}
+    .evk-protect-url,.evk-protect-email{width:100%;box-sizing:border-box;height:34px;font-size:13px;}
+    .evk-protect-url{font-family:Menlo,Consolas,monospace;font-size:12px;background:#f8fafc;color:#0f172a;}
+    .evk-protect-actions{display:flex;gap:8px;margin-bottom:4px;}
+    .evk-protect-actions .button,.evk-protect-send .button,.evk-protect-send-row .button{height:34px;display:inline-flex;align-items:center;gap:4px;}
+    .evk-protect-actions .evk-protect-copy{flex:1;justify-content:center;}
+    .evk-protect-actions .button .dashicons,.evk-protect-send-row .button .dashicons{font-size:16px;width:16px;height:16px;line-height:1;}
+    .evk-protect-sep{border-top:1px solid #e2e8f0;margin:14px 0;}
+    .evk-protect-send-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+    .evk-protect-msg{font-size:12px;}
+    </style>
     <script>
     (function () {
         var box = document.currentScript.previousElementSibling;
@@ -356,18 +387,37 @@ add_action('wp_ajax_evk_protect_regen', function () {
     wp_send_json_success(['url' => evk_protect_url($pid)]);
 });
 
+/**
+ * Temat + treść e-maila z linkiem. Szablon z ustawień CPT (protect_email_subject /
+ * protect_email_body) z placeholderami; puste = sensowne domyślne.
+ * Placeholdery: {title} tytuł wpisu, {url}/{link} link z kluczem, {site} nazwa witryny.
+ */
+function evk_protect_email_template(int $post_id): array {
+    $cfg     = function_exists('evk_cpt_config') ? evk_cpt_config((string) get_post_type($post_id)) : [];
+    $subject = trim((string) ($cfg['protect_email_subject'] ?? ''));
+    $body    = trim((string) ($cfg['protect_email_body'] ?? ''));
+
+    $title = get_the_title($post_id) ?: ('#' . $post_id);
+    $url   = evk_protect_url($post_id);
+
+    if ($subject === '') $subject = 'Dostęp: {title}';
+    if ($body === '')    $body = "Link dostępowy do „{title}\":\n\n{url}\n\nTraktuj ten link jak hasło — nie udostępniaj osobom niepowołanym.";
+
+    $repl = [
+        '{title}' => $title,
+        '{url}'   => $url,
+        '{link}'  => $url,
+        '{site}'  => get_bloginfo('name'),
+    ];
+    return [strtr($subject, $repl), strtr($body, $repl)];
+}
+
 add_action('wp_ajax_evk_protect_send', function () {
     $pid   = evk_protect_ajax_guard();
     $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
     if ($email === '' || !is_email($email)) wp_send_json_error(['error' => 'Zły adres e-mail.'], 400);
 
-    $title = get_the_title($pid) ?: ('#' . $pid);
-    $url   = evk_protect_url($pid);
-    $subject = sprintf('Dostęp: %s', $title);
-    $body    = sprintf(
-        "Link dostępowy do „%s\":\n\n%s\n\nTraktuj ten link jak hasło — nie udostępniaj osobom niepowołanym.",
-        $title, $url
-    );
+    list($subject, $body) = evk_protect_email_template($pid);
     $ok = wp_mail($email, $subject, $body);
     if ($ok) wp_send_json_success(['sent' => true]);
     wp_send_json_error(['error' => 'Serwer nie wysłał wiadomości (sprawdź konfigurację poczty).'], 500);

@@ -106,6 +106,8 @@ function evk_render_custom_post_types_page() {
                         'rand_slug'          => isset( $post_type['rand_slug'] ) ? 1 : 0,
                         'protected'          => isset( $post_type['protected'] ) ? 1 : 0,
                         'protect_email_field'=> sanitize_key( $post_type['protect_email_field'] ?? '' ),
+                        'protect_email_subject' => sanitize_text_field( $post_type['protect_email_subject'] ?? '' ),
+                        'protect_email_body' => sanitize_textarea_field( $post_type['protect_email_body'] ?? '' ),
                     );
                 }
             }
@@ -239,6 +241,13 @@ function evk_render_custom_post_types_page() {
                                     </label>
                                     <label><?php echo esc_html__( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_field]" value="<?php echo esc_attr( $post_type['protect_email_field'] ?? '' ); ?>" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />
+                                    </label>
+                                    <label><?php echo esc_html__( 'E-mail z linkiem — temat', 'evk-repeater' ); ?>
+                                        <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_subject]" value="<?php echo esc_attr( $post_type['protect_email_subject'] ?? '' ); ?>" placeholder="Dostęp: {title}" />
+                                    </label>
+                                    <label><?php echo esc_html__( 'E-mail z linkiem — treść', 'evk-repeater' ); ?>
+                                        <textarea name="custom_post_types[<?php echo esc_attr( $index ); ?>][protect_email_body]" rows="4" placeholder="Link dostępowy do „{title}”:&#10;&#10;{url}"><?php echo esc_textarea( $post_type['protect_email_body'] ?? '' ); ?></textarea>
+                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Puste = domyślna treść. Znaczniki: {title} tytuł wpisu, {url} link z kluczem, {site} nazwa witryny.', 'evk-repeater' ); ?></span>
                                     </label>
                                 </div>
                             </div>
@@ -388,6 +397,13 @@ function evk_render_custom_post_types_page() {
                                 </label>
                                 <label><?php echo esc_js( __( 'Pole z adresem e-mail do wysyłki klucza (klucz EVK)', 'evk-repeater' ) ); ?>
                                     <input type="text" name="custom_post_types[${index}][protect_email_field]" placeholder="np. email" style="font-family:Menlo,Consolas,monospace;" />
+                                </label>
+                                <label><?php echo esc_js( __( 'E-mail z linkiem — temat', 'evk-repeater' ) ); ?>
+                                    <input type="text" name="custom_post_types[${index}][protect_email_subject]" placeholder="Dostęp: {title}" />
+                                </label>
+                                <label><?php echo esc_js( __( 'E-mail z linkiem — treść', 'evk-repeater' ) ); ?>
+                                    <textarea name="custom_post_types[${index}][protect_email_body]" rows="4" placeholder="Link dostępowy do {title}: {url}"></textarea>
+                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Puste = domyślna treść. Znaczniki: {title}, {url}, {site}.', 'evk-repeater' ) ); ?></span>
                                 </label>
                             </div>
                         `;
