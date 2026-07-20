@@ -143,6 +143,17 @@ function evk_csv_tax_targets(string $post_type): array {
     return $out;
 }
 
+/** Czytelna etykieta celu mapowania ('core:title' → „Tytuł", 'evk:cena' → „Cena" itd.). */
+function evk_csv_target_label(string $target, string $post_type): string {
+    $core = evk_csv_core_targets();
+    if (isset($core[$target])) return $core[$target];
+    $tax = evk_csv_tax_targets($post_type);
+    if (isset($tax[$target])) return $tax[$target];
+    $evk = evk_csv_evk_targets($post_type);
+    if (isset($evk[$target])) return $evk[$target]['label'];
+    return $target;
+}
+
 /** Proste pola EVK grup pojedynczych obejmujących ten typ treści → 'evk:<key>' => [label,type,field]. */
 function evk_csv_evk_targets(string $post_type): array {
     $simple = evk_csv_simple_types();
@@ -297,7 +308,11 @@ add_action('admin_init', function () {
     if ($match_key !== 'none') {
         $need_target = $need[$match_key] ?? $match_key; // evk:<key> mapuje się na siebie
         if (!in_array($need_target, $mapping, true)) {
-            evk_csv_notice('error', 'Aby dopasowywać wpisy, zmapuj kolumnę na: ' . esc_html($need_target) . '.');
+            $label = evk_csv_target_label($need_target, $post_type);
+            evk_csv_notice('error', sprintf(
+                'Wybrano dopasowanie istniejących wpisów po „%s", ale żadna kolumna nie jest na to pole zmapowana. Zmapuj kolumnę na „%s" — albo ustaw „Dopasuj istniejące wpisy po" na „zawsze twórz nowe".',
+                $label, $label
+            ));
             evk_csv_redirect();
         }
     }
@@ -465,6 +480,10 @@ function evk_csv_import_row(array &$s, array $row): void {
         if ($store === '' || $store === null) delete_post_meta($pid, $key);
         else                                  update_post_meta($pid, $key, $store);
     }
+
+    // Tytuł z pola EVK (CPT bez „title") — po zapisaniu mety, przed recalc.
+    // Import zapisuje metę sam (poza save_post EVK), więc wołamy jawnie.
+    if (function_exists('evk_sync_cpt_title')) evk_sync_cpt_title($pid);
 
     // Pola calc tego wpisu — przelicz z zapisanej mety.
     if (function_exists('evk_rep_recalc')) evk_rep_recalc($pid, 'post');

@@ -99,6 +99,7 @@ function evk_render_custom_post_types_page() {
                         'menu_name'          => sanitize_text_field( $post_type['menu_name'] ?? '' ),
                         'add_new_item'       => sanitize_text_field( $post_type['add_new_item'] ?? '' ),
                         'all_items'          => sanitize_text_field( $post_type['all_items'] ?? '' ),
+                        'title_field'        => sanitize_key( remove_accents( $post_type['title_field'] ?? '' ) ),
                     );
                 }
             }
@@ -209,6 +210,10 @@ function evk_render_custom_post_types_page() {
                                     </label>
                                     <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][all_items]" value="<?php echo esc_attr( $post_type['all_items'] ?? '' ); ?>" placeholder="np. Wszystkie książki" />
+                                    </label>
+                                    <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK)', 'evk-repeater' ); ?>
+                                        <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][title_field]" value="<?php echo esc_attr( $post_type['title_field'] ?? '' ); ?>" placeholder="np. nazwa" style="font-family:Menlo,Consolas,monospace;" />
+                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Gdy typ nie ma tytułu (albo chcesz go wyliczać): wartość tego pola EVK staje się tytułem wpisu przy zapisie — widocznym na liście, w wyszukiwarce i relacjach.', 'evk-repeater' ); ?></span>
                                     </label>
                                 </div>
                             </div>
@@ -335,6 +340,10 @@ function evk_render_custom_post_types_page() {
                                 </label>
                                 <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                     <input type="text" name="custom_post_types[${index}][all_items]" placeholder="np. Wszystkie książki" />
+                                </label>
+                                <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK)', 'evk-repeater' ); ?>
+                                    <input type="text" name="custom_post_types[${index}][title_field]" placeholder="np. nazwa" style="font-family:Menlo,Consolas,monospace;" />
+                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Gdy typ nie ma tytułu (albo chcesz go wyliczać): wartość tego pola EVK staje się tytułem wpisu przy zapisie.', 'evk-repeater' ) ); ?></span>
                                 </label>
                             </div>
                         `;
@@ -548,3 +557,50 @@ function evk_register_custom_post_types() {
         }
     }
 }
+
+// =========================================================================
+// TYTUŁ WPISU Z POLA EVK (dla CPT bez wsparcia „title" lub wyliczanego tytułu)
+// =========================================================================
+
+/** Mapa [slug CPT => klucz pola EVK], dla których tytuł ma pochodzić z pola. */
+function evk_cpt_title_fields() {
+    $out = array();
+    foreach ( (array) get_option( 'evk_custom_post_types', array() ) as $pt ) {
+        $slug = substr( (string) ( $pt['slug'] ?? '' ), 0, 20 );
+        $tf   = sanitize_key( $pt['title_field'] ?? '' );
+        if ( $slug !== '' && $tf !== '' ) $out[ $slug ] = $tf;
+    }
+    return $out;
+}
+
+/**
+ * Ustaw post_title wpisu z wartości skonfigurowanego pola EVK.
+ * Wołane po zapisie mety (save_post prio 99) oraz przez importer CSV po zapisaniu pól.
+ * Guard statyczny chroni przed rekurencją (wp_update_post → save_post).
+ */
+function evk_sync_cpt_title( $post_id ) {
+    static $busy = false;
+    $post_id = (int) $post_id;
+    if ( $busy || $post_id <= 0 ) return;
+
+    $fields = evk_cpt_title_fields();
+    $pt     = get_post_type( $post_id );
+    if ( ! isset( $fields[ $pt ] ) ) return;
+
+    $val = get_post_meta( $post_id, $fields[ $pt ], true );
+    $val = is_scalar( $val ) ? trim( (string) $val ) : '';
+    if ( $val === '' ) return; // nie nadpisuj tytułu pustką
+
+    if ( get_post_field( 'post_title', $post_id ) === $val ) return; // już zsynchronizowany
+
+    $busy = true;
+    wp_update_post( array( 'ID' => $post_id, 'post_title' => $val ) );
+    $busy = false;
+}
+
+// Ekran edycji: po tym jak EVK zapisze metę (save_post prio 10) — prio 99.
+add_action( 'save_post', function ( $post_id ) {
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+    if ( wp_is_post_revision( $post_id ) ) return;
+    evk_sync_cpt_title( $post_id );
+}, 99 );

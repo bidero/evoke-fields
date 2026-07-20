@@ -2,6 +2,25 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.57.0] — 2026-07-20
+
+### Dodane
+
+- **Tytuł wpisu z pola EVK** (Typy treści → „Tytuł wpisu z pola") — dla typów bez wsparcia
+  „title" (lub gdy tytuł ma być wyliczany): podajesz klucz pola EVK, a jego wartość staje
+  się `post_title` przy zapisie — widocznym na liście wpisów, w wyszukiwarce, relacjach i
+  panelu. Działa na ekranie edycji (po zapisie mety) **oraz podczas importu CSV** (tytuł
+  uzupełnia się nawet gdy w CSV mapujesz tylko pola EVK). Guard chroni przed rekurencją
+  zapisu. Nowe API: `evk_sync_cpt_title()`, `evk_cpt_title_fields()`. (`includes/cpt.php`,
+  `includes/import-csv.php`)
+
+### Zmienione
+
+- **Czytelniejszy komunikat importu CSV o kluczu dopasowania** — gdy wybierzesz „dopasuj
+  istniejące wpisy po X", ale nie zmapujesz kolumny na X, komunikat podaje teraz nazwę pola
+  po ludzku i podpowiada rozwiązanie (zmapuj kolumnę albo ustaw „zawsze twórz nowe") zamiast
+  wewnętrznego klucza typu `evk:cena`. (`includes/import-csv.php`)
+
 ## [1.56.1] — 2026-07-20
 
 ### Naprawione
