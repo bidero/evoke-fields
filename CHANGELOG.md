@@ -2,6 +2,23 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.58.0] — 2026-07-20
+
+### Dodane
+
+- **Szablon tytułu z wielu pól** — „Tytuł wpisu z pola" przyjmuje teraz oprócz klucza
+  także szablon w klamrach, np. `{imie} {nazwisko}`; puste pola znikają, a pozostałe po
+  nich wielokrotne spacje są sklejane (spójnie z etykietą wiersza repeatera). Tytuł
+  fizycznie zapisuje się w `post_title`. (`includes/cpt.php`)
+- **Przełącznik „Ukryj pole tytułu na ekranie edycji"** (per CPT) — chowa input tytułu
+  w edytorze klasycznym (`#titlediv`) i Gutenbergu (blok tytułu); tytuł nadal istnieje
+  w bazie i na liście wpisów (ustawia go „Tytuł wpisu z pola"). (`includes/cpt.php`)
+- **Losowa nazwa skrócona (slug)** (per CPT) — nowe wpisy dostają losowy slug 6 znaków
+  `[a-z0-9]` (2,1 mld kombinacji; kontrola kolizji + `wp_unique_post_slug` jako strażnik).
+  Zasady bezpieczeństwa permalinków: tylko nowe wpisy lub wpisy bez slugu, nadanie
+  jednorazowe (marker `_evk_rand_slug`), późniejsza ręczna zmiana respektowana,
+  auto-drafty pomijane. Działa też przy imporcie CSV. (`includes/cpt.php`)
+
 ## [1.57.1] — 2026-07-20
 
 ### Naprawione

@@ -99,7 +99,10 @@ function evk_render_custom_post_types_page() {
                         'menu_name'          => sanitize_text_field( $post_type['menu_name'] ?? '' ),
                         'add_new_item'       => sanitize_text_field( $post_type['add_new_item'] ?? '' ),
                         'all_items'          => sanitize_text_field( $post_type['all_items'] ?? '' ),
-                        'title_field'        => sanitize_key( remove_accents( $post_type['title_field'] ?? '' ) ),
+                        // Klucz pola ALBO szablon z kluczy ({imie} {nazwisko}) — dlatego nie sanitize_key.
+                        'title_field'        => sanitize_text_field( $post_type['title_field'] ?? '' ),
+                        'hide_title'         => isset( $post_type['hide_title'] ) ? 1 : 0,
+                        'rand_slug'          => isset( $post_type['rand_slug'] ) ? 1 : 0,
                     );
                 }
             }
@@ -211,9 +214,17 @@ function evk_render_custom_post_types_page() {
                                     <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                         <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][all_items]" value="<?php echo esc_attr( $post_type['all_items'] ?? '' ); ?>" placeholder="np. Wszystkie książki" />
                                     </label>
-                                    <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK)', 'evk-repeater' ); ?>
-                                        <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][title_field]" value="<?php echo esc_attr( $post_type['title_field'] ?? '' ); ?>" placeholder="np. nazwa" style="font-family:Menlo,Consolas,monospace;" />
-                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Gdy typ nie ma tytułu (albo chcesz go wyliczać): wartość tego pola EVK staje się tytułem wpisu przy zapisie — widocznym na liście, w wyszukiwarce i relacjach.', 'evk-repeater' ); ?></span>
+                                    <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK lub szablon)', 'evk-repeater' ); ?>
+                                        <input type="text" name="custom_post_types[<?php echo esc_attr( $index ); ?>][title_field]" value="<?php echo esc_attr( $post_type['title_field'] ?? '' ); ?>" placeholder="np. nazwa  albo  {imie} {nazwisko}" style="font-family:Menlo,Consolas,monospace;" />
+                                        <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_html__( 'Wartość pola (lub złożenie kilku pól w klamrach) staje się tytułem wpisu przy zapisie — widocznym na liście, w wyszukiwarce i relacjach.', 'evk-repeater' ); ?></span>
+                                    </label>
+                                    <label style="display:block;margin-top:8px;">
+                                        <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][hide_title]" <?php checked( ! empty( $post_type['hide_title'] ), 1 ); ?> />
+                                        <?php echo esc_html__( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ); ?>
+                                    </label>
+                                    <label style="display:block;margin-top:4px;">
+                                        <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][rand_slug]" <?php checked( ! empty( $post_type['rand_slug'] ), 1 ); ?> />
+                                        <?php echo esc_html__( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ); ?>
                                     </label>
                                 </div>
                             </div>
@@ -341,9 +352,17 @@ function evk_render_custom_post_types_page() {
                                 <label><?php echo esc_html__( 'Etykieta „Wszystkie”', 'evk-repeater' ); ?>
                                     <input type="text" name="custom_post_types[${index}][all_items]" placeholder="np. Wszystkie książki" />
                                 </label>
-                                <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK)', 'evk-repeater' ); ?>
-                                    <input type="text" name="custom_post_types[${index}][title_field]" placeholder="np. nazwa" style="font-family:Menlo,Consolas,monospace;" />
-                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Gdy typ nie ma tytułu (albo chcesz go wyliczać): wartość tego pola EVK staje się tytułem wpisu przy zapisie.', 'evk-repeater' ) ); ?></span>
+                                <label><?php echo esc_html__( 'Tytuł wpisu z pola (klucz EVK lub szablon)', 'evk-repeater' ); ?>
+                                    <input type="text" name="custom_post_types[${index}][title_field]" placeholder="np. nazwa  albo  {imie} {nazwisko}" style="font-family:Menlo,Consolas,monospace;" />
+                                    <span class="description" style="display:block;font-weight:400;margin-top:2px;"><?php echo esc_js( __( 'Wartość pola (lub złożenie kilku pól w klamrach) staje się tytułem wpisu przy zapisie.', 'evk-repeater' ) ); ?></span>
+                                </label>
+                                <label style="display:block;margin-top:8px;">
+                                    <input type="checkbox" name="custom_post_types[${index}][hide_title]" />
+                                    <?php echo esc_js( __( 'Ukryj pole tytułu na ekranie edycji', 'evk-repeater' ) ); ?>
+                                </label>
+                                <label style="display:block;margin-top:4px;">
+                                    <input type="checkbox" name="custom_post_types[${index}][rand_slug]" />
+                                    <?php echo esc_js( __( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ) ); ?>
                                 </label>
                             </div>
                         `;
@@ -562,12 +581,20 @@ function evk_register_custom_post_types() {
 // TYTUŁ WPISU Z POLA EVK (dla CPT bez wsparcia „title" lub wyliczanego tytułu)
 // =========================================================================
 
-/** Mapa [slug CPT => klucz pola EVK], dla których tytuł ma pochodzić z pola. */
+/** Wiersz konfiguracji CPT po slugu (albo pusta tablica). */
+function evk_cpt_config( $slug ) {
+    foreach ( (array) get_option( 'evk_custom_post_types', array() ) as $pt ) {
+        if ( substr( (string) ( $pt['slug'] ?? '' ), 0, 20 ) === (string) $slug ) return (array) $pt;
+    }
+    return array();
+}
+
+/** Mapa [slug CPT => klucz pola EVK LUB szablon „{imie} {nazwisko}"] dla tytułu z pola. */
 function evk_cpt_title_fields() {
     $out = array();
     foreach ( (array) get_option( 'evk_custom_post_types', array() ) as $pt ) {
         $slug = substr( (string) ( $pt['slug'] ?? '' ), 0, 20 );
-        $tf   = sanitize_key( $pt['title_field'] ?? '' );
+        $tf   = trim( (string) ( $pt['title_field'] ?? '' ) );
         if ( $slug !== '' && $tf !== '' ) $out[ $slug ] = $tf;
     }
     return $out;
@@ -587,8 +614,19 @@ function evk_sync_cpt_title( $post_id ) {
     $pt     = get_post_type( $post_id );
     if ( ! isset( $fields[ $pt ] ) ) return;
 
-    $val = get_post_meta( $post_id, $fields[ $pt ], true );
-    $val = is_scalar( $val ) ? trim( (string) $val ) : '';
+    $tf = $fields[ $pt ];
+    if ( strpos( $tf, '{' ) !== false ) {
+        // Szablon z kluczy, np. „{imie} {nazwisko}" — puste pola znikają,
+        // pozostałe po nich wielokrotne spacje sklejane do jednej.
+        $val = preg_replace_callback( '/\{([a-zA-Z0-9_]+)\}/', function ( $m ) use ( $post_id ) {
+            $v = get_post_meta( $post_id, $m[1], true );
+            return is_scalar( $v ) ? (string) $v : '';
+        }, $tf );
+        $val = trim( preg_replace( '/\s+/u', ' ', (string) $val ) );
+    } else {
+        $val = get_post_meta( $post_id, $tf, true );
+        $val = is_scalar( $val ) ? trim( (string) $val ) : '';
+    }
     if ( $val === '' ) return; // nie nadpisuj tytułu pustką
 
     if ( get_post_field( 'post_title', $post_id ) === $val ) return; // już zsynchronizowany
@@ -598,9 +636,79 @@ function evk_sync_cpt_title( $post_id ) {
     $busy = false;
 }
 
-// Ekran edycji: po tym jak EVK zapisze metę (save_post prio 10) — prio 99.
-add_action( 'save_post', function ( $post_id ) {
+// =========================================================================
+// LOSOWA NAZWA SKRÓCONA (SLUG) — 6 znaków [a-z0-9], tylko nowe wpisy
+// =========================================================================
+
+/** Losowy slug o zadanej długości. Tylko małe litery i cyfry — slugi są lowercase. */
+function evk_cpt_random_slug( $len = 6 ) {
+    $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    $out   = '';
+    for ( $i = 0; $i < $len; $i++ ) $out .= $chars[ wp_rand( 0, 35 ) ];
+    return $out;
+}
+
+/**
+ * Nadaj wpisowi losowy slug, jeśli jego CPT ma włączoną opcję „rand_slug".
+ * Zasady bezpieczeństwa permalinków:
+ *  - tylko NOWE wpisy ($is_new) lub wpisy bez slugu — istniejących linków nie ruszamy;
+ *  - tylko RAZ (marker _evk_rand_slug) — późniejsza ręczna zmiana slugu jest respektowana;
+ *  - auto-drafty pomijane (WP tworzy je przy wejściu na „Dodaj nowy").
+ * Unikalność: 36^6 = 2,1 mld kombinacji + kontrola kolizji (3 losowania) +
+ * wp_unique_post_slug jako ostateczny strażnik (dołoży -2 w patologicznym przypadku).
+ */
+function evk_cpt_ensure_random_slug( $post_id, $is_new = false ) {
+    static $busy = false;
+    $post_id = (int) $post_id;
+    if ( $busy || $post_id <= 0 ) return;
+
+    $pt  = get_post_type( $post_id );
+    $cfg = $pt ? evk_cpt_config( $pt ) : array();
+    if ( empty( $cfg['rand_slug'] ) ) return;
+
+    if ( get_post_meta( $post_id, '_evk_rand_slug', true ) ) return; // już nadany
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_status === 'auto-draft' ) return;
+    if ( ! $is_new && $post->post_name !== '' ) return; // istniejący slug = permalink
+
+    global $wpdb;
+    $slug = '';
+    for ( $try = 0; $try < 3; $try++ ) {
+        $cand = evk_cpt_random_slug( 6 );
+        $hit  = $wpdb->get_var( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND ID <> %d LIMIT 1",
+            $cand, $post_id
+        ) );
+        if ( ! $hit ) { $slug = $cand; break; }
+    }
+    if ( $slug === '' ) $slug = evk_cpt_random_slug( 6 );
+    $slug = wp_unique_post_slug( $slug, $post_id, $post->post_status, $pt, (int) $post->post_parent );
+
+    $busy = true;
+    wp_update_post( array( 'ID' => $post_id, 'post_name' => $slug ) );
+    $busy = false;
+    update_post_meta( $post_id, '_evk_rand_slug', $slug );
+}
+
+// =========================================================================
+// UKRYCIE POLA TYTUŁU NA EKRANIE EDYCJI (opcja per CPT)
+// =========================================================================
+
+add_action( 'admin_head', function () {
+    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+    if ( ! $screen || $screen->base !== 'post' ) return;
+    $cfg = evk_cpt_config( (string) $screen->post_type );
+    if ( empty( $cfg['hide_title'] ) ) return;
+    // Klasyczny edytor (#titlediv) + Gutenberg (blok tytułu). Tytuł nadal istnieje
+    // w bazie (ustawia go „Tytuł wpisu z pola") — ukrywamy tylko input.
+    echo '<style>#titlediv{display:none;}.editor-post-title__block,.editor-post-title,.wp-block-post-title{display:none !important;}</style>' . "\n";
+} );
+
+// Ekran edycji + importy: po tym jak EVK zapisze metę (save_post prio 10) — prio 99.
+// $update=false → nowy wpis (wp_insert_post) → kandydat do losowego slugu.
+add_action( 'save_post', function ( $post_id, $post = null, $update = true ) {
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
     if ( wp_is_post_revision( $post_id ) ) return;
+    evk_cpt_ensure_random_slug( $post_id, ! $update );
     evk_sync_cpt_title( $post_id );
-}, 99 );
+}, 99, 3 );

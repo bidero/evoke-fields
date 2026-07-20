@@ -102,7 +102,7 @@ evk_rep_recalc_options(): int;                                       // przelicz
 
 **Evoke FIELDS → Typy treści / Taksonomie** — rejestracja własnych typów i taksonomii (z kolumną admina, REST, hierarchią). Permalinki odświeżają się automatycznie po zapisie definicji.
 
-- **Tytuł wpisu z pola** (Typy treści → „Tytuł wpisu z pola"): dla typów bez wsparcia „title" (albo gdy tytuł ma być wyliczany) wskazujesz klucz pola EVK — jego wartość staje się tytułem wpisu przy zapisie (lista, wyszukiwarka, relacje) i uzupełnia się także podczas importu CSV.
+- **Tytuł wpisu z pola** (Typy treści → „Tytuł wpisu z pola"): klucz pola EVK **lub szablon** z wielu pól (np. `{imie} {nazwisko}`) — wartość staje się tytułem wpisu przy zapisie (lista, wyszukiwarka, relacje) i uzupełnia się także podczas importu CSV. Do tego przełączniki per CPT: **„Ukryj pole tytułu na ekranie edycji"** (tytuł zostaje w bazie) i **„Losowa nazwa skrócona"** (nowe wpisy dostają unikalny losowy slug 6 znaków; istniejące permalinki nieruszane, ręczna zmiana respektowana).
 
 - **Metabox wyboru** per taksonomia: **Checkboxy** (WP, wielokrotny), **Lista rozwijana** lub **Radio** (pojedynczy wybór z opcją „— brak —"); zapis przypisuje prawdziwe termy (`wp_set_object_terms`).
 - **Zależne metaboxy**: opcja „Filtruj opcje wg taksonomii" + klucz pola relacji (pole Taksonomia EVK na termach, term meta) — wybór termu nadrzędnego (np. Trenera) zawęża opcje zależnej taksonomii (np. Grupy); działa kaskadowo, termy bez relacji są zawsze widoczne.
