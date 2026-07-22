@@ -301,6 +301,120 @@ add_action('admin_init', function () {
 });
 
 // =========================================================================
+// EKSPORT WARTOŚCI STRON OPCJI → CSV
+// =========================================================================
+// Strony opcji przechowują wartości w opcjach evk_rep_opt_{gkey} (nie we wpisach),
+// więc eksport ma inny kształt niż typy treści:
+//   • grupa-repeater  → TABELA: nagłówek = etykiety pól, jeden wiersz = jeden wiersz repeatera;
+//   • grupa pojedyncza → PIONOWO: kolumny „Pole” | „Wartość”, jeden wiersz na pole.
+// Round-trip (import) nie dotyczy opcji — to zrzut/kopia wartości. Kolumny obejmują
+// wyłącznie proste typy pól (te same co eksport wpisów).
+
+/**
+ * Grupy pól przypisane do którejkolwiek strony ustawień → cele eksportu opcji.
+ * Zwraca [ gkey => ['label','group'=>def,'repeater'=>bool,'page'=>etykieta strony] ].
+ * Pierwsze wystąpienie grupy wygrywa (grupa może być na wielu stronach).
+ */
+function evk_csv_option_group_targets(): array {
+    if (!function_exists('evk_rep_settings_pages')) return [];
+    $groups = evk_rep_groups();
+    $out    = [];
+    foreach (evk_rep_settings_pages() as $slug => $page) {
+        $plabel = (string) (($page['label'] ?? '') !== '' ? $page['label'] : $slug);
+        foreach ((array) ($page['tabs'] ?? []) as $tab) {
+            foreach ((array) ($tab['groups'] ?? []) as $gk) {
+                $gk = (string) $gk;
+                if ($gk === '' || isset($out[$gk]) || !isset($groups[$gk])) continue;
+                $g = $groups[$gk];
+                $out[$gk] = [
+                    'label'    => ($g['label'] ?? '') !== '' ? $g['label'] : $gk,
+                    'group'    => $g,
+                    'repeater' => evk_rep_is_repeater($g),
+                    'page'     => $plabel,
+                ];
+            }
+        }
+    }
+    return $out;
+}
+
+/** Proste pola danych grupy jako kolumny eksportu: [ fkey => ['label','type'] ]. Pomija pola układu i typy złożone. */
+function evk_csv_group_simple_fields(array $group): array {
+    $simple = evk_csv_simple_types();
+    $out    = [];
+    foreach (($group['fields'] ?? []) as $fk => $f) {
+        $t = $f['type'] ?? 'text';
+        if (!in_array($t, $simple, true)) continue;
+        $out[(string) $fk] = ['label' => (($f['label'] ?? '') !== '' ? $f['label'] : $fk), 'type' => $t];
+    }
+    return $out;
+}
+
+// Handler eksportu opcji — streamuje CSV bezpośrednio na wyjście.
+add_action('admin_init', function () {
+    if (empty($_POST['evk_csv_opt_export'])) return;
+    if (!current_user_can('manage_options')) return;
+    check_admin_referer('evk_csv_opt_export', 'evk_csv_opt_export_nonce');
+
+    $gk      = sanitize_key($_POST['evk_csv_opt_export_group'] ?? '');
+    $targets = evk_csv_option_group_targets();
+    if ($gk === '' || !isset($targets[$gk])) {
+        evk_csv_notice('error', 'Wybierz prawidłową grupę pól ze strony ustawień.');
+        evk_csv_redirect();
+    }
+
+    $group    = (array) $targets[$gk]['group'];
+    $repeater = !empty($targets[$gk]['repeater']);
+    $fields   = evk_csv_group_simple_fields($group);
+    if (!$fields) {
+        evk_csv_notice('error', 'Ta grupa nie ma prostych pól, które można wyeksportować do CSV.');
+        evk_csv_redirect();
+    }
+
+    $enc   = in_array($_POST['evk_csv_opt_export_enc'] ?? '', ['UTF-8', 'Windows-1250', 'ISO-8859-2'], true) ? $_POST['evk_csv_opt_export_enc'] : 'UTF-8';
+    $delim = evk_csv_delim_char((string) ($_POST['evk_csv_opt_export_delim'] ?? 'comma'));
+    $bom   = !empty($_POST['evk_csv_opt_export_bom']) && $enc === 'UTF-8';
+
+    $stored = evk_rep_get_option($gk);
+    if (!is_array($stored)) $stored = [];
+
+    nocache_headers();
+    header('Content-Type: text/csv; charset=' . $enc);
+    header('Content-Disposition: attachment; filename=evk-opt-' . $gk . '-' . gmdate('Ymd-His') . '.csv');
+    @set_time_limit(0);
+    while (ob_get_level() > 0) ob_end_clean(); // czysty strumień (bez buforów WP)
+
+    $out = fopen('php://output', 'w');
+    if ($bom) fwrite($out, "\xEF\xBB\xBF"); // Excel rozpozna UTF-8
+
+    $conv = function (string $s) use ($enc): string {
+        if ($enc === 'UTF-8' || !function_exists('mb_convert_encoding')) return $s;
+        return mb_convert_encoding($s, $enc, 'UTF-8');
+    };
+
+    if ($repeater) {
+        // TABELA: nagłówek = etykiety pól, jeden wiersz repeatera = jeden wiersz CSV.
+        fputcsv($out, array_map($conv, array_map(static fn($d) => $d['label'], $fields)), $delim);
+        foreach (array_values($stored) as $row) {
+            if (!is_array($row)) continue;
+            $line = [];
+            foreach ($fields as $fk => $d) {
+                $line[] = $conv(evk_csv_export_field_value($d['type'], $row[$fk] ?? ''));
+            }
+            fputcsv($out, $line, $delim);
+        }
+    } else {
+        // PIONOWO: Pole | Wartość, jeden wiersz na pole.
+        fputcsv($out, array_map($conv, ['Pole', 'Wartość']), $delim);
+        foreach ($fields as $fk => $d) {
+            fputcsv($out, [$conv($d['label']), $conv(evk_csv_export_field_value($d['type'], $stored[$fk] ?? ''))], $delim);
+        }
+    }
+    fclose($out);
+    exit;
+});
+
+// =========================================================================
 // MENU + ENQUEUE
 // =========================================================================
 
@@ -753,7 +867,7 @@ function evk_csv_page(): void {
         <?php
         if ($step === 'map' && !empty($s['headers']))      evk_csv_render_map($s);
         elseif (in_array($step, ['run', 'done'], true))    evk_csv_render_run($s);
-        else { evk_csv_render_upload(); evk_csv_render_export(); }
+        else { evk_csv_render_upload(); evk_csv_render_export(); evk_csv_render_opt_export(); }
         ?>
     </div>
     <?php
@@ -874,6 +988,72 @@ function evk_csv_render_export(): void {
         });
     });
     </script>
+    <?php
+}
+
+function evk_csv_render_opt_export(): void {
+    $targets = evk_csv_option_group_targets();
+    ?>
+    <div class="evk-settings-group">
+        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-admin-settings" style="vertical-align:text-bottom;color:#2563eb;"></span> Eksport wartości stron opcji do CSV</h2>
+        <p style="margin-top:0;color:#475569;">Pobierz wartości zapisane na <strong>stronach ustawień</strong> (opcje witryny, nie wpisy).
+            Grupa-repeater eksportuje się jako <strong>tabela</strong> (wiersz = wiersz repeatera), grupa pojedyncza jako pary <strong>Pole / Wartość</strong>.
+            Uwzględniane są proste typy pól.</p>
+
+        <?php if (!$targets): ?>
+            <div class="evk-b-info" style="margin:0;">
+                <span class="dashicons dashicons-info-outline"></span>
+                <div>Brak grup pól przypisanych do stron ustawień. Utwórz stronę i przypisz do niej grupy w
+                <a href="<?php echo esc_url(admin_url('admin.php?page=evk-settings')); ?>">Strony ustawień</a>.</div>
+            </div>
+        <?php else: ?>
+        <form method="post">
+            <?php wp_nonce_field('evk_csv_opt_export', 'evk_csv_opt_export_nonce'); ?>
+            <p style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">
+                <label>Grupa pól<br>
+                    <select name="evk_csv_opt_export_group" class="evk-csv-opt-group">
+                        <?php foreach ($targets as $gk => $d): ?>
+                        <option value="<?php echo esc_attr($gk); ?>" data-repeater="<?php echo $d['repeater'] ? '1' : '0'; ?>">
+                            <?php echo esc_html($d['label']); ?> — <?php echo esc_html($d['page']); ?> (<?php echo $d['repeater'] ? 'repeater' : 'pojedyncza'; ?>)
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>Separator<br>
+                    <select name="evk_csv_opt_export_delim">
+                        <option value="comma">Przecinek ( , )</option>
+                        <option value="semicolon">Średnik ( ; ) — Excel PL</option>
+                        <option value="tab">Tabulator</option>
+                    </select>
+                </label>
+                <label>Kodowanie<br>
+                    <select name="evk_csv_opt_export_enc">
+                        <option value="UTF-8">UTF-8</option>
+                        <option value="Windows-1250">Windows-1250</option>
+                        <option value="ISO-8859-2">ISO-8859-2</option>
+                    </select>
+                </label>
+                <label style="display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="evk_csv_opt_export_bom" value="1" checked> BOM (UTF-8, dla Excela)</label>
+            </p>
+            <p class="evk-csv-opt-hint description" style="margin:0 0 12px;"></p>
+            <button type="submit" name="evk_csv_opt_export" value="1" class="button button-primary"><span class="dashicons dashicons-download" style="vertical-align:text-bottom;"></span> Pobierz CSV</button>
+        </form>
+        <script>
+        (function () {
+            var sel = document.querySelector('.evk-csv-opt-group');
+            var hint = document.querySelector('.evk-csv-opt-hint');
+            if (!sel || !hint) return;
+            function upd() {
+                var o = sel.options[sel.selectedIndex];
+                hint.textContent = (o && o.getAttribute('data-repeater') === '1')
+                    ? 'Format: tabela — nagłówek to etykiety pól, każdy wiersz repeatera to wiersz CSV.'
+                    : 'Format: pionowy — kolumny „Pole” i „Wartość”, jeden wiersz na pole.';
+            }
+            sel.addEventListener('change', upd); upd();
+        })();
+        </script>
+        <?php endif; ?>
+    </div>
     <?php
 }
 

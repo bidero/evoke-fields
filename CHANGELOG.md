@@ -2,6 +2,20 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.65.0] — 2026-07-22
+
+### Dodane
+
+- **Eksport wartości stron opcji do CSV** — nowa sekcja na ekranie *Import / Eksport CSV*
+  (obok eksportu wpisów). Wybierasz grupę pól przypisaną do dowolnej **strony ustawień**;
+  eksport dopasowuje kształt do rodzaju grupy: **grupa-repeater → tabela** (nagłówek =
+  etykiety pól, jeden wiersz repeatera = jeden wiersz CSV), **grupa pojedyncza → pary
+  „Pole / Wartość"** (jeden wiersz na pole). Wybór separatora i kodowania (UTF-8 /
+  Windows-1250 / ISO-8859-2) oraz BOM dla Excela; plik streamowany bez trzymania w pamięci.
+  Kolumny obejmują proste typy pól (spójnie z eksportem wpisów). Gdy żadna grupa nie jest
+  przypisana do stron ustawień, sekcja pokazuje podpowiedź z linkiem do *Stron ustawień*.
+  (`includes/import-csv.php`)
+
 ## [1.64.3] — 2026-07-20
 
 ### Zmienione

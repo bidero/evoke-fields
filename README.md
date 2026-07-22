@@ -102,7 +102,7 @@ evk_rep_recalc_options(): int;                                       // przelicz
 
 ## Import / Eksport CSV
 
-**Evoke FIELDS → Import / Eksport CSV**. **Import**: upload → mapowanie kolumn (rdzeń wpisu, taksonomie po nazwie, proste pola EVK) → tworzenie/aktualizacja z kluczem dopasowania; przetwarzanie porcjami przez AJAX (pasek postępu), po imporcie przeliczają się pola calc i uzupełnia „tytuł z pola". **Eksport**: wybór typu treści, kolumn, zakresu, separatora/kodowania (+ BOM dla Excela); plik streamowany. Nagłówki eksportu są zgodne z auto-mapowaniem importu — pełny round-trip (eksport → arkusz → import).
+**Evoke FIELDS → Import / Eksport CSV**. **Import**: upload → mapowanie kolumn (rdzeń wpisu, taksonomie po nazwie, proste pola EVK) → tworzenie/aktualizacja z kluczem dopasowania; przetwarzanie porcjami przez AJAX (pasek postępu), po imporcie przeliczają się pola calc i uzupełnia „tytuł z pola". **Eksport**: wybór typu treści, kolumn, zakresu, separatora/kodowania (+ BOM dla Excela); plik streamowany. Nagłówki eksportu są zgodne z auto-mapowaniem importu — pełny round-trip (eksport → arkusz → import). **Eksport wartości stron opcji**: osobna sekcja — wybierasz grupę pól przypisaną do strony ustawień; grupa-repeater eksportuje się jako tabela (wiersz = wiersz repeatera), grupa pojedyncza jako pary „Pole / Wartość" (proste typy pól).
 
 ## Narzędzia
 
