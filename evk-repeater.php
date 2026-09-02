@@ -9,7 +9,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.66.0');
+define('EVK_REP_VERSION', '1.66.1');
 define('EVK_REP_FILE', __FILE__);
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
