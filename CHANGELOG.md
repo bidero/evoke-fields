@@ -2,6 +2,8 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.66.2] — 2026-09-02
+
 ## [1.66.0] — 2026-09-02
 
 ### Dodane
