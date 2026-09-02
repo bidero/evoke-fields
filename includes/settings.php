@@ -36,7 +36,7 @@ function evk_rep_group_on_page(string $gkey, array $page): bool {
 // =========================================================================
 
 add_action('admin_menu', function () {
-    $hook = add_submenu_page('evk-repeater', 'Strony ustawień', 'Strony ustawień', 'manage_options', 'evk-settings', 'evk_rep_settings_builder_page');
+    $hook = add_submenu_page('evk-repeater', 'Strony ustawień', 'Strony ustawień', EVK_REP_CAP, 'evk-settings', 'evk_rep_settings_builder_page');
 
     // Enqueue assetów buildera tylko na jego ekranie. Hook suffix zależy od
     // tytułu menu nadrzędnego (WP przepuszcza go przez sanitize_title), więc go
@@ -188,7 +188,7 @@ function evk_rep_settings_builder_page(): void {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_rep_settings_builder_save'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     if (!wp_verify_nonce($_POST['evk_rep_settings_builder_nonce'] ?? '', 'evk_rep_settings_builder')) return;
 
     $raw = isset($_POST['evk_settings_pages']) && is_array($_POST['evk_settings_pages']) ? wp_unslash($_POST['evk_settings_pages']) : [];

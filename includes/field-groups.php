@@ -30,7 +30,12 @@ add_action('init', function () {
         'show_in_menu'       => 'evk-repeater',
         'show_in_rest'       => false,
         'supports'           => ['title'],
-        'capability_type'    => 'post',
+        // Własny zestaw uprawnień (zamiast 'post'): definicja pól to konfiguracja
+        // struktury danych, a nie treść — dostęp do niej nadaje się przez
+        // EVK_REP_CAP, bez rozdawania praw do edycji wpisów. Mostek user_has_cap
+        // w evk-repeater.php przyznaje te capy administratorowi i posiadaczom
+        // EVK_REP_CAP, więc żadna rola nie musi mieć ich zapisanych w bazie.
+        'capability_type'    => ['evk_field_group', 'evk_field_groups'],
         'map_meta_cap'       => true,
         'rewrite'            => false,
         'query_var'          => false,

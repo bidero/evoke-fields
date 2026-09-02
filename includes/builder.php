@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) exit;
 
 add_action('admin_menu', function () {
     add_menu_page(
-        'Evoke FIELDS', 'Evoke FIELDS', 'manage_options',
+        'Evoke FIELDS', 'Evoke FIELDS', EVK_REP_CAP,
         'evk-repeater',
         function () {
             wp_safe_redirect(admin_url('edit.php?post_type=evk_field_group'));

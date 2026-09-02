@@ -25,7 +25,7 @@ const EVK_TOOLS_SCHEMA_VERSION = 1;
 // =========================================================================
 
 add_action('admin_menu', function () {
-    add_submenu_page('evk-repeater', 'Narzędzia', 'Narzędzia', 'manage_options', 'evk-tools', 'evk_tools_page');
+    add_submenu_page('evk-repeater', 'Narzędzia', 'Narzędzia', EVK_REP_CAP, 'evk-tools', 'evk_tools_page');
 }, 25);
 
 // =========================================================================
@@ -151,7 +151,7 @@ function evk_tools_redirect(): void {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_export'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_tools_export', 'evk_tools_nonce');
 
     $data = evk_tools_build_export();
@@ -285,7 +285,7 @@ function evk_tools_run_import(array $data, bool $overwrite, ?array $parts = null
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_import'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_tools_import', 'evk_tools_nonce');
 
     if (empty($_FILES['evk_import_file']['tmp_name']) || !is_uploaded_file($_FILES['evk_import_file']['tmp_name'])) {
@@ -374,7 +374,7 @@ add_action('admin_head', function () {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_style_save'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_tools_style', 'evk_tools_nonce');
 
     $out = [];
@@ -454,7 +454,7 @@ function evk_tools_recalc_scope_label(string $scope): string {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_recalc'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_tools_recalc', 'evk_tools_nonce');
 
     $scope = sanitize_text_field(wp_unslash($_POST['evk_recalc_scope'] ?? ''));
@@ -576,7 +576,7 @@ function evk_tools_scan_orphans(): array {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_tools_cleanup'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_tools_cleanup', 'evk_tools_nonce');
 
     $scan      = evk_tools_scan_orphans();
@@ -618,7 +618,7 @@ add_action('admin_init', function () {
 // =========================================================================
 
 function evk_tools_page(): void {
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
 
     $notice = get_transient('evk_tools_notice_' . get_current_user_id());
     if ($notice) delete_transient('evk_tools_notice_' . get_current_user_id());

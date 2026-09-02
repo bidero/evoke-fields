@@ -2,6 +2,42 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.66.0] — 2026-09-02
+
+### Dodane
+
+- **Uprawnienie `evk_access_fields` — dostęp do panelu bez roli administratora.** Uprawnienie
+  nadaje Role Manager w Evoke ONE, ale sprawdza je FIELDS: nowa bramka `evk_rep_can_manage()`
+  (`manage_options` **lub** `evk_access_fields`) obowiązuje w **komplecie** miejsc — rejestracja
+  menu (6 ekranów), handlery zapisu (`admin_init`) i punkty AJAX. Podmiana samego capa w menu
+  odsłoniłaby ekrany, ale zapisy dalej odbijałyby się od `manage_options`, więc przestawione
+  zostały wszystkie 21 bramek naraz. (`evk-repeater.php` + 8 modułów)
+- **FIELDS nie wymaga Evoke ONE.** Mostek `user_has_cap` (dynamiczny, nic nie zapisuje do ról
+  w bazie — nie ma czego sprzątać przy deinstalacji) traktuje `manage_options` jako
+  `evk_access_fields`, więc administrator wchodzi zawsze, także gdy Evoke ONE nie jest
+  zainstalowane i nikt uprawnienia nie nadał. (`evk-repeater.php`)
+
+### Zmienione
+
+- **CPT „Grupy pól" ma własny zestaw uprawnień** (`edit_evk_field_groups`, `publish_…`,
+  `delete_…` itd.) zamiast `capability_type => 'post'`. Definicja pól to konfiguracja struktury
+  danych, nie treść — teraz dostęp do niej nadaje się **bez** rozdawania praw do edycji wpisów,
+  a posiadacz `evk_access_fields` nie odbija się od ekranu grup „brakiem uprawnień". Komplet
+  tych capów dostaje automatycznie każdy z `manage_options` lub `evk_access_fields`.
+  **Zmiana zachowania:** rola z samym `edit_posts` (np. Redaktor) traci dostęp do definicji grup
+  pól — wcześniej mogła je edytować wchodząc bezpośrednim URL-em (menu i tak było
+  administratorskie). Do delegowania tego dostępu służy teraz `evk_access_fields`.
+  (`includes/field-groups.php`)
+- Wyszukiwarka AJAX pola relacji przyjmuje też osoby zarządzające FIELDS (pola relacji na
+  stronach ustawień, gdzie praw do edycji treści mieć nie trzeba). Tryb użytkowników **nadal**
+  wymaga `list_users` — zwraca adresy e-mail. (`includes/metabox.php`)
+
+### Uwagi
+
+- Bez zmian celowo: strony ustawień mają własne, konfigurowalne uprawnienie (pole „Uprawnienie",
+  domyślnie `manage_options`), a ochrona danych (pola wrażliwe / typy chronione) dalej chodzi po
+  `edit_post` konkretnego wpisu — `evk_access_fields` nie odsłania chronionych treści.
+
 ## [1.65.0] — 2026-07-22
 
 ### Dodane

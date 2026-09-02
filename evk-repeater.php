@@ -2,17 +2,80 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.65.0
+ * Version: 1.66.0
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.65.0');
+define('EVK_REP_VERSION', '1.66.0');
 define('EVK_REP_FILE', __FILE__);
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
+
+/**
+ * Uprawnienie dające dostęp do panelu Evoke FIELDS.
+ *
+ * Nadaje je Role Manager w Evoke ONE, ale FIELDS to osobna wtyczka i to TUTAJ
+ * musi zapaść sprawdzenie — samo zaznaczenie pola w Evoke ONE nic nie zmieni,
+ * dopóki wszystkie bramki (menu, zapisy, AJAX) nie pytają o to uprawnienie.
+ *
+ * FIELDS nie zakłada obecności Evoke ONE: gdy tamtej wtyczki nie ma, nikt nie
+ * ma tego uprawnienia w bazie — dlatego mostek niżej nadaje je każdemu, kto ma
+ * `manage_options`. Administrator wchodzi zawsze, także bez Evoke ONE.
+ */
+define('EVK_REP_CAP', 'evk_access_fields');
+
+/**
+ * Czy bieżący użytkownik może zarządzać wtyczką (panel + zapisy + AJAX).
+ * Jedna bramka dla wszystkich ekranów — używaj JEJ, nie gołego 'manage_options'.
+ */
+function evk_rep_can_manage(): bool {
+    return current_user_can('manage_options') || current_user_can(EVK_REP_CAP);
+}
+
+/**
+ * Prymitywne uprawnienia CPT „Grupy pól" (własny zestaw, nie miesza się z wpisami).
+ * Dzięki nim dostęp do definicji pól da się nadać BEZ nadawania praw do treści.
+ */
+function evk_rep_group_caps(): array {
+    return [
+        'edit_evk_field_groups',
+        'edit_others_evk_field_groups',
+        'edit_private_evk_field_groups',
+        'edit_published_evk_field_groups',
+        'publish_evk_field_groups',
+        'read_private_evk_field_groups',
+        'delete_evk_field_groups',
+        'delete_others_evk_field_groups',
+        'delete_private_evk_field_groups',
+        'delete_published_evk_field_groups',
+        'create_evk_field_groups',
+    ];
+}
+
+/**
+ * Mostek uprawnień (dynamiczny — nic nie zapisuje do ról w bazie):
+ *  1. manage_options ⇒ EVK_REP_CAP — administrator ma dostęp zawsze, również
+ *     gdy Evoke ONE nie jest zainstalowane i nikt nie nadał uprawnienia.
+ *  2. EVK_REP_CAP ⇒ uprawnienia CPT „Grupy pól" — bez tego użytkownik z samym
+ *     `evk_access_fields` zobaczyłby menu, ale ekran grup odbiłby go „brakiem
+ *     uprawnień" (CPT chodzi po capach wpisów, nie po manage_options).
+ */
+add_filter('user_has_cap', function ($allcaps) {
+    $via_admin = !empty($allcaps['manage_options']);
+    if (!$via_admin && empty($allcaps[EVK_REP_CAP])) return $allcaps;
+
+    // Filtr chodzi przy KAŻDYM current_user_can() — listę budujemy raz na request.
+    static $group_caps = null;
+    if ($group_caps === null) $group_caps = evk_rep_group_caps();
+
+    if ($via_admin) $allcaps[EVK_REP_CAP] = true;
+    foreach ($group_caps as $cap) $allcaps[$cap] = true;
+
+    return $allcaps;
+});
 
 /**
  * Stała klasa <body> dla WSZYSTKICH ekranów wtyczki.

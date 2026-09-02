@@ -127,7 +127,9 @@ function evk_rep_admin_localize(): void {
 // AJAX: wyszukiwarka wpisów dla pola relacji.
 add_action('wp_ajax_evk_rel_search', function () {
     if (!check_ajax_referer('evk_rel_search', 'nonce', false)) wp_send_json_error('nonce');
-    if (!current_user_can('edit_posts')) wp_send_json_error('caps');
+    // Redakcja (edit_posts) albo osoba zarządzająca FIELDS — ta druga używa pól
+    // relacji na stronach ustawień, gdzie praw do edycji treści mieć nie musi.
+    if (!current_user_can('edit_posts') && !evk_rep_can_manage()) wp_send_json_error('caps');
 
     $s = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
 

@@ -21,7 +21,7 @@ function evk_add_taxonomy_submenu() {
         'evk-repeater',
         esc_html__( 'Taksonomie — rejestracja', 'evk-repeater' ),
         esc_html__( 'Taksonomie', 'evk-repeater' ),
-        'manage_options',
+        EVK_REP_CAP,
         'evk-tax',
         'evk_render_taxonomies_page'
     );
@@ -29,7 +29,7 @@ function evk_add_taxonomy_submenu() {
 
 function evk_render_taxonomies_page() {
 
-    if ( ! current_user_can( 'manage_options' ) ) {
+    if ( ! evk_rep_can_manage() ) {
         return;
     }
 

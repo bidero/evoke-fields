@@ -122,6 +122,15 @@ evk_rep_recalc_options(): int;                                       // przelicz
 - **Zależne metaboxy**: opcja „Filtruj opcje wg taksonomii" + klucz pola relacji (pole Taksonomia EVK na termach, term meta) — wybór termu nadrzędnego (np. Trenera) zawęża opcje zależnej taksonomii (np. Grupy); działa kaskadowo, termy bez relacji są zawsze widoczne.
 - **Kolumna taksonomii** na liście wpisów jest **sortowalna** po nazwie termu; wpisy bez termu pozostają na liście (sortują się na początku/końcu).
 
+## Dostęp i uprawnienia
+
+Panel wtyczki (Grupy pól, Typy treści, Taksonomie, Strony ustawień, Narzędzia, Import/Eksport CSV) otwiera **administrator** (`manage_options`) **albo** posiadacz uprawnienia **`evk_access_fields`** — nadawanego przez **Role Managera w Evoke ONE**. Jedna bramka `evk_rep_can_manage()` obowiązuje wszędzie: w menu, w handlerach zapisu i w punktach AJAX (samo odsłonięcie ekranu bez tego pękłoby przy pierwszym „Zapisz").
+
+- **Evoke ONE nie jest wymagane.** Gdy go nie ma, nikt nie ma `evk_access_fields` w bazie — administrator i tak wchodzi, bo FIELDS dynamicznie (filtr `user_has_cap`, bez zapisu do ról) traktuje `manage_options` jako to uprawnienie.
+- **Grupy pól** to CPT `evk_field_group` z **własnym zestawem uprawnień** (`edit_evk_field_groups` itd.), a nie uprawnieniami wpisów. Dzięki temu dostęp do definicji pól nadaje się **bez** rozdawania praw do edycji treści; te capy dostaje automatycznie każdy, kto ma `manage_options` lub `evk_access_fields`.
+- `evk_access_fields` **nie daje** `manage_options` ani `edit_posts` — nie jest furtką do reszty witryny.
+- **Nietknięte celowo:** strony ustawień mają własne, konfigurowalne uprawnienie (pole „Uprawnienie", domyślnie `manage_options`); ochrona danych (pola wrażliwe / typy chronione) dalej chodzi po `edit_post` danego wpisu; wyszukiwarka użytkowników w polu „Użytkownik" nadal wymaga `list_users` (zwraca adresy e-mail).
+
 ## Deinstalacja
 
 `uninstall.php` usuwa **konfigurację** wtyczki (grupy pól, definicje CPT/taksonomii, strony ustawień i ich wartości, transienty). **Nie usuwa** danych treści: meta wpisów/termów/użytkowników z wartościami pól i załączniki zostają.

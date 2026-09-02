@@ -232,7 +232,7 @@ function evk_csv_export_cell(WP_Post $post, string $target, array $evk_defs): st
 // Handler eksportu — streamuje CSV bez trzymania wszystkiego w pamięci.
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_export'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_csv_export', 'evk_csv_export_nonce');
 
     $post_type = sanitize_key($_POST['evk_csv_export_pt'] ?? '');
@@ -353,7 +353,7 @@ function evk_csv_group_simple_fields(array $group): array {
 // Handler eksportu opcji — streamuje CSV bezpośrednio na wyjście.
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_opt_export'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_csv_opt_export', 'evk_csv_opt_export_nonce');
 
     $gk      = sanitize_key($_POST['evk_csv_opt_export_group'] ?? '');
@@ -419,7 +419,7 @@ add_action('admin_init', function () {
 // =========================================================================
 
 add_action('admin_menu', function () {
-    add_submenu_page('evk-repeater', 'Migracja CSV', 'Migracja CSV', 'manage_options', 'evk-import', 'evk_csv_page');
+    add_submenu_page('evk-repeater', 'Migracja CSV', 'Migracja CSV', EVK_REP_CAP, 'evk-import', 'evk_csv_page');
 }, 27);
 
 // =========================================================================
@@ -428,7 +428,7 @@ add_action('admin_menu', function () {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_upload'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_csv', 'evk_csv_nonce');
 
     if (empty($_FILES['evk_csv_file']['tmp_name']) || !is_uploaded_file($_FILES['evk_csv_file']['tmp_name'])) {
@@ -512,7 +512,7 @@ function evk_csv_conv(string $v, string $encoding): string {
 
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_run'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_csv', 'evk_csv_nonce');
 
     $s = evk_csv_get_session();
@@ -646,7 +646,7 @@ function evk_csv_process_chunk(int $budget): array {
 
 // AJAX: płynny pasek postępu bez przeładowań całej strony.
 add_action('wp_ajax_evk_csv_process', function () {
-    if (!current_user_can('manage_options')) wp_send_json_error(['error' => 'Brak uprawnień.'], 403);
+    if (!evk_rep_can_manage()) wp_send_json_error(['error' => 'Brak uprawnień.'], 403);
     if (!check_ajax_referer('evk_csv_ajax', 'nonce', false)) wp_send_json_error(['error' => 'Nieprawidłowy token.'], 400);
     $r = evk_csv_process_chunk(EVK_CSV_AJAX_BUDGET);
     if (empty($r['ok'])) wp_send_json_error(['error' => $r['error'] ?? 'Błąd importu.'], 400);
@@ -656,7 +656,7 @@ add_action('wp_ajax_evk_csv_process', function () {
 // Fallback bez JS: przetwarzanie przez POST + redirect (większa porcja, mniej przeładowań).
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_process'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_csv', 'evk_csv_nonce');
     $r = evk_csv_process_chunk(EVK_CSV_TIME_BUDGET);
     if (empty($r['ok'])) { evk_csv_notice('error', $r['error'] ?? 'Błąd importu.'); evk_csv_clear_session(false); }
@@ -845,7 +845,7 @@ function evk_csv_redirect(): void {
 // =========================================================================
 
 function evk_csv_page(): void {
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     $notice = get_transient('evk_csv_notice_' . get_current_user_id());
     if ($notice) delete_transient('evk_csv_notice_' . get_current_user_id());
     $s    = evk_csv_get_session();
@@ -1281,7 +1281,7 @@ function evk_csv_render_run(array $s): void {
 // Reset sesji z linku „Nowy import / Anuluj".
 add_action('admin_init', function () {
     if (empty($_GET['reset']) || ($_GET['page'] ?? '') !== 'evk-import') return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     evk_csv_clear_session(true);
     evk_csv_redirect();
 });

@@ -160,7 +160,7 @@ unset($evk_bopt);
 // Ręczna kopia teraz.
 add_action('admin_init', function () {
     if (empty($_POST['evk_backup_create'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_backups', 'evk_backups_nonce');
     $file = evk_backups_write_now();
     if ($file !== '') evk_tools_set_notice('success', 'Utworzono kopię zapasową konfiguracji: ' . $file);
@@ -172,7 +172,7 @@ add_action('admin_init', function () {
 // świeży snapshot bieżącego stanu — żeby dało się cofnąć nietrafione przywrócenie.
 add_action('admin_init', function () {
     if (empty($_POST['evk_backup_restore'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_backups', 'evk_backups_nonce');
 
     $path = evk_backups_resolve((string) ($_POST['evk_backup_file'] ?? ''));
@@ -196,7 +196,7 @@ add_action('admin_init', function () {
 // Usuń wskazaną kopię.
 add_action('admin_init', function () {
     if (empty($_POST['evk_backup_delete'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_backups', 'evk_backups_nonce');
     $path = evk_backups_resolve((string) ($_POST['evk_backup_file'] ?? ''));
     if ($path !== '' && @unlink($path)) evk_tools_set_notice('success', 'Kopia usunięta.');
@@ -207,7 +207,7 @@ add_action('admin_init', function () {
 // Pobierz wskazaną kopię (stream JSON).
 add_action('admin_init', function () {
     if (empty($_POST['evk_backup_download'])) return;
-    if (!current_user_can('manage_options')) return;
+    if (!evk_rep_can_manage()) return;
     check_admin_referer('evk_backups', 'evk_backups_nonce');
     $path = evk_backups_resolve((string) ($_POST['evk_backup_file'] ?? ''));
     if ($path === '') { evk_tools_set_notice('error', 'Nie znaleziono wskazanej kopii.'); evk_tools_redirect(); }

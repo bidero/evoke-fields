@@ -24,14 +24,14 @@ function evk_add_custom_post_types_submenu() {
         'evk-repeater',
         __( 'Typy treści — rejestracja', 'evk-repeater' ),
         __( 'Typy treści', 'evk-repeater' ),
-        'manage_options',
+        EVK_REP_CAP,
         'evk-cpt',
         'evk_render_custom_post_types_page'
     );
 }
 
 function evk_render_custom_post_types_page() {
-    if ( ! current_user_can( 'manage_options' ) ) {
+    if ( ! evk_rep_can_manage() ) {
         return;
     }
 
