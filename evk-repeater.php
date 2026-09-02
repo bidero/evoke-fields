@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.66.0
+ * Version: 1.66.1
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
