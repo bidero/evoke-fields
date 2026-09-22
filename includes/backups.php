@@ -159,10 +159,16 @@ function evk_backups_snapshot_before(): void {
  */
 function evk_backups_write_now(string $reason = 'manual'): string {
     if (!function_exists('evk_tools_build_export')) return '';
-    $info = evk_backups_dir_info();
-    if (!$info) return '';
 
     $export = evk_tools_build_export();
+
+    // Sejf w bazie PRZED plikiem: zrzut do uploads bywa niemożliwy (brak praw do zapisu,
+    // katalog skasowany przez starą wersję uninstall.php), a wtedy brak kopii byłby
+    // zupełny. Sejf nie zależy od systemu plików.
+    if (function_exists('evk_vault_store')) evk_vault_store($export, $reason);
+
+    $info = evk_backups_dir_info();
+    if (!$info) return '';
 
     // Metadane na POCZĄTKU pliku — lista kopii czyta je z pierwszego kilobajta,
     // bez dekodowania całego JSON-a (przy 30 kopiach to różnica rzędu wielkości).
@@ -289,6 +295,9 @@ function evk_backups_reason_label(string $reason): string {
         'after-change'  => 'po zmianie',
         'before-restore'=> 'przed przywróceniem',
         'deactivate'    => 'przed wyłączeniem wtyczki',
+        'activate'      => 'przy aktywacji wtyczki',
+        'uninstall'     => 'przed odinstalowaniem',
+        'heartbeat'     => 'zrzut dobowy',
         'manual'        => 'ręczna',
     ];
     return $map[$reason] ?? '—';

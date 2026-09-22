@@ -792,6 +792,8 @@ function evk_tools_page(): void {
             </div>
         </div>
 
+        <?php if (function_exists('evk_vault_render_section')) evk_vault_render_section(); ?>
+
         <?php if (function_exists('evk_backups_render_section')) evk_backups_render_section(); ?>
 
         <!-- PRZELICZANIE PÓL OBLICZENIOWYCH -->

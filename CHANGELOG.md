@@ -2,6 +2,53 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.69.0] — 2026-09-22
+
+### Naprawione
+
+- **Usunięcie starej kopii wtyczki kasowało dane nowej.** Wersja z innej gałęzi
+  ma inną nazwę katalogu, więc WordPress widzi **dwie wtyczki**. Po wgraniu
+  nowej i usunięciu starej WordPress uruchamia `uninstall.php`
+  **z katalogu usuwanej kopii** — czyli starą, destrukcyjną wersję tego pliku.
+  Poprawka z 1.68.0 była w tej sytuacji bezsilna: kod kasujący dane leży
+  w katalogu, który właśnie znika, i nikt go nie zaktualizował.
+
+  Dane w bazie są **wspólne dla obu kopii** — nie należą do katalogu, tylko do
+  witryny. `uninstall.php` sprawdza teraz, czy w systemie została inna kopia
+  Evoke FIELDS, i jeśli tak — nie rusza niczego poza śmieciami, niezależnie od
+  przełącznika. Czyszczenie bazy jest możliwe tylko przy usuwaniu **ostatniej**
+  kopii wtyczki. (`uninstall.php`)
+
+### Dodane
+
+- **Sejf konfiguracji w bazie danych** (`includes/vault.php`). Ostatnie trzy
+  zrzuty konfiguracji trzymane w opcji `evk_config_vault` — w bazie, nie
+  w plikach. Przeżywają usunięcie wtyczki, zmianę nazwy jej katalogu
+  i skasowanie katalogu kopii, czyli dokładnie te sytuacje, w których kopie
+  w `uploads` bywają niedostępne.
+
+  Nazwa opcji jest dobrana celowo: **każda** wersja `uninstall.php` sprzed
+  1.68.0 kasuje opcje z zamkniętej listy nazw plus wzorce `evk_rep_opt_%`
+  i `_transient_evk_%`. `evk_config_vault` nie pasuje do żadnego z nich, więc
+  przeżywa odinstalowanie dowolnej starszej kopii wtyczki. Sejf jest kasowany
+  wyłącznie pod świadomym przełącznikiem „usuń konfigurację przy
+  odinstalowaniu", i tylko przy usuwaniu ostatniej kopii.
+
+  Zrzut powstaje przy każdej zmianie struktury, przy aktywacji wtyczki i raz
+  na dobę — sejf napełniany wyłącznie przy zmianach byłby pusty dokładnie tam,
+  gdzie jest najbardziej potrzebny: na stabilnej witrynie, której konfiguracji
+  nikt nie ruszał od miesięcy, a katastrofa przyszła z zewnątrz.
+
+- **Alarm i przywrócenie jednym kliknięciem.** Gdy konfiguracja jest pusta
+  (zero typów, taksonomii, stron ustawień i grup pól), a w sejfie leży zrzut
+  z danymi, panel pokazuje czerwony komunikat z datą i zawartością zrzutu oraz
+  przyciskiem „Przywróć konfigurację". Sejf jest też widoczny na stałe
+  w Narzędziach, nad sekcją kopii zapasowych.
+
+- **Kopia do sejfu powstaje nawet bez dostępu do `uploads`.** Zrzut do pliku
+  bywa niemożliwy (brak praw do zapisu, katalog skasowany przez starą wersję
+  `uninstall.php`) — sejf nie zależy od systemu plików i zapisuje się pierwszy.
+
 ## [1.68.0] — 2026-09-22
 
 ### Naprawione

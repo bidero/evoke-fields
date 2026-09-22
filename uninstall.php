@@ -28,7 +28,29 @@ delete_option('evk_rep_flush_rewrite');
 delete_option('evk_tools_recalc_progress');
 $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_evk\\_%' OR option_name LIKE '\\_transient\\_timeout\\_evk\\_%'");
 
-// Konfiguracja zostaje, dopóki ktoś wprost nie poprosi o jej skasowanie.
+/**
+ * BLOKADA NR 1 — DRUGA KOPIA WTYCZKI.
+ *
+ * Wersja z innej gałęzi ma inną nazwę katalogu, więc WordPress widzi DWIE wtyczki.
+ * Usunięcie starej uruchamia jej `uninstall.php`, a dane w bazie są WSPÓLNE — nie
+ * należą do katalogu, tylko do witryny. Skasowanie ich przy usuwaniu jednej z kopii
+ * wyrywa grunt spod nóg tej, która zostaje. Dokładnie tak ginęła konfiguracja przy
+ * przesiadce z gałęzi na `main`.
+ *
+ * Gdy druga kopia istnieje — nie ruszamy niczego poza śmieciami, niezależnie od
+ * przełącznika. Kto naprawdę chce wyczyścić bazę, usuwa OSTATNIĄ kopię wtyczki.
+ */
+if (!function_exists('get_plugins')) {
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+$evk_this_dir = basename(__DIR__);
+foreach ((array) get_plugins() as $evk_file => $evk_data) {
+    if (dirname($evk_file) === $evk_this_dir) continue;
+    if (($evk_data['Name'] ?? '') !== 'Evoke FIELDS') continue;
+    return; // inna kopia Evoke FIELDS zostaje w systemie — dane są jej potrzebne
+}
+
+// BLOKADA NR 2 — konfiguracja zostaje, dopóki ktoś wprost nie poprosi o skasowanie.
 if (!get_option('evk_rep_delete_data_on_uninstall')) {
     return;
 }
@@ -42,6 +64,9 @@ if (!get_option('evk_rep_delete_data_on_uninstall')) {
 // EVK_UNINSTALLING wycisza wyzwalacze kopii, żeby kasowanie grup poniżej nie
 // produkowało zrzutów stanu „w trakcie usuwania".
 define('EVK_UNINSTALLING', true);
+
+// Nazwa opcji sejfu trzymana lokalnie: uninstall.php biegnie bez vault.php.
+define('EVK_VAULT_OPT_NAME', 'evk_config_vault');
 
 if (!defined('EVK_REP_FILE'))    define('EVK_REP_FILE', __DIR__ . '/evk-repeater.php');
 if (!defined('EVK_REP_PATH'))    define('EVK_REP_PATH', trailingslashit(__DIR__));
@@ -77,6 +102,7 @@ $options = [
     'evk_opt_autoload_off_done',
     'evk_rep_style_tokens',
     'evk_rep_delete_data_on_uninstall',
+    EVK_VAULT_OPT_NAME, // sejf — tylko tutaj, czyli wyłącznie pod świadomym przełącznikiem
 ];
 
 // Katalog roboczy importu CSV (pliki tymczasowe, nie kopie) — pliki + folder.
