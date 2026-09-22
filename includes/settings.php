@@ -173,6 +173,15 @@ function evk_rep_settings_builder_page(): void {
     <div class="wrap evk-b-wrap">
         <h1>Strony ustawień</h1>
         <p class="evk-b-intro">Twórz strony ustawień (zapis do opcji witryny). Każda strona ma zakładki, a w zakładkach umieszczasz wybrane grupy pól. Po zapisaniu odśwież stronę, aby pojawiło się menu.</p>
+        <?php
+        // Każda zakładka rysuje checkbox dla KAŻDEJ grupy pól — stąd iloczyn, a nie suma.
+        $evk_sp_vars = 10;
+        foreach ($pages as $evk_p) {
+            $evk_sp_vars += 8;
+            foreach ((array) ($evk_p['tabs'] ?? []) as $evk_t) $evk_sp_vars += 2 + count($groups);
+        }
+        evk_rep_input_vars_warning($evk_sp_vars);
+        ?>
         <form method="post">
             <?php wp_nonce_field('evk_rep_settings_builder', 'evk_rep_settings_builder_nonce'); ?>
             <div id="evk-settings-pages">
@@ -180,6 +189,7 @@ function evk_rep_settings_builder_page(): void {
             </div>
             <button type="button" class="button evk-sp-add-page"><span class="dashicons dashicons-plus-alt2"></span> Dodaj stronę ustawień</button>
             <p class="submit"><button type="submit" name="evk_rep_settings_builder_save" value="1" class="button button-primary">Zapisz strony</button></p>
+            <?php evk_rep_form_end_marker('evk_sp_form_end'); // MUSI być ostatnim polem formularza ?>
         </form>
     </div>
     <?php
@@ -190,6 +200,15 @@ add_action('admin_init', function () {
     if (empty($_POST['evk_rep_settings_builder_save'])) return;
     if (!evk_rep_can_manage()) return;
     if (!wp_verify_nonce($_POST['evk_rep_settings_builder_nonce'] ?? '', 'evk_rep_settings_builder')) return;
+
+    // Najcięższy formularz w całej wtyczce: każda zakładka rysuje checkbox dla KAŻDEJ grupy
+    // pól, więc liczba zmiennych rośnie iloczynowo (strony × zakładki × grupy). To tutaj
+    // najszybciej pęka max_input_vars — a zapis obciętego POST-a kasował komplet stron
+    // ustawień. Niepewny POST = brak zapisu.
+    if (!evk_rep_form_complete('evk_sp_form_end')) {
+        add_action('admin_notices', 'evk_rep_truncated_notice');
+        return;
+    }
 
     $raw = isset($_POST['evk_settings_pages']) && is_array($_POST['evk_settings_pages']) ? wp_unslash($_POST['evk_settings_pages']) : [];
     $out = [];

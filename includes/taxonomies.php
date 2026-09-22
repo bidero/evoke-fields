@@ -34,7 +34,10 @@ function evk_render_taxonomies_page() {
     }
 
     if ( isset( $_POST['evk_taxonomies_nonce'] ) && wp_verify_nonce( $_POST['evk_taxonomies_nonce'], 'evk_save_taxonomies' ) ) {
-        if ( ! isset( $_POST['taxonomies'] ) || ! is_array( $_POST['taxonomies'] ) || empty( $_POST['taxonomies'] ) ) {
+        // Jak na ekranie typów treści: niekompletny POST nie może uchodzić za „pustą listę".
+        if ( ! evk_rep_form_complete( 'evk_tax_form_end' ) ) {
+            evk_rep_truncated_notice();
+        } elseif ( ! isset( $_POST['taxonomies'] ) || ! is_array( $_POST['taxonomies'] ) || empty( $_POST['taxonomies'] ) ) {
             update_option( 'evk_taxonomies', array() );
             evk_rep_schedule_rewrite_flush();
             echo '<div class="updated"><p>' . esc_html__( 'Zapisano taksonomie.', 'evk-repeater' ) . '</p></div>';
@@ -109,6 +112,7 @@ function evk_render_taxonomies_page() {
     ?>
     <div class="wrap">
     <h1><?php esc_html_e( 'Taksonomie', 'evk-repeater' ); ?></h1>
+        <?php evk_rep_input_vars_warning( count( $taxonomies ) * 14 + 20 ); ?>
         <form method="post">
             <?php wp_nonce_field( 'evk_save_taxonomies', 'evk_taxonomies_nonce' ); ?>
             <div id="taxonomy-settings">
@@ -188,6 +192,7 @@ function evk_render_taxonomies_page() {
             <button type="button" id="add-taxonomy-row" class="button"><span class="dashicons dashicons-plus-alt2"></span> <?php esc_html_e( 'Dodaj taksonomię', 'evk-repeater' ); ?></button>
             <br><br>
             <p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Zapisz taksonomie', 'evk-repeater' ); ?>"></p>
+            <?php evk_rep_form_end_marker( 'evk_tax_form_end' ); // MUSI być ostatnim polem formularza ?>
         </form>
 
         <script>

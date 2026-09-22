@@ -2,6 +2,98 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.68.0] — 2026-09-22
+
+### Naprawione
+
+- **Znikające typy treści, taksonomie i strony ustawień.** Trzy ekrany
+  („Typy treści", „Taksonomie", „Strony ustawień") zapisują CAŁĄ listę naraz:
+  zawartość `$_POST` zastępuje zawartość opcji. Taki zapis jest bezpieczny
+  wyłącznie wtedy, gdy żądanie dotarło w całości — a nie dociera, gdy PHP
+  przekroczy `max_input_vars` (domyślnie 1000). PHP wtedy **nie zgłasza
+  błędu**: po prostu przestaje parsować dalsze zmienne. Nonce siedzi na
+  początku formularza, więc walidacja przechodzi, a handler zapisuje ogryzek
+  listy jako komplet — albo, gdy zabrakło całej tablicy, pustkę.
+
+  Skutek: część albo wszystkie definicje znikały po kliknięciu „Zapisz", bez
+  jednego komunikatu. Grupy pól przeżywały, bo są wpisami, a nie opcją — stąd
+  mylący obraz „zniknęły typy i strony opcji, pola zostały".
+
+  Najszybciej pękał ekran stron ustawień: każda zakładka rysuje checkbox dla
+  KAŻDEJ grupy pól, więc liczba pól formularza rośnie iloczynowo
+  (strony × zakładki × grupy). Każde pole dokładane do wiersza zbliżało duże
+  instalacje do granicy — checkbox „poza indeksem" z 1.67.0 u części witryn ją
+  przekroczył.
+
+  Teraz: na samym końcu każdego z tych formularzy stoi znacznik kontrolny.
+  Brak znacznika w `$_POST` (albo liczba zmiennych dobijająca do limitu) =
+  żądanie urwane = **zapis nie następuje**, a ekran mówi wprost, co się stało
+  i o co poprosić hosting. Dotychczasowe definicje zostają nietknięte.
+  (`evk-repeater.php`, `includes/cpt.php`, `includes/taxonomies.php`,
+  `includes/settings.php`)
+
+- **Odinstalowanie wtyczki kasowało całą konfigurację — domyślnie i bez
+  pytania.** „Aktualizacja ręczna" wygląda u większości ludzi tak: wyłącz →
+  usuń → wgraj nowy ZIP. Krok „usuń" uruchamia `uninstall.php`, który kasował
+  grupy pól, definicje CPT/taksonomii i strony ustawień. Rutynowa aktualizacja
+  zamieniała się w utratę konfiguracji.
+
+  Teraz `uninstall.php` domyślnie **nie usuwa niczego poza śmieciami** (flagi,
+  transienty). Skasowanie konfiguracji trzeba włączyć świadomie: Narzędzia →
+  Kopie zapasowe → „Usuń konfigurację przy odinstalowaniu wtyczki".
+  (`uninstall.php`)
+
+- **Kopie zapasowe ginęły razem z danymi.** `uninstall.php` kasował też katalog
+  kopii i opcję z jego nazwą. Kopia, którą usuwa to samo kliknięcie co dane,
+  nie jest kopią zapasową. Katalog kopii nie jest teraz usuwany w żadnym
+  wypadku, a przed skasowaniem konfiguracji powstaje jeszcze jeden zrzut.
+
+- **Kopie zapasowe „przestawały istnieć" po utracie opcji.** Nazwa katalogu ma
+  losowy sufiks i siedzi w opcji `evk_backups_dir`. Gdy ta opcja znikała
+  (odinstalowanie, przenosiny bazy), wtyczka losowała nową nazwę — kopie dalej
+  leżały na dysku, ale panel pokazywał „brak kopii". Teraz przed wylosowaniem
+  nazwy przeszukiwany jest katalog `uploads`, a istniejący zbiór kopii zostaje
+  przejęty. Sekcja „Kopie zapasowe" pokazuje też kopie znalezione w innych
+  katalogach i pozwala się na nie przełączyć. (`includes/backups.php`)
+
+- **Kopia powstawała PO zmianie, nie przed.** Zrzut robiony na `shutdown`
+  utrwalał stan już nadpisany — po błędnym zapisie w pliku lądowała pustka,
+  a nie to, co zginęło. Teraz pierwsza zmiana struktury w żądaniu odpala
+  snapshot „przed" (filtr `pre_update_option_*`), a `shutdown` dokłada stan
+  „po". Dochodzi też zrzut przy wyłączaniu wtyczki — ostatnia chwila przed
+  „usuń i wgraj nowy ZIP". (`includes/backups.php`)
+
+- **Rotacja kopii mogła wyrzucić jedyny ratunek.** Seria błędnych zapisów
+  generuje serię pustych kopii, a rotacja „najstarsze out" wypychała te
+  z danymi. Najnowsza niepusta kopia jest teraz chroniona przed rotacją.
+
+- **Nieudana aktualizacja z GitHuba cicho dezaktywowała wtyczkę.** Gdy
+  zmiana nazwy katalogu z zipballa się nie powiodła, updater instalował paczkę
+  pod nazwą `bidero-evoke-fields-abc1234`. WordPress kasuje stary katalog
+  i aktywuje wtyczkę po ŚCIEŻCE pliku głównego, więc wtyczka wyłączała się
+  sama — a wyłączona nie rejestruje typów, taksonomii ani stron ustawień.
+  W panelu wygląda to identycznie jak utrata danych, choć w bazie leży
+  komplet. Teraz updater przerywa aktualizację z czytelnym błędem i zostawia
+  działającą wersję. (`includes/github-updater.php`)
+
+### Dodane
+
+- **Narzędzia → „Stan konfiguracji w bazie".** Liczby czytane prosto z opcji
+  i tabeli wpisów, z pominięciem cache'u i rejestracji typów, wraz ze
+  wskazaniem, w której opcji/tabeli każdy element leży. Rozstrzyga w dwie
+  sekundy, czy dane zginęły, czy tylko nikt ich nie rejestruje. Panel pokazuje
+  też aktualny `max_input_vars` i to, co stanie się przy odinstalowaniu
+  wtyczki. (`includes/tools.php`)
+
+- **Ostrzeżenie przed limitem `max_input_vars`.** Ekrany, które rosną wraz
+  z konfiguracją, szacują swój rozmiar i mówią o zbliżaniu się do limitu,
+  zanim zrobi się problem — razem z wartością, o jaką poprosić hosting.
+
+- **Lista kopii z zawartością i powodem zrzutu.** Przy każdej kopii widać, ile
+  zawiera grup, typów i taksonomii oraz czy powstała przed zmianą, po zmianie,
+  przed przywróceniem czy przy wyłączaniu wtyczki. Kopie puste są oznaczone na
+  czerwono — wybór właściwej kopii do przywrócenia przestaje być zgadywanką.
+
 ## [1.67.0] — 2026-09-22
 
 ### Dodane

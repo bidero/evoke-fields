@@ -59,7 +59,12 @@ function evk_render_custom_post_types_page() {
     );
 
     if ( isset( $_POST['evk_custom_post_types_nonce'] ) && wp_verify_nonce( $_POST['evk_custom_post_types_nonce'], 'evk_save_custom_post_types' ) ) {
-        if ( isset( $_POST['custom_post_types'] ) && is_array( $_POST['custom_post_types'] ) ) {
+        // Ten ekran zapisuje CAŁĄ listę naraz — POST zastępuje zawartość opcji. Jeśli POST
+        // dotarł niekompletny (max_input_vars, urwane żądanie), „zapis" skasowałby definicje,
+        // których w nim zabrakło. Bez pewności co do kompletności nie ruszamy opcji.
+        if ( ! evk_rep_form_complete( 'evk_cpt_form_end' ) ) {
+            evk_rep_truncated_notice();
+        } elseif ( isset( $_POST['custom_post_types'] ) && is_array( $_POST['custom_post_types'] ) ) {
             $custom_post_types = array();
             $skipped_slugs     = array();
 
@@ -154,6 +159,7 @@ function evk_render_custom_post_types_page() {
     ?>
     <div class="wrap">
         <h1><?php echo esc_html__( 'Typy treści', 'evk-repeater' ); ?></h1>
+        <?php evk_rep_input_vars_warning( count( $custom_post_types ) * 40 + 20 ); ?>
         <form method="post">
             <?php wp_nonce_field( 'evk_save_custom_post_types', 'evk_custom_post_types_nonce' ); ?>
             <div id="custom-post-type-settings">
@@ -281,6 +287,7 @@ function evk_render_custom_post_types_page() {
             <button type="button" id="add-custom-post-type-row" class="button"><span class="dashicons dashicons-plus-alt2"></span> <?php echo esc_html__( 'Dodaj typ treści', 'evk-repeater' ); ?></button>
             <br><br>
             <p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="<?php echo esc_attr__( 'Zapisz typy treści', 'evk-repeater' ); ?>"></p>
+            <?php evk_rep_form_end_marker( 'evk_cpt_form_end' ); // MUSI być ostatnim polem formularza ?>
         </form>
 
         <script>

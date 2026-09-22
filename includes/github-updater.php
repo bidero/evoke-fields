@@ -275,7 +275,9 @@ class EVK_Fields_GitHub_Updater {
         if (($hook_extra['plugin'] ?? '') !== $this->basename) return $source;
 
         global $wp_filesystem;
-        if (!$wp_filesystem) return $source;
+        if (!$wp_filesystem) {
+            return new WP_Error('evk_fs', 'Brak dostępu do systemu plików — aktualizacja przerwana, wtyczka została nietknięta.');
+        }
 
         $desired = trailingslashit($remote_source) . $this->slug . '/';
         if (untrailingslashit($source) === untrailingslashit($desired)) return $source;
@@ -283,7 +285,24 @@ class EVK_Fields_GitHub_Updater {
         if ($wp_filesystem->move(untrailingslashit($source), untrailingslashit($desired), true)) {
             return $desired;
         }
-        return $source;
+
+        /* Przerywamy aktualizację, zamiast instalować paczkę pod nazwą z zipballa
+           („bidero-evoke-fields-abc1234").
+
+           Dlaczego to nie jest przesada: WordPress kasuje stary katalog wtyczki i
+           aktywuje ją po ŚCIEŻCE pliku głównego. Instalacja pod inną nazwą katalogu
+           daje więc cichą dezaktywację — a wyłączona wtyczka nie rejestruje typów
+           treści, taksonomii ani stron ustawień. Z panelu wygląda to identycznie jak
+           utrata danych („wszystko zniknęło"), choć w bazie leży komplet. Lepiej nie
+           zaktualizować i powiedzieć o tym wprost. */
+        return new WP_Error(
+            'evk_rename_failed',
+            sprintf(
+                'Nie udało się przygotować katalogu wtyczki (%s). Aktualizacja przerwana — dotychczasowa wersja działa dalej. '
+                . 'Zwykle to kwestia uprawnień do zapisu w wp-content/plugins. Dane w bazie nie zostały naruszone.',
+                esc_html($this->slug)
+            )
+        );
     }
 
     // =====================================================================

@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.67.0
+ * Version: 1.68.0
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.67.0');
+define('EVK_REP_VERSION', '1.68.0');
 define('EVK_REP_FILE', __FILE__);
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
@@ -129,6 +129,87 @@ add_action('admin_enqueue_scripts', function ($hook) {
     wp_enqueue_style('evk-rep-admin', EVK_REP_URL . 'assets/admin.css', [], EVK_REP_VERSION);
     evk_rep_admin_localize();
 });
+
+/**
+ * OCHRONA PRZED CICHĄ UTRATĄ DEFINICJI PRZY ZAPISIE EKRANU.
+ *
+ * Ekrany „Typy treści" i „Taksonomie" zapisują CAŁĄ listę naraz: to, co przyszło
+ * w POST, zastępuje zawartość opcji. Taki zapis jest bezpieczny tylko wtedy, gdy
+ * POST na pewno dotarł w całości — a nie dociera w dwóch sytuacjach:
+ *
+ *  1. PHP przekroczył `max_input_vars` (domyślnie 1000). Wtedy NIE zgłasza błędu do
+ *     aplikacji — po prostu przestaje parsować dalsze zmienne. Nonce siedzi na
+ *     początku formularza, więc walidacja przechodzi, a handler zapisuje ogryzek
+ *     listy jako komplet. Definicje z końca listy znikają bez śladu. Każde pole
+ *     dokładane do wiersza (np. checkbox „poza indeksem" w 1.67.0) zbliża duże
+ *     instalacje do tego limitu.
+ *  2. POST urwał się po drodze (proxy, limit `post_max_size`, wtyczka bezpieczeństwa).
+ *
+ * Stąd dwa zabezpieczenia. `evk_rep_post_truncated()` porównuje liczbę zmiennych
+ * z limitem PHP. `evk_rep_form_complete()` sprawdza znacznik doklejany na SAMYM KOŃCU
+ * formularza — jeśli go nie ma, POST urwał się przed końcem, cokolwiek było przyczyną.
+ * Brak pewności = nie zapisujemy. Lepszy komunikat „nie zapisano" niż pusta lista typów.
+ */
+function evk_rep_count_input_vars($data): int {
+    $n = 0;
+    foreach ((array) $data as $v) {
+        $n += is_array($v) ? evk_rep_count_input_vars($v) : 1;
+    }
+    return $n;
+}
+
+/** Czy $_POST dobił do limitu max_input_vars (czyli najpewniej został obcięty). */
+function evk_rep_post_truncated(): bool {
+    $max = (int) ini_get('max_input_vars');
+    if ($max <= 0) return false;
+    return evk_rep_count_input_vars($_POST) >= $max;
+}
+
+/** Znacznik końca formularza — drukowany tuż przed </form>. */
+function evk_rep_form_end_marker(string $name): void {
+    echo '<input type="hidden" name="' . esc_attr($name) . '" value="1">';
+}
+
+/** Czy formularz dotarł w całości (znacznik końcowy obecny i POST nieobcięty). */
+function evk_rep_form_complete(string $name): bool {
+    return !empty($_POST[$name]) && !evk_rep_post_truncated();
+}
+
+/**
+ * Ostrzeżenie PRZED zapisem, gdy formularz zbliża się do limitu max_input_vars.
+ *
+ * Wykrycie obcięcia po fakcie ratuje dane, ale nie pozwala zapisać zmian — a człowiek
+ * i tak musi dowiedzieć się, co podkręcić na hostingu. Dlatego ekrany, które rosną
+ * wraz z konfiguracją, szacują swój rozmiar i mówią o tym, zanim zrobi się problem.
+ *
+ * @param int $estimate Szacowana liczba pól formularza na tym ekranie.
+ */
+function evk_rep_input_vars_warning(int $estimate): void {
+    $max = (int) ini_get('max_input_vars');
+    if ($max <= 0 || $estimate < (int) ($max * 0.7)) return;
+
+    echo '<div class="notice notice-warning"><p><strong>'
+        . esc_html__( 'Ten ekran zbliża się do limitu PHP.', 'evk-repeater' ) . '</strong> '
+        . sprintf(
+            /* translators: 1: szacowana liczba pól, 2: limit max_input_vars */
+            esc_html__( 'Formularz ma około %1$d pól przy limicie max_input_vars = %2$d. Po przekroczeniu limitu PHP ucina dane bez ostrzeżenia. Wtyczka wykryje obcięcie i odmówi zapisu (nic nie zginie), ale zapisanie zmian będzie niemożliwe do czasu zwiększenia limitu — poproś hosting o ustawienie max_input_vars na co najmniej %3$d.', 'evk-repeater' ),
+            $estimate,
+            $max,
+            max( 5000, (int) ( $estimate * 2 ) )
+        )
+        . '</p></div>';
+}
+
+/** Komunikat dla urwanego POST-a — jeden tekst dla obu ekranów. */
+function evk_rep_truncated_notice(): void {
+    $max = (int) ini_get('max_input_vars');
+    echo '<div class="notice notice-error"><p><strong>'
+        . esc_html__( 'Nie zapisano — formularz dotarł niekompletny.', 'evk-repeater' ) . '</strong> '
+        . esc_html__( 'Dotychczasowe definicje zostały nienaruszone. Najczęstsza przyczyna to limit PHP max_input_vars', 'evk-repeater' )
+        . ( $max > 0 ? ' (' . esc_html__( 'obecnie', 'evk-repeater' ) . ': <code>' . (int) $max . '</code>)' : '' )
+        . esc_html__( ' — formularz z wieloma typami treści przekracza go i PHP ucina resztę danych bez ostrzeżenia. Zwiększ limit (np. do 5000) w php.ini albo poproś o to hosting, a następnie zapisz ponownie.', 'evk-repeater' )
+        . '</p></div>';
+}
 
 /**
  * Odświeżenie permalinków po zmianie definicji CPT / taksonomii.

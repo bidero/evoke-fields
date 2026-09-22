@@ -614,6 +614,88 @@ add_action('admin_init', function () {
 });
 
 // =========================================================================
+// STAN KONFIGURACJI W BAZIE (diagnostyka)
+// =========================================================================
+
+/**
+ * Gdzie dokładnie leży każdy element konfiguracji — i ile go tam jest.
+ *
+ * Powód istnienia: „wszystko zniknęło" ma dwie zupełnie różne przyczyny, a w panelu
+ * wyglądają identycznie. Albo dane naprawdę zostały nadpisane, albo są w bazie, lecz
+ * nikt ich nie rejestruje (wtyczka wyłączona po nieudanej aktualizacji, zmieniona
+ * nazwa katalogu, konflikt). Ta tabelka rozstrzyga to w dwie sekundy: liczby czytane
+ * są PROSTO z opcji i tabeli wpisów, z pominięciem cache'y i rejestracji typów.
+ */
+function evk_tools_render_db_state(): void {
+    global $wpdb;
+
+    $cpt   = (array) get_option('evk_custom_post_types', []);
+    $tax   = (array) get_option('evk_taxonomies', []);
+    $pages = (array) get_option('evk_rep_settings_pages', []);
+    $grp   = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'evk_field_group' AND post_status != 'trash'");
+    $vals  = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like(EVK_TOOLS_OPT_PREFIX) . '%'));
+
+    $max      = (int) ini_get('max_input_vars');
+    $wipe_on  = (int) get_option('evk_rep_delete_data_on_uninstall', 0);
+
+    $rows = [
+        ['Grupy pól (definicje)',      $grp,            'wpisy <code>evk_field_group</code> w tabeli <code>' . esc_html($wpdb->posts) . '</code>'],
+        ['Typy treści (CPT)',          count($cpt),     'opcja <code>evk_custom_post_types</code>'],
+        ['Taksonomie',                 count($tax),     'opcja <code>evk_taxonomies</code>'],
+        ['Strony ustawień',            count($pages),   'opcja <code>evk_rep_settings_pages</code>'],
+        ['Wartości stron ustawień',    $vals,           'opcje <code>evk_rep_opt_*</code>'],
+    ];
+    ?>
+    <div class="evk-settings-group">
+        <h2 class="evk-settings-group-title"><span class="dashicons dashicons-database" style="vertical-align:text-bottom;color:#2563eb;"></span> Stan konfiguracji w bazie</h2>
+        <div>
+            <p style="margin-top:0;color:#475569;">
+                Liczby czytane bezpośrednio z bazy, z pominięciem cache'u i rejestracji typów.
+                Jeśli coś „zniknęło" z panelu, ale <strong>tutaj</strong> jest widoczne — dane żyją,
+                a problem leży w rejestracji (wyłączona wtyczka, zmieniona nazwa katalogu, konflikt).
+                Jeśli tutaj jest zero — przywróć kopię zapasową z sekcji niżej.
+            </p>
+            <table class="widefat striped" style="max-width:720px;">
+                <thead><tr><th>Element</th><th style="width:80px;">W bazie</th><th>Gdzie</th></tr></thead>
+                <tbody>
+                <?php foreach ($rows as $r): ?>
+                    <tr>
+                        <td><?php echo esc_html($r[0]); ?></td>
+                        <td style="<?php echo $r[1] > 0 ? 'color:#166534;font-weight:600;' : 'color:#b91c1c;font-weight:600;'; ?>"><?php echo (int) $r[1]; ?></td>
+                        <td style="color:#64748b;font-size:12px;"><?php echo $r[2]; // zawiera <code>, treść budowana lokalnie ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p style="margin:12px 0 0;color:#475569;">
+                <strong>Limit PHP <code>max_input_vars</code>:</strong>
+                <?php if ($max <= 0): ?>
+                    nieokreślony
+                <?php else: ?>
+                    <code><?php echo (int) $max; ?></code>
+                    <?php if ($max < 3000): ?>
+                        — <span style="color:#92400e;">nisko. Ekrany typów treści i stron ustawień rosną wraz z konfiguracją;
+                        po przekroczeniu limitu PHP ucina dane formularza bez ostrzeżenia. Wtyczka wykrywa obcięcie
+                        i odmawia zapisu, ale wygodniej podnieść limit (np. 5000) na hostingu.</span>
+                    <?php else: ?>
+                        — <span style="color:#166534;">z zapasem.</span>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </p>
+            <p style="margin:6px 0 0;color:#475569;">
+                <strong>Przy odinstalowaniu wtyczki:</strong>
+                <?php if ($wipe_on): ?>
+                    <span style="color:#b91c1c;">konfiguracja zostanie usunięta</span> (przełącznik w sekcji „Kopie zapasowe").
+                <?php else: ?>
+                    <span style="color:#166534;">konfiguracja zostaje w bazie</span> — usunięcie i ponowna instalacja wtyczki niczego nie kasuje.
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+    <?php
+}
+
+// =========================================================================
 // STRONA
 // =========================================================================
 
@@ -652,6 +734,8 @@ function evk_tools_page(): void {
                 wartości pól zapisanych przy wpisach (są związane z ID wpisów danej witryny).
             </div>
         </div>
+
+        <?php evk_tools_render_db_state(); ?>
 
         <!-- EKSPORT -->
         <div class="evk-settings-group">
