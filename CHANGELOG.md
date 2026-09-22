@@ -2,6 +2,41 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.67.0] — 2026-09-22
+
+### Dodane
+
+- **Typ treści i taksonomia „poza indeksem".** Nowy checkbox przy definicji
+  typu treści (sekcja „Widoczność w wyszukiwarkach") i przy definicji
+  taksonomii. Zaznaczony robi trzy rzeczy naraz: wyprowadza typ z
+  `wp-sitemap.xml`, dokłada `exclude_from_search` przy rejestracji (czyli
+  wyjmuje wpisy z wyszukiwarki WordPressa) i drukuje `<meta name="robots"
+  content="noindex, follow">` na pojedynczym wpisie, archiwum typu i archiwum
+  termu.
+
+  PO CO: typ zrobiony pod slider, menu albo listę referencji nie ma być
+  stroną — jego wpisy renderują się wewnątrz innych stron. WordPress traktuje
+  jednak każdy publiczny typ jak pełnoprawną treść, więc slajdy lądowały
+  w mapie strony i w indeksie Google pod własnymi adresami.
+
+  CZYM TO SIĘ RÓŻNI OD „CHRONIONEGO": typ chroniony to zamek (404 bez klucza,
+  poza REST-em, poza pętlami gościa). Ten przełącznik niczego nie zamyka —
+  wpis dalej renderuje się wszędzie tam, gdzie go wstawiono, a znika wyłącznie
+  z mapy, wyszukiwarki i indeksu. (`includes/noindex.php`, `includes/cpt.php`,
+  `includes/taxonomies.php`)
+
+- **Most do Evoke ONE.** Funkcje `evk_noindex_post_types()`
+  i `evk_noindex_taxonomies()` wystawiają listę oznaczonych slugów. Panel
+  Evoke ONE (SEO → Mapa strony, od 1.221.0) czyta je i pokazuje takie pozycje
+  jako zaznaczone i zablokowane — ustawienie ma jedno źródło, a nie dwa
+  rozjeżdżające się.
+
+  Meta tag `noindex` FIELDS drukuje **tylko wtedy, gdy nie ma modułu SEO Evoke
+  ONE**: tamten renderuje komplet meta tagów z jednego resolvera, więc drugi
+  `<meta name="robots">` obok byłby dubletem, którego wyszukiwarki nie mają jak
+  rozstrzygnąć. Wyprowadzenie z mapy i z wyszukiwarki działa niezależnie od
+  tego, czy Evoke ONE jest zainstalowane.
+
 ## [1.66.2] — 2026-09-02
 
 ## [1.66.0] — 2026-09-02

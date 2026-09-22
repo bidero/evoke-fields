@@ -79,6 +79,7 @@ function evk_render_taxonomies_page() {
                     'hierarchical' => isset( $taxonomy['hierarchical'] ) ? 1 : 0,
                     'post_types'   => array_map( 'sanitize_text_field', $taxonomy['post_types'] ),
                     'add_columns'  => isset( $taxonomy['add_columns'] ) ? 1 : 0,
+                    'noindex'      => isset( $taxonomy['noindex'] ) ? 1 : 0,
                     'meta_box'     => in_array( $taxonomy['meta_box'] ?? '', array( 'select', 'radio' ), true ) ? $taxonomy['meta_box'] : 'default',
                     'dep_tax'      => sanitize_key( $taxonomy['dep_tax'] ?? '' ),
                     'dep_key'      => sanitize_key( $taxonomy['dep_key'] ?? '' ),
@@ -153,6 +154,13 @@ function evk_render_taxonomies_page() {
                                 <div class="checkbox-container">
                                     <input type="checkbox" name="taxonomies[<?php echo esc_attr( $index ); ?>][add_columns]" <?php checked( isset( $taxonomy['add_columns'] ) ? $taxonomy['add_columns'] : 0, 1 ); ?> />
                                 </div>
+                            </div>
+                            <div class="field-group">
+                                <label><?php esc_html_e( 'Poza indeksem', 'evk-repeater' ); ?></label><br>
+                                <div class="checkbox-container">
+                                    <input type="checkbox" name="taxonomies[<?php echo esc_attr( $index ); ?>][noindex]" <?php checked( ! empty( $taxonomy['noindex'] ), 1 ); ?> />
+                                </div>
+                                <p class="description" style="margin:6px 0 0;"><?php esc_html_e( 'Archiwa termów znikają z mapy strony i dostają meta noindex.', 'evk-repeater' ); ?></p>
                             </div>
                             <div class="field-group">
                                 <label><?php esc_html_e( 'Metabox wyboru', 'evk-repeater' ); ?></label><br>
@@ -284,6 +292,12 @@ function evk_render_taxonomies_page() {
                             <label><?php esc_html_e( 'Pokaż kolumny', 'evk-repeater' ); ?></label><br>
                             <div class="checkbox-container">
                                 <input type="checkbox" name="taxonomies[${newIndex}][add_columns]" />
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label><?php echo esc_js( __( 'Poza indeksem', 'evk-repeater' ) ); ?></label><br>
+                            <div class="checkbox-container">
+                                <input type="checkbox" name="taxonomies[${newIndex}][noindex]" />
                             </div>
                         </div>
                         <div class="field-group">

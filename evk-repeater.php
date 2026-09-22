@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.66.2
+ * Version: 1.67.0
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.66.2');
+define('EVK_REP_VERSION', '1.67.0');
 define('EVK_REP_FILE', __FILE__);
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
@@ -161,6 +161,7 @@ require_once EVK_REP_PATH . 'includes/builder.php';
 require_once EVK_REP_PATH . 'includes/cpt.php';
 require_once EVK_REP_PATH . 'includes/protect.php'; // pola wrażliwe + typy chronione (po cpt.php — używa evk_cpt_config)
 require_once EVK_REP_PATH . 'includes/taxonomies.php';
+require_once EVK_REP_PATH . 'includes/noindex.php'; // typy/taksonomie poza mapą strony i indeksem (po cpt.php i taxonomies.php — czyta ich opcje)
 require_once EVK_REP_PATH . 'includes/settings.php';
 require_once EVK_REP_PATH . 'includes/tools.php';
 require_once EVK_REP_PATH . 'includes/backups.php'; // auto-kopie konfiguracji (po tools.php — używa jego eksportu/importu)

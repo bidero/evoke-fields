@@ -104,6 +104,7 @@ function evk_render_custom_post_types_page() {
                         'hide_title'         => isset( $post_type['hide_title'] ) ? 1 : 0,
                         'hide_title_col'     => isset( $post_type['hide_title_col'] ) ? 1 : 0,
                         'rand_slug'          => isset( $post_type['rand_slug'] ) ? 1 : 0,
+                        'noindex'            => isset( $post_type['noindex'] ) ? 1 : 0,
                         'protected'          => isset( $post_type['protected'] ) ? 1 : 0,
                         'protect_email_field'=> sanitize_key( $post_type['protect_email_field'] ?? '' ),
                         'protect_email_subject' => sanitize_text_field( $post_type['protect_email_subject'] ?? '' ),
@@ -243,6 +244,13 @@ function evk_render_custom_post_types_page() {
                                     <label class="evk-cpt-check">
                                         <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][rand_slug]" <?php checked( ! empty( $post_type['rand_slug'] ), 1 ); ?> />
                                         <span><?php echo esc_html__( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ); ?></span>
+                                    </label>
+                                </div>
+                                <div class="evk-cpt-labels">
+                                    <p class="evk-cpt-labels-title"><?php echo esc_html__( 'Widoczność w wyszukiwarkach', 'evk-repeater' ); ?></p>
+                                    <label class="evk-cpt-check">
+                                        <input type="checkbox" name="custom_post_types[<?php echo esc_attr( $index ); ?>][noindex]" <?php checked( ! empty( $post_type['noindex'] ), 1 ); ?> />
+                                        <span><?php echo esc_html__( 'Poza indeksem — bez mapy strony, z meta noindex i poza wyszukiwarką WordPressa (dla typów renderowanych w innych stronach: slidery, menu, listy)', 'evk-repeater' ); ?></span>
                                     </label>
                                 </div>
                                 <div class="evk-cpt-labels">
@@ -408,6 +416,13 @@ function evk_render_custom_post_types_page() {
                                 <label class="evk-cpt-check">
                                     <input type="checkbox" name="custom_post_types[${index}][rand_slug]" />
                                     <span><?php echo esc_js( __( 'Losowa nazwa skrócona (slug) — 6 znaków, tylko nowe wpisy', 'evk-repeater' ) ); ?></span>
+                                </label>
+                            </div>
+                            <div class="evk-cpt-labels">
+                                <p class="evk-cpt-labels-title"><?php echo esc_js( __( 'Widoczność w wyszukiwarkach', 'evk-repeater' ) ); ?></p>
+                                <label class="evk-cpt-check">
+                                    <input type="checkbox" name="custom_post_types[${index}][noindex]" />
+                                    <span><?php echo esc_js( __( 'Poza indeksem — bez mapy strony, z meta noindex i poza wyszukiwarką WordPressa', 'evk-repeater' ) ); ?></span>
                                 </label>
                             </div>
                             <div class="evk-cpt-labels">
@@ -607,6 +622,14 @@ function evk_register_custom_post_types() {
             'show_ui'           => ( isset($post_type['show_ui']) && $post_type['show_ui'] !== '' ) ? (bool)$post_type['show_ui'] : true,
             'show_in_nav_menus' => ( isset($post_type['show_in_nav_menus']) && $post_type['show_in_nav_menus'] !== '' ) ? (bool)$post_type['show_in_nav_menus'] : true,
         );
+
+        /* „Poza indeksem" — typ znika z wyszukiwarki WordPressa już na poziomie
+           rejestracji. Mapa strony i meta `noindex` siedzą w `noindex.php`;
+           tu jest to jedno, czego filtrem po fakcie się nie załatwia, bo
+           `exclude_from_search` czyta się w momencie rejestracji typu. */
+        if ( ! empty( $post_type['noindex'] ) ) {
+            $args['exclude_from_search'] = true;
+        }
 
         $post_type_slug = substr( $post_type['slug'], 0, 20 );
         register_post_type( $post_type_slug, $args );
