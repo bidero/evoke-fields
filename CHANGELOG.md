@@ -2,6 +2,69 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.70.0] — 2026-09-27
+
+### Dodane
+
+- **Tłumaczenia wartości pól.** Na stronie wielojęzycznej pola Tekst,
+  Tekst wielowierszowy, Edytor WYSIWYG i etykieta Linku (także jako podpola
+  repeaterów, na każdym poziomie) mają wersje językowe.
+  (`includes/translations.php`, `assets/translations.js`, `assets/translations.css`)
+  - Języki podaje wtyczka od języków przez filtry `evk_fields_jezyki`,
+    `evk_fields_biezacy_jezyk`, `evk_fields_jezyk_podstawowy`
+    i `evk_fields_url_jezyka` — w praktyce Evoke ONE 1.250.0 z włączonymi
+    Tłumaczeniami. Bez niej panel i strona wyglądają jak dotąd.
+  - Wpisy i typy treści, termy taksonomii, strony ustawień. Profil
+    użytkownika i media — bez pól języków.
+  - Nad grupą przełącznik `PL | EN 3/5 | DE 0/5` (przetłumaczone / pola
+    z tekstem oryginału). Jedno kliknięcie przełącza wszystkie grupy na
+    ekranie. W widoku języka zostają tylko pola do tłumaczenia (także
+    w repeaterach), pod każdym podgląd oryginału. Zakładki i akordeony bez
+    takich pól znikają; wiersze dodaje się i przestawia w oryginale.
+  - „Kopiuj z polskiego" — przy nadpisaniu innego tłumaczenia pyta.
+  - Dodawanie termu (AJAX): WordPress czyści potem tylko widoczne pola,
+    więc ukryty w widoku języka oryginał przechodziłby do następnego
+    termu. Po udanym dodaniu pola języków i ukryty oryginał są czyszczone,
+    widok wraca do oryginału.
+  - **„Do sprawdzenia"**: przy tłumaczeniu leży skrót tekstu, z którego
+    powstało (`…__zrodlo`). Zmiana oryginału po tłumaczeniu zapala
+    znacznik, na ekranie od razu i po zapisie. Zdejmuje go przycisk
+    „Sprawdzone" albo poprawka tłumaczenia. Samo formatowanie w WYSIWYG
+    (akapity, znaczniki) nie jest zmianą tekstu.
+  - Edytor WYSIWYG języka startuje dopiero, gdy jego pole jest widoczne
+    (w ukrytym dostawał zerową wysokość), a pole pod nim jest aktualne
+    przy każdej zmianie — zapis z edytora bloków i dodawanie termu idą
+    bez zdarzenia submit.
+  - Zapis obok oryginału pod `evk_tl_{język}__{klucz}`: pole pojedyncze —
+    osobna meta, wiersz — w wierszu, strona ustawień — w tablicy opcji.
+    Tłumaczenia bez widocznego pola (język wyłączony, „Nie tłumacz",
+    Tłumaczenia wyłączone) wracają w formularzu jako pola ukryte, więc
+    zwykły zapis ich nie kasuje.
+  - Na stronie tagi `{evk_field_…}`, `{evk_opt_…}`, pętle i
+    `evk_get_field()` dają wartość w języku strony; puste tłumaczenie →
+    oryginał, pusty oryginał → pusto wszędzie. Adres z Linku idzie przez
+    `evk_fields_url_jezyka` (wewnętrzny → wersja językowa). W builderze
+    Bricksa zawsze oryginał.
+- **„Nie tłumacz"** w kreatorze pola (przy typach, które się tłumaczy):
+  bez pól języków, ta sama wartość wszędzie. Zapisane tłumaczenia zostają
+  w danych — odznaczenie je przywraca.
+
+### Naprawione
+
+- **Błąd JS przy każdym zapisie wpisu w klasycznym edytorze.** `admin.js`
+  wołał przy submit `wp.editor.save()` — takiej funkcji WordPress nie ma.
+  Wyjątek przerywał pozostałe obsługi zdarzenia. Teraz
+  `tinymce.triggerSave()`. (Wyłapał to test panelu tłumaczeń w Evoke ONE.)
+
+### Testy
+
+- W repozytorium Evoke ONE (1.250.0), na testowym WordPressie z obiema
+  wtyczkami: `fields-tlumaczenia` (zapis przez prawdziwe `save_post`,
+  `edited_category` i handler strony ustawień z formularzem złożonym jak
+  w przeglądarce; „Do sprawdzenia"; przenoszenie; odczyt w każdym języku;
+  adresy) i `fields-panel` (Chromium: klasyczny edytor, dodawanie
+  i edycja termu, strona ustawień, edytor blokowy, klawiatura, 360 px).
+
 ## [1.69.0] — 2026-09-22
 
 ### Naprawione

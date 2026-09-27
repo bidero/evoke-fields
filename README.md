@@ -64,6 +64,17 @@ Dwa niezależne mechanizmy, do użycia osobno lub razem:
 - **Meta powiązanego obiektu:** `{evk_field_klucz__meta:inny_klucz}` (dla pól Użytkownik / Relacja / Taksonomia).
 - W elemencie **Image** Bricks używaj wariantu `__id` (pełny srcset i lightbox); `__preview` pliku PDF w kontekście Image zwraca ID podglądu automatycznie.
 
+## Tłumaczenia wartości pól
+
+Na stronie wielojęzycznej pola **Tekst**, **Tekst wielowierszowy**, **Edytor WYSIWYG** i **etykieta Linku** (także w repeaterach) mają wersje językowe. Języki podaje wtyczka od języków — Evoke ONE z włączonymi Tłumaczeniami. Bez niej panel i strona wyglądają jak dotąd.
+
+- **Gdzie:** wpisy i typy treści, termy taksonomii, strony ustawień. Profil użytkownika i media — bez pól języków.
+- **Panel:** nad grupą przełącznik `PL | EN 3/5 | DE 0/5` (przetłumaczone / pola z tekstem). W widoku języka zostają tylko pola do tłumaczenia, pod każdym polski oryginał. „Kopiuj z polskiego" przepisuje oryginał; po zmianie oryginału tłumaczenie dostaje znacznik **„Do sprawdzenia"**, zdejmowany przyciskiem „Sprawdzone" albo poprawieniem tłumaczenia.
+- **„Nie tłumacz"** w kreatorze pola: bez pól języków, ta sama wartość wszędzie. Już zapisane tłumaczenia zostają w bazie — odznaczenie przywraca je.
+- **Na stronie** tagi `{evk_field_…}`, `{evk_opt_…}`, pętle i `evk_get_field()` dają wartość w języku strony. Puste tłumaczenie → tekst polski. Pusty polski → pusto we wszystkich językach. Adres w Linku zawsze idzie przez filtr — wewnętrzny prowadzi do wersji językowej. W builderze Bricksa zawsze polski.
+- **Zapis:** obok oryginału, klucz `evk_tl_{język}__{klucz}` (+ `…__zrodlo`): pole pojedyncze — osobna meta; wiersz repeatera — w wierszu; strona ustawień — w tablicy opcji. `evk_rows()` i `evk_get_option_field()` oddają dane surowe, z tymi kluczami.
+- **Filtry** dla innej wtyczki od języków: `evk_fields_jezyki` (`['en' => 'English']`, pusta = wyłączone), `evk_fields_biezacy_jezyk`, `evk_fields_jezyk_podstawowy` (`'pl'`), `evk_fields_url_jezyka` (`$url, $lang`).
+
 ## Pętle (Query Loop)
 
 W Query Loop elementu Bricks: **„EVK: …"** (wiersze repeatera; wewnątrz pętli tagi subpól), **„EVK Opcje: …"** (repeater ze strony ustawień), **„EVK Galeria: …"** + **„EVK Galeria kategorie: …"** (galeria z filtrami), **„EVK Relacja: …"**, **„EVK Użytkownicy: …"**, **„EVK Termy (pole): …"**. Pętle zagnieżdżają się (repeater w repeaterze).

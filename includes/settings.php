@@ -247,6 +247,7 @@ function evk_rep_render_option_group(string $gk, array $group): void {
     $fields = $group['fields'] ?? [];
     $stored = get_option('evk_rep_opt_' . $gk, []);
     if (!is_array($stored)) $stored = [];
+    $tl = evk_rep_tl_group_open($fields);   // przełącznik języka (includes/translations.php)
     if (evk_rep_is_repeater($group)) {
         $rows = array_values($stored);
         evk_rep_render_repeater_widget('evk_opt[' . $gk . ']', $fields, $rows, $group['title_field'] ?? '', 0, !empty($group['collapsed']));
@@ -254,8 +255,11 @@ function evk_rep_render_option_group(string $gk, array $group): void {
         $ll = !empty($group['label_left']);
         if ($ll) echo '<div class="evk-label-left">';
         evk_rep_render_field_list($fields, ['mode' => 'option', 'name_base' => 'evk_opt[' . $gk . ']', 'values' => $stored, 'depth' => -1, 'uid' => 'o_' . $gk]);
+        // Tłumaczenia bez widocznego pola wracają w formularzu — opcja zapisuje się w całości.
+        evk_rep_tl_render_carry('evk_opt[' . $gk . ']', $stored, $fields);
         if ($ll) echo '</div>';
     }
+    evk_rep_tl_group_close($tl);
 }
 
 function evk_rep_render_settings_page(string $slug): void {

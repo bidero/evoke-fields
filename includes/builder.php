@@ -657,6 +657,8 @@ function evk_rep_builder_parse_field(array $f, bool $sub, array $allowed_types, 
         if (!empty($f['required'])) $def['required'] = true;
         // Pole wrażliwe — wartość gatowana w resolverze (includes/protect.php).
         if (!empty($f['sensitive'])) $def['sensitive'] = true;
+        // „Nie tłumacz" — bez pól języków, ta sama wartość wszędzie (includes/translations.php).
+        if (!empty($f['no_translate'])) $def['no_translate'] = true;
         $px = sanitize_text_field($f['prefix'] ?? '');
         if ($px !== '') $def['prefix'] = $px;
         $sx = sanitize_text_field($f['suffix'] ?? '');
@@ -1213,6 +1215,9 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                 </label>
                 <label class="evk-b-inline-check" style="margin:10px 0 0;" title="Wartość renderuje się tylko dla redakcji lub na stronie wpisu z kluczem dostępu; w pętlach/rankingach i cudzych stronach zwraca pustkę.">
                     <input type="checkbox" name="<?php echo esc_attr($base); ?>[sensitive]" value="1" <?php checked(!empty($field['sensitive'])); ?>> Pole wrażliwe (chronione przed wyciekiem)
+                </label>
+                <label class="evk-b-inline-check evk-b-opt-notl" style="margin:10px 0 0;" title="Bez pól tłumaczeń w panelu — na stronie w każdym języku ta sama wartość. Dotyczy stron wielojęzycznych (Evoke ONE, Tłumaczenia).">
+                    <input type="checkbox" name="<?php echo esc_attr($base); ?>[no_translate]" value="1" <?php checked(!empty($field['no_translate'])); ?>> Nie tłumacz (ta sama wartość w każdym języku)
                 </label>
 
                 <div class="evk-b-validation" style="margin-top:14px;border-top:1px solid #e2e4e7;padding-top:12px;">

@@ -644,7 +644,9 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         }
         $rows = is_array($rows) ? array_values($rows) : [];
         $rep_title_src = (($field['title_tpl'] ?? '') !== '') ? $field['title_tpl'] : ($field['title_field'] ?? '');
-        echo '<div class="evk-s-field evk-rep-field--repeater" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span 12;">';
+        // evk-tl-zawiera: repeater z polami tłumaczalnymi zostaje widoczny w widoku innego języka.
+        $rep_tl = evk_rep_tl_ui() && evk_rep_tl_fields_have((array) ($field['sub_fields'] ?? [])) ? ' evk-tl-zawiera' : '';
+        echo '<div class="evk-s-field evk-rep-field--repeater' . $rep_tl . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span 12;">';
         $rep_lbl = $field['label'] ?? $fkey;
         $rep_tip = evk_rep_label_tooltip($field);
         if ($rep_lbl !== '' || $rep_tip !== '') echo '<label class="evk-s-label">' . esc_html($rep_lbl) . $rep_tip . '</label>';
@@ -673,6 +675,8 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $name = 'evk_single[' . $fkey . ']';
         $eid  = 'evk_ed_' . ($ctx['uid'] ?? 'g') . '_' . $fkey;
         $c    = 'single';
+        // Tłumaczenia pola pojedynczego to osobne meta obok oryginału.
+        $twin = function (string $k) use ($mt, $oid) { return $oid > 0 ? get_metadata($mt, $oid, $k, true) : ''; };
     } elseif ($mode === 'option') {
         $val  = array_key_exists($fkey, (array) ($ctx['values'] ?? [])) ? $ctx['values'][$fkey]
               : ($has_default ? $default_val : '');
@@ -687,17 +691,29 @@ function evk_rep_render_ctx_field(string $fkey, array $field, array $ctx): void 
         $eid  = '';
         $c    = 'row';
     }
+    if ($mode !== 'single') {
+        // Wiersz i strona ustawień: tłumaczenia leżą w tej samej tablicy co oryginał.
+        $vals = (array) ($ctx['values'] ?? []);
+        $twin = function (string $k) use ($vals) { return $vals[$k] ?? ''; };
+    }
+    // Pola języków (includes/translations.php): tylko w grupie z przełącznikiem.
+    $tl   = evk_rep_tl_ui() && evk_rep_tl_field_on($field);
     $span = evk_rep_field_span($field);
-    echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
+    echo '<div class="evk-s-field evk-rep-field--' . esc_attr($type) . ($tl ? ' evk-tl-tak' : '') . '" data-key="' . esc_attr($fkey) . '"' . evk_rep_cond_data_attr($field) . ' style="grid-column:span ' . $span . ';">';
     $lbl = $field['label'] ?? $fkey;
     $tip = evk_rep_label_tooltip($field);
     if ($lbl !== '') {
         echo '<label class="evk-s-label">' . esc_html($lbl) . (!empty($field['required']) ? ' <span class="evk-req">*</span>' : '') . '</label>';
     }
+    if ($tl) echo '<div class="evk-tl-pl">';
     // Tooltip „?" po prawej stronie pola (input skraca się, robiąc miejsce na ikonę).
     if ($tip !== '') echo '<div class="evk-s-input-row">';
     evk_rep_render_field_input($name, $field, $val, $c, $eid);
     if ($tip !== '') echo $tip . '</div>';
+    if ($tl) {
+        echo '</div>';
+        evk_rep_tl_render_twins($fkey, $field, $name, $val, $twin);
+    }
     echo evk_rep_field_instructions_html($field);
     echo '</div>';
 }
@@ -782,20 +798,36 @@ function evk_rep_render_field_list(array $fields, array $ctx): void {
         }
     };
 
+    // Widok innego języka (translations.php): zakładka i akordeon bez pól
+    // tłumaczalnych dostają evk-tl-bez i znikają — zostaje tylko to, co tłumacz ma przejść.
+    $tl_ui = evk_rep_tl_ui();
+    $ma_tl = function (array $blocks) use (&$ma_tl): bool {
+        foreach ($blocks as $b) {
+            if ($b['type'] === 'accordion' && $ma_tl($b['blocks'] ?? [])) return true;
+            if ($b['type'] !== 'field') continue;
+            $f = $b['field'];
+            if (($f['type'] ?? '') === 'repeater' ? evk_rep_tl_fields_have((array) ($f['sub_fields'] ?? [])) : evk_rep_tl_field_on($f)) return true;
+        }
+        return false;
+    };
+    $bez = function (array $blocks) use ($tl_ui, $ma_tl): string {
+        return $tl_ui && !$ma_tl($blocks) ? ' evk-tl-bez' : '';
+    };
+
     echo '<div class="evk-s">';
     if ($has_tabs) {
         echo '<div class="evk-s-tabs">';
         foreach ($panels as $pi => $p) {
-            echo '<button type="button" class="evk-s-tab' . ($pi === 0 ? ' active' : '') . '" data-tab="' . $pi . '">' . esc_html((string) $p['label']) . '</button>';
+            echo '<button type="button" class="evk-s-tab' . ($pi === 0 ? ' active' : '') . $bez($p['blocks']) . '" data-tab="' . $pi . '">' . esc_html((string) $p['label']) . '</button>';
         }
         echo '</div>';
     }
     echo '<div class="evk-s-panels">';
     foreach ($panels as $pi => $p) {
-        echo '<div class="evk-s-panel' . ($pi === 0 ? ' active' : '') . '" data-panel="' . $pi . '">';
+        echo '<div class="evk-s-panel' . ($pi === 0 ? ' active' : '') . $bez($p['blocks']) . '" data-panel="' . $pi . '">';
         foreach ($p['blocks'] as $b) {
             if ($b['type'] === 'accordion') {
-                echo '<div class="evk-s-acc"><button type="button" class="evk-s-acc-head">' . esc_html($b['label']) . '<span class="dashicons dashicons-arrow-down-alt2"></span></button><div class="evk-s-acc-body">';
+                echo '<div class="evk-s-acc' . $bez($b['blocks'] ?? []) . '"><button type="button" class="evk-s-acc-head">' . esc_html($b['label']) . '<span class="dashicons dashicons-arrow-down-alt2"></span></button><div class="evk-s-acc-body">';
                 foreach (($b['blocks'] ?? []) as $ib) {
                     $render_block($ib);
                 }
@@ -849,6 +881,8 @@ function evk_rep_render_single(string $group_key, array $fields, int $object_id,
  */
 function evk_rep_render_group_object(string $meta_type, int $object_id, string $key, array $group): void {
     $fields = $group['fields'] ?? [];
+    // Przełącznik i pola języków: wpisy i termy — profil użytkownika bez nich (translations.php).
+    $tl = in_array($meta_type, ['post', 'term'], true) && evk_rep_tl_group_open($fields);
     if (evk_rep_is_repeater($group)) {
         $rows = get_metadata($meta_type, $object_id, $key, true);
         $rows = is_array($rows) ? array_values($rows) : [];
@@ -859,6 +893,7 @@ function evk_rep_render_group_object(string $meta_type, int $object_id, string $
         evk_rep_render_single($key, $fields, $object_id, $meta_type);
         if ($ll) echo '</div>';
     }
+    evk_rep_tl_group_close($tl);
 }
 
 /**
@@ -905,6 +940,8 @@ function evk_rep_save_group_object(string $meta_type, int $object_id, string $ke
         } else {
             update_metadata($meta_type, $object_id, $fkey, $v);
         }
+        // Tłumaczenia pola (osobne meta `evk_tl_{język}__{klucz}` + źródło).
+        evk_rep_tl_save_meta($meta_type, (int) $object_id, (string) $fkey, $field, $single, $v);
 
         if ($bidir) {
             evk_rep_sync_bidirectional($field, (int) $object_id, $old_ids, evk_rep_bidir_ids($v === '' ? [] : $v));
@@ -944,6 +981,8 @@ function evk_rep_render_row(string $name_base, array $fields, $index, array $val
     echo '</div>';
     echo '<div class="evk-rep-row-body">';
     evk_rep_render_field_list($fields, ['mode' => 'row', 'name_base' => $name_base, 'index' => $index, 'values' => $values, 'depth' => $depth, 'uid' => 'r']);
+    // Tłumaczenia bez widocznego pola wracają w formularzu — wiersz zapisuje się w całości.
+    evk_rep_tl_render_carry($name_base . '[' . $index . ']', $values, $fields);
     echo '</div>';
     echo '</div>';
 }
@@ -1048,6 +1087,7 @@ function evk_rep_sanitize_rows(array $fields, $raw): array {
     foreach ($raw as $row) {
         if (!is_array($row)) continue;
         $crow = [];
+        $tl   = []; // tłumaczenia — osobno, żeby same nie utrzymywały pustego wiersza
         foreach ($fields as $fk => $f) {
             $t = $f['type'] ?? 'text';
             if (evk_rep_is_layout($t)) continue;
@@ -1058,13 +1098,14 @@ function evk_rep_sanitize_rows(array $fields, $raw): array {
             }
             if ($t === 'calc') { $crow[$fk] = ''; continue; } // POST ignorowany; liczy pass niżej
             $crow[$fk] = evk_rep_sanitize_value($t, $row[$fk] ?? '', $f);
+            evk_rep_tl_collect($tl, (string) $fk, $f, $row, $crow[$fk]);
         }
         $nonempty = false;
         foreach ($crow as $v) {
             if (is_array($v)) { if (!empty($v)) { $nonempty = true; break; } }
             elseif ($v !== '' && $v !== null) { $nonempty = true; break; }
         }
-        if ($nonempty) $clean[] = $crow;
+        if ($nonempty) $clean[] = $crow + $tl;
     }
     // Subpola calc: licz dopiero na wierszach, które przeszły filtr pustych —
     // wynik (np. 0) nie może sztucznie utrzymywać pustego wiersza przy życiu.
@@ -1083,6 +1124,7 @@ function evk_rep_sanitize_group_values(array $fields, $raw): array {
             $out[$fk] = ''; // POST ignorowany; liczy pass niżej
         } else {
             $out[$fk] = evk_rep_sanitize_value($t, $raw[$fk] ?? '', $f);
+            evk_rep_tl_collect($out, (string) $fk, $f, $raw, $out[$fk]);
         }
     }
     // Pola calc grupy (wiersze repeaterów są już policzone w evk_rep_sanitize_rows).

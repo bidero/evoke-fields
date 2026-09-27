@@ -362,3 +362,11 @@
 .evk-b-field.is-collapsed > .evk-b-field-toggle,
 .evk-b-field.is-collapsed > .evk-b-field-description,
 .evk-b-field.is-collapsed > .evk-b-field-heading-ext{display:none!important;}
+
+/* „Nie tłumacz" (1.70.0) — tylko przy typach, których wartość ma wersje językowe
+   (includes/translations.php: tekst, tekst wielowierszowy, WYSIWYG, etykieta linku). */
+.evk-b-inline-check.evk-b-opt-notl{display:none;}
+.evk-b-field[data-ftype="text"] .evk-b-opt-notl,
+.evk-b-field[data-ftype="textarea"] .evk-b-opt-notl,
+.evk-b-field[data-ftype="wysiwyg"] .evk-b-opt-notl,
+.evk-b-field[data-ftype="link"] .evk-b-opt-notl{display:inline-flex;}

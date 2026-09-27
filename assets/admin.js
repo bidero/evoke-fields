@@ -35,8 +35,10 @@
     }
 
     // ── Zapis TinyMCE → textarea przed submitem ──
+    // (do 1.69.0 było tu wp.editor.save() — takiej funkcji WordPress nie ma:
+    // wyjątek przy każdym zapisie wpisu przerywał pozostałe obsługi submit)
     $(document).on('submit', 'form#post', function () {
-        if (typeof wp !== 'undefined' && wp.editor) wp.editor.save();
+        if (window.tinymce && typeof window.tinymce.triggerSave === 'function') window.tinymce.triggerSave();
     });
 
     // ── Repeater: dodaj wiersz ──

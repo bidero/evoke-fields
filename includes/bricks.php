@@ -480,7 +480,9 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
             $f = $fields[$key] ?? ['type' => 'text'];
             // Pole wrażliwe: w pętli owner = wpis posiadający repeater; gość bez klucza → ''.
             if (function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($f, (int) ($top['post_id'] ?? 0))) return '';
-            return evk_rep_format_value($f, $row[$key], $prop);
+            // Tłumaczenie z tego samego wiersza (includes/translations.php).
+            $val = evk_rep_tl_value($f, $key, $row[$key], function (string $k) use ($row) { return $row[$k] ?? ''; });
+            return evk_rep_format_value($f, $val, $prop);
         }
         if (evk_rep_is_builder() && array_key_exists($key, $fields)) {
             return evk_rep_builder_placeholder($fields[$key], $key, $prop);
@@ -498,25 +500,33 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
         $blocked = function ($owner) use ($field) {
             return function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($field, (int) $owner);
         };
+        // Wartość w bieżącym języku: tłumaczenie to sąsiednie meta tego samego obiektu.
+        // Użytkownik i media nie mają pól języków — tam zmienia się tylko adres Linku.
+        $w_jezyku = function (string $mt, int $oid) use ($field, $key) {
+            $twin = in_array($mt, ['post', 'term'], true)
+                ? function (string $k) use ($mt, $oid) { return get_metadata($mt, $oid, $k, true); }
+                : function (string $k) { return ''; };
+            return evk_rep_tl_value($field, $key, get_metadata($mt, $oid, $key, true), $twin);
+        };
         if ($ot === 'term') {
             $tid = evk_rep_current_term_id();
             if ($tid && metadata_exists('term', $tid, $key)) {
-                return $blocked(0) ? '' : evk_rep_format_value($field, get_term_meta($tid, $key, true), $prop);
+                return $blocked(0) ? '' : evk_rep_format_value($field, $w_jezyku('term', $tid), $prop);
             }
         } elseif ($ot === 'user') {
             $uid = evk_rep_current_user_id_ctx();
             if ($uid && metadata_exists('user', $uid, $key)) {
-                return $blocked(0) ? '' : evk_rep_format_value($field, get_user_meta($uid, $key, true), $prop);
+                return $blocked(0) ? '' : evk_rep_format_value($field, $w_jezyku('user', $uid), $prop);
             }
         } elseif ($ot === 'media') {
             $aid = evk_rep_current_attachment_id();
             if ($aid && metadata_exists('post', $aid, $key)) {
-                return $blocked($aid) ? '' : evk_rep_format_value($field, get_post_meta($aid, $key, true), $prop);
+                return $blocked($aid) ? '' : evk_rep_format_value($field, evk_rep_tl_value($field, $key, get_post_meta($aid, $key, true), function (string $k) { return ''; }), $prop);
             }
         } else {
             $pid = evk_rep_filter_pid($ctx_pid);
             if ($pid && metadata_exists('post', $pid, $key)) {
-                return $blocked($pid) ? '' : evk_rep_format_value($field, get_post_meta($pid, $key, true), $prop);
+                return $blocked($pid) ? '' : evk_rep_format_value($field, $w_jezyku('post', $pid), $prop);
             }
         }
         if (evk_rep_is_builder()) return evk_rep_builder_placeholder($field, $key, $prop);
@@ -567,12 +577,11 @@ function evk_rep_resolve_option(string $tagContent, string $prop = '') {
         // Klucze grup mogą być swoimi prefiksami (np. 'dane' i 'dane_firmy') —
         // brak pola w tej grupie nie kończy szukania, tag może należeć do dłuższej.
         if (!$field) continue;
-        if (function_exists('evk_rep_get_option')) {
-            $val = evk_rep_get_option($gk, $fk);
-        } else {
-            $vals = get_option('evk_rep_opt_' . $gk, []);
-            $val  = is_array($vals) && array_key_exists($fk, $vals) ? $vals[$fk] : '';
-        }
+        $vals = get_option('evk_rep_opt_' . $gk, []);
+        $vals = is_array($vals) ? $vals : [];
+        $val  = array_key_exists($fk, $vals) ? $vals[$fk] : '';
+        // Tłumaczenie leży w tej samej tablicy opcji (includes/translations.php).
+        $val  = evk_rep_tl_value($field, $fk, $val, function (string $k) use ($vals) { return $vals[$k] ?? ''; });
         return evk_rep_format_value($field, $val, $prop);
     }
     return '';
