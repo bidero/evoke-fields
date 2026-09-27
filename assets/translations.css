@@ -1,15 +1,21 @@
-/* Evoke FIELDS — tłumaczenia wartości pól (1.70.0).
+/* Evoke FIELDS — tłumaczenia wartości pól (1.70.0, wygląd 1.70.1).
    Pole języka widać tylko w widoku tego języka: regułę per język dopisuje
    includes/translations.php (wp_add_inline_style), bo języki zna dopiero serwer. */
 
 .evk-tl-pole{display:none;margin-top:4px;}
 
-/* ── Przełącznik języka nad grupą ── */
-.evk-tl-przelacznik{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 14px;}
-.evk-tl-przelacznik .evk-tl-jezyk{display:inline-flex;align-items:center;gap:6px;min-height:30px;font-weight:600;}
-.evk-tl-przelacznik .evk-tl-jezyk[aria-pressed="true"]{background:#2271b1;border-color:#2271b1;color:#fff;}
-.evk-tl-licznik{font-weight:400;font-size:12px;opacity:.85;}
+/* ── Przełącznik języka nad grupą ──
+   Kolory z klas WordPressa: `button` i wciśnięty `button-primary` — schemat
+   panelu, a przy kolorze z White Label (Evoke ONE) jego kolor. Rozmiar własny,
+   z wysoką specyficznością: WordPress na wąskim ekranie daje każdemu
+   `.button` 40 px wysokości, inne arkusze panelu też potrafią go powiększyć. */
+.evk-tl-przelacznik{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px;}
+.wp-core-ui .evk-tl-przelacznik .button.evk-tl-jezyk{display:inline-flex;align-items:center;gap:5px;min-height:26px;height:auto;margin:0;padding:0 10px;font-size:12px;line-height:24px;font-weight:600;}
+.evk-tl-licznik{font-weight:400;font-size:11px;opacity:.85;}
 .evk-tl-licznik:empty{display:none;}
+/* Metabox Fields w wierszach: .inside bez bocznego paddingu, a pola mają własny
+   (14 px) — pasek przełącznika wcięty tak samo i oddzielony kreską jak wiersz. */
+.evk-mb-rows .evk-tl-przelacznik{margin:0;padding:4px 14px 12px;border-bottom:1px solid #eef2f7;}
 
 /* ── Pole tłumaczenia ── */
 .evk-tl-etykieta{display:block;font-weight:600;font-size:var(--evk-label-size,13px);margin:0 0 6px;color:#111827;}
@@ -23,22 +29,31 @@
 .evk-tl-pole[data-sprawdz] .evk-tl-narzedzia .evk-tl-sprawdzone{display:inline-flex;align-items:center;}
 .evk-tl-pole[data-sprawdz] .evk-tl-wejscie{border-color:#dba617;}
 
-/* ── Widok innego języka: tylko pola tłumaczone ── */
-.evk-tl-obcy .evk-s-field:not(.evk-tl-tak):not(.evk-tl-zawiera),
-.evk-tl-obcy .evk-tl-bez,
+/* ── Widok innego języka ──
+   Pola do tłumaczenia: pole języka zamiast oryginału. Pozostałe ZOSTAJĄ na
+   swoim miejscu — układ się nie zmienia — przygaszone i nieaktywne (`inert`
+   z translations.js: bez klikania i fokusu). Tak samo przyciski wierszy. */
 .evk-tl-obcy .evk-tl-tak > .evk-s-label,
 .evk-tl-obcy .evk-tl-pl{display:none;}
-/* Wiersze dodaje, usuwa i przestawia się w oryginale — tłumacz ich nie rusza. */
+.evk-tl-obcy .evk-s-field:not(.evk-tl-tak):not(.evk-tl-zawiera),
 .evk-tl-obcy .evk-rep-add-wrap,
 .evk-tl-obcy .evk-rep-remove,
-.evk-tl-obcy .evk-rep-handle{display:none;}
-/* Etykieta z lewej: w widoku języka jej kolumna jest pusta — pole na całą szerokość. */
-.evk-tl-obcy .evk-label-left .evk-s-field.evk-tl-tak{display:flex;}
+.evk-tl-obcy .evk-rep-handle{opacity:.45;}
+.evk-tl-obcy .evk-s-field:not(.evk-tl-tak):not(.evk-tl-zawiera) > .evk-s-label::after{content:" · wspólne dla języków";font-weight:400;color:#6b7280;}
+/* Zakładka i akordeon bez pól do tłumaczenia: zostają, przygaszone — da się zajrzeć. */
+.evk-tl-obcy .evk-s-tab.evk-tl-bez,
+.evk-tl-obcy .evk-s-acc.evk-tl-bez > .evk-s-acc-head{opacity:.6;}
+/* Etykieta z lewej: w kolumnie etykiet zostaje etykieta oryginału, a pole języka
+   stoi obok (jego etykieta tylko dla czytnika) — kolumny się nie przesuwają. */
+.evk-tl-obcy .evk-label-left .evk-tl-tak > .evk-s-label{display:block;}
+.evk-tl-obcy .evk-label-left .evk-tl-etykieta{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
 /* ── Telefon (do 782 px, jak panel WordPressa) ── */
 @media (max-width:782px){
     .evk-tl-pole input.evk-tl-wejscie,
     .evk-tl-pole textarea.evk-tl-wejscie{font-size:16px;}   /* mniej = Safari powiększa stronę */
-    .evk-tl-przelacznik .evk-tl-jezyk{min-height:40px;min-width:44px;justify-content:center;}
-    .evk-tl-narzedzia .button{min-height:32px;}
+    .wp-core-ui .evk-tl-przelacznik .button.evk-tl-jezyk{min-height:32px;line-height:30px;padding:0 12px;font-size:13px;}
+    .wp-core-ui .evk-tl-narzedzia .button.button-small{min-height:30px;margin:0;padding:0 10px;font-size:12px;line-height:28px;}
+    .evk-tl-obcy .evk-label-left .evk-tl-etykieta{position:static;width:auto;height:auto;margin:0 0 6px;overflow:visible;clip:auto;white-space:normal;}
+    .evk-tl-obcy .evk-label-left .evk-tl-tak > .evk-s-label{display:none;}
 }

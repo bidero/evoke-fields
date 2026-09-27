@@ -397,8 +397,11 @@ function evk_rep_tl_group_open(array $fields): bool {
     evk_rep_tl_ui(true);
     $baza = evk_rep_tl_default();
     echo '<div class="evk-tl-grupa" data-evk-jezyk="' . esc_attr($baza) . '" data-evk-baza="' . esc_attr($baza) . '">';
+    /* Wciśnięty język ma `button-primary`: kolor ze schematu panelu WordPressa,
+       a przy ustawionym kolorze White Label (Evoke ONE) — z niego, bo White Label
+       przebarwia właśnie `.button-primary`. */
     echo '<div class="evk-tl-przelacznik" role="group" aria-label="Język wartości pól">';
-    echo '<button type="button" class="button evk-tl-jezyk" data-lang="' . esc_attr($baza) . '" aria-pressed="true">'
+    echo '<button type="button" class="button button-primary evk-tl-jezyk" data-lang="' . esc_attr($baza) . '" aria-pressed="true">'
         . esc_html(strtoupper($baza)) . '<span class="screen-reader-text"> — oryginał</span></button>';
     foreach ($langs as $lang => $lname) {
         echo '<button type="button" class="button evk-tl-jezyk" data-lang="' . esc_attr($lang) . '" aria-pressed="false">'

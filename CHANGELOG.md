@@ -2,6 +2,41 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.70.1] — 2026-09-28
+
+Poprawki wyglądu tłumaczeń po pierwszym teście na stronie.
+
+### Zmienione (decyzje zgłaszającego)
+
+- **Pola bez tłumaczenia wyszarzone zamiast ukrytych.** W widoku języka
+  pola „Nie tłumacz", liczby, obrazy itd. zostają na swoim miejscu —
+  przygaszone, z dopiskiem „wspólne dla języków" — i nieaktywne (`inert`:
+  bez klikania i bez fokusu z klawiatury). Układ grupy się nie zmienia.
+  Zakładka i akordeon bez pól do tłumaczenia zostają, przygaszone.
+- **Wiersze repeatera nie zmieniają już wysokości przy zmianie języka**
+  (zgłoszone: znikały strzałki przenoszenia). Uchwyty przeciągania, kosze
+  i „Dodaj wiersz" zostają, przygaszone i nieaktywne — strukturę wierszy
+  zmienia się w oryginale.
+- **Przełącznik języka**: w linii z polami (metabox Fields zdejmuje boczny
+  padding, a przełącznik go nie dostawał — przyklejał się do krawędzi),
+  mniejsze przyciski (26 px, na telefonie 32 px). Wciśnięty język ma
+  `button-primary`: kolor schematu panelu WordPressa, a przy kolorze
+  głównym White Label (Evoke ONE) — jego kolor.
+- Etykieta z lewej (opcja grupy): w widoku języka etykieta oryginału zostaje
+  w swojej kolumnie, pole języka stoi obok.
+
+### Testy
+
+- W repozytorium Evoke ONE, `fields-panel` (48 sprawdzeń, Chromium):
+  - nagłówki wierszy i kolumny pól w PL i EN identyczne;
+  - wyszarzone pole nie łapie fokusu;
+  - przełącznik w linii z polami, 24–28 px, kolor schematu i White Label,
+    kolor wciśnięcia przechodzi na wybrany język;
+  - po powrocie do PL nic nie zostaje nieaktywne.
+
+  Mutacje: ukryte uchwyty jak w 1.70.0, bez `inert`, bez odstępu, bez
+  `button-primary`, pola znów ukryte, duże przyciski.
+
 ## [1.70.0] — 2026-09-27
 
 ### Dodane

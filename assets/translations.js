@@ -147,6 +147,12 @@
     }
 
     // ── Przełącznik: jeden język dla wszystkich grup na ekranie ──
+    // Pola bez tłumaczenia w widoku języka: zostają na miejscu (układ się nie
+    // zmienia), przygaszone (CSS) i nieaktywne — `inert`: bez klikania i bez
+    // fokusu z klawiatury. Tak samo dodawanie, usuwanie i przeciąganie wierszy:
+    // strukturę zmienia się w oryginale.
+    var NIEAKTYWNE = '.evk-s-field:not(.evk-tl-tak):not(.evk-tl-zawiera), .evk-rep-add-wrap, .evk-rep-remove, .evk-rep-handle';
+
     function przelacz(lang) {
         var $grupy = $('.evk-tl-grupa');
         if (!$grupy.length) return;
@@ -155,8 +161,11 @@
         $grupy.each(function () {
             var $g = $(this);
             $g.attr('data-evk-jezyk', lang).toggleClass('evk-tl-obcy', obcy);
+            $g.find(NIEAKTYWNE).each(function () { this.inert = obcy; });
             $g.children('.evk-tl-przelacznik').find('.evk-tl-jezyk').each(function () {
-                this.setAttribute('aria-pressed', this.getAttribute('data-lang') === lang ? 'true' : 'false');
+                var wcisniety = this.getAttribute('data-lang') === lang;
+                this.setAttribute('aria-pressed', wcisniety ? 'true' : 'false');
+                $(this).toggleClass('button-primary', wcisniety);
             });
         });
         if (obcy) {
