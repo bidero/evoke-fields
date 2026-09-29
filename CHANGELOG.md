@@ -2,6 +2,41 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.74.0] — 2026-09-29
+
+Pętle nad „Polem wrażliwym" z tą samą bramką co tagi.
+
+### Poprawione
+
+- **Pętla Bricksa nad polem wrażliwym pokazywała dane gościowi.** Tag tego
+  pola dawał pustkę, a podpowiedź pola obiecuje: „w pętlach/rankingach
+  i cudzych stronach zwraca pustkę".
+  - Przyczyna: wiersze pętli galerii mają syntetyczne pola `img`/`cat` bez
+    flagi „wrażliwe", więc `evk_rep_resolve` ich nie blokował. Relacja,
+    użytkownicy i termy pola wracają jako obiekty WP, bez żadnego
+    sprawdzenia.
+  - Teraz `bricks/query/run` sprawdza pole źródłowe pętli
+    (`evk_protect_field_blocked`) i daje pustą pętlę. Dotyczy:
+    - galerii i jej kategorii, także w wierszu listy i płaskiej z listy;
+    - relacji, użytkowników i termów pola.
+  - Redakcja i gość z kluczem TEGO wpisu widzą pętlę jak dotąd; klucz
+    innego wpisu jej nie otwiera.
+  - Pętle „Opcje" zostają bez bramki, tak jak tagi opcji
+    (`evk_rep_resolve_option`).
+
+### Testy
+
+- `tests/fields-petle-wrazliwe.test.js` w Evoke ONE (czwarty testowy
+  WordPress): 13 sprawdzeń. Pokrywa gościa bez klucza (każda pętla pusta,
+  pola jawne i opcje bez zmian), redakcję i gościa z kluczem (ten wpis
+  pełny, inny pusty).
+- Mutacje: 5, każda zapala swoje sprawdzenia:
+  - bez bramki;
+  - bramka także na opcjach;
+  - relacja bez pola źródłowego;
+  - kategorie galerii bez bramki;
+  - bramka bez właściciela.
+
 ## [1.73.0] — 2026-09-29
 
 Galeria z listy (repeatera) w natywnej galerii Bricksa, bez pętli.

@@ -159,11 +159,11 @@ function evk_rep_loops(): array {
                 }
                 $add_gallery_flat($basePath, $optBase, $k, $f, $label, $flatRow); // płaska lista ze wszystkich wierszy
             } elseif ($t === 'relationship') {
-                $add_rel($sub, $label, $oSub);
+                $add_rel($sub, $label, $oSub, $f);
             } elseif ($t === 'user') {
-                $add_user($sub, $label, $oSub);
+                $add_user($sub, $label, $oSub, $f);
             } elseif ($t === 'taxonomy') {
-                $add_tax($sub, $label, $oSub);
+                $add_tax($sub, $label, $oSub, $f);
             }
         }
     };
@@ -179,8 +179,8 @@ function evk_rep_loops(): array {
             'cat' => ['type' => 'select', 'label' => 'Kategoria', 'options' => trim($catOpts)],
         ];
         $sort = $field['gallery_sort'] ?? '';
-        $loops[$path]                 = ['label' => 'EVK Galeria: '       . $label, 'fields' => $rowFields, 'sort' => $sort];
-        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Galeria Opcje: ' . $label, 'fields' => $rowFields, 'sort' => $sort];
+        $loops[$path]                 = ['label' => 'EVK Galeria: '       . $label, 'fields' => $rowFields, 'sort' => $sort, 'pole' => $field];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Galeria Opcje: ' . $label, 'fields' => $rowFields, 'sort' => $sort, 'pole' => $field];
 
         // Pętla kategorii UŻYTYCH w tej galerii (do przycisków filtrów Isotope).
         // Wiersz: {slug, name}. Bez wariantów nieużytych — czyste, pasujące przyciski.
@@ -190,24 +190,24 @@ function evk_rep_loops(): array {
     };
 
     // Relacja = pętla zwracająca powiązane WP_Post (kontekst posta natywny w Bricks).
-    $add_rel = function(string $path, string $label, ?string $optPath = null) use (&$loops) {
+    $add_rel = function(string $path, string $label, ?string $optPath = null, array $field = []) use (&$loops) {
         $optPath = $optPath ?? $path;
-        $loops[$path]                 = ['label' => 'EVK Relacja: '       . $label, 'fields' => [], 'relationship' => true];
-        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Relacja Opcje: ' . $label, 'fields' => [], 'relationship' => true];
+        $loops[$path]                 = ['label' => 'EVK Relacja: '       . $label, 'fields' => [], 'relationship' => true, 'pole' => $field];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Relacja Opcje: ' . $label, 'fields' => [], 'relationship' => true, 'pole' => $field];
     };
 
     // Pole Użytkownik = pętla po wybranych użytkownikach (WP_User — kontekst usera w Bricks).
-    $add_user = function(string $path, string $label, ?string $optPath = null) use (&$loops) {
+    $add_user = function(string $path, string $label, ?string $optPath = null, array $field = []) use (&$loops) {
         $optPath = $optPath ?? $path;
-        $loops[$path]                 = ['label' => 'EVK Użytkownicy: '       . $label, 'fields' => [], 'users' => true];
-        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Użytkownicy Opcje: ' . $label, 'fields' => [], 'users' => true];
+        $loops[$path]                 = ['label' => 'EVK Użytkownicy: '       . $label, 'fields' => [], 'users' => true, 'pole' => $field];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Użytkownicy Opcje: ' . $label, 'fields' => [], 'users' => true, 'pole' => $field];
     };
 
     // Pole Taksonomia = pętla po WYBRANYCH termach pola (WP_Term — kontekst termu w Bricks).
-    $add_tax = function(string $path, string $label, ?string $optPath = null) use (&$loops) {
+    $add_tax = function(string $path, string $label, ?string $optPath = null, array $field = []) use (&$loops) {
         $optPath = $optPath ?? $path;
-        $loops[$path]                 = ['label' => 'EVK Termy (pole): '       . $label, 'fields' => [], 'tax_terms' => true];
-        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Termy (pole) Opcje: ' . $label, 'fields' => [], 'tax_terms' => true];
+        $loops[$path]                 = ['label' => 'EVK Termy (pole): '       . $label, 'fields' => [], 'tax_terms' => true, 'pole' => $field];
+        $loops['evk_opt_' . $optPath] = ['label' => 'EVK Termy (pole) Opcje: ' . $label, 'fields' => [], 'tax_terms' => true, 'pole' => $field];
     };
 
     // Galeria SPŁASZCZONA — wszystkie obrazy ze WSZYSTKICH wierszy repeatera w jednej
@@ -248,11 +248,11 @@ function evk_rep_loops(): array {
                 } elseif ($t === 'gallery') {
                     $add_gallery($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $f, $gk . '.' . $fk);
                 } elseif ($t === 'relationship') {
-                    $add_rel($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
+                    $add_rel($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk, $f);
                 } elseif ($t === 'user') {
-                    $add_user($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
+                    $add_user($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk, $f);
                 } elseif ($t === 'taxonomy') {
-                    $add_tax($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
+                    $add_tax($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk, $f);
                 }
             }
         }
@@ -752,6 +752,16 @@ add_filter('bricks/query/run', function ($results, $query_obj) {
 
     if (!$post_id && !empty($query_obj->settings['evk_post_id'])) {
         $post_id = (int) $query_obj->settings['evk_post_id'];
+    }
+
+    // Pole wrażliwe (1.74.0): pętla nad takim polem daje gościowi pustkę, jak tag tego pola
+    // (evk_rep_resolve). Wiersze galerii mają syntetyczne pola img/cat bez flagi, a relacja,
+    // użytkownicy i termy wracają jako obiekty WP — bez bramki pętla pokazywała to, czego tag
+    // nie pokazuje. Pętle „Opcje" jak tagi opcji (evk_rep_resolve_option): bez bramki.
+    $zrodlo = $loops[$raw_type]['pole'] ?? $loops[$raw_type]['galflat'] ?? $loops[$raw_type]['galcatflat'] ?? $loops[$raw_type]['galcat'] ?? null;
+    if (is_array($zrodlo) && !evk_rep_loop_is_option((string) $raw_type)
+        && function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($zrodlo, $post_id)) {
+        return [];
     }
 
     // Galeria – kategorie użyte (distinct) do przycisków filtrów.
