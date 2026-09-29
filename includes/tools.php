@@ -87,7 +87,7 @@ function evk_tools_export_groups(): array {
             'label'       => $p->post_title,
             'status'      => $p->post_status,
             'menu_order'  => (int) $p->menu_order,
-            'object_type' => in_array($obj, ['post', 'term', 'user', 'media'], true) ? $obj : 'post',
+            'object_type' => in_array($obj, evk_rep_object_types(), true) ? $obj : 'post',
             'post_types'  => is_array($pts) && $pts ? array_values($pts) : ['post'],
             'taxonomies'  => is_array($tax) ? array_values($tax) : [],
             'repeater'    => (bool) get_post_meta($p->ID, '_evk_repeater', true),
@@ -229,7 +229,7 @@ function evk_tools_run_import(array $data, bool $overwrite, ?array $parts = null
         // wtedy NIE nadpisujemy istniejącej grupy (import zdegradowałby np. grupę
         // termów do grupy wpisów); nowa grupa dostaje domyślne 'post'.
         if (array_key_exists('object_type', $g) || !$existing) {
-            $obj = in_array($g['object_type'] ?? 'post', ['post', 'term', 'user', 'media'], true) ? ($g['object_type'] ?? 'post') : 'post';
+            $obj = in_array($g['object_type'] ?? 'post', evk_rep_object_types(), true) ? ($g['object_type'] ?? 'post') : 'post';
             update_post_meta($pid, '_evk_object_type', $obj);
         }
         if (array_key_exists('taxonomies', $g) || !$existing) {

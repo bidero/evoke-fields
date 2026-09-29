@@ -88,6 +88,12 @@ add_action('manage_evk_field_group_posts_custom_column', function ($col, $post_i
             break;
 
         case 'evk_pts':
+            if (get_post_meta($post_id, '_evk_object_type', true) === 'options') {
+                $gk      = (string) get_post_meta($post_id, '_evk_key', true);
+                $miejsca = $gk !== '' && function_exists('evk_rep_group_settings_places') ? evk_rep_group_settings_places($gk) : [];
+                echo 'Strona ustawień: ' . ($miejsca ? esc_html(implode(', ', $miejsca)) : '—');
+                break;
+            }
             $pts = get_post_meta($post_id, '_evk_post_types', true);
             if (is_array($pts) && $pts) {
                 echo implode(', ', array_map('esc_html', $pts));
@@ -187,6 +193,18 @@ function evk_groups_list_css(): string {
 // evk_rep_groups() — czyta z CPT (z cache)
 // =========================================================================
 
+/**
+ * Typy lokalizacji grupy pól („Pokaż w"). JEDNO źródło dla kreatora, zapisu,
+ * rejestru grup, eksportu i importu — każda z tych list zamieniała nieznany typ
+ * na „post", więc nowy typ trzeba było dopisywać w pięciu miejscach.
+ * 'options' (1.71.0): grupa tylko dla stron ustawień, bez metaboksu gdziekolwiek.
+ *
+ * @return list<string>
+ */
+function evk_rep_object_types(): array {
+    return ['post', 'term', 'user', 'media', 'options'];
+}
+
 function evk_rep_groups(): array {
     // Memo per-żądanie: schemat czyta wiele miejsc (loops, resolver tagów, render),
     // co inaczej oznaczałoby dziesiątki odczytów transientu na jednej stronie.
@@ -222,11 +240,13 @@ function evk_rep_groups(): array {
         $obj = get_post_meta($post->ID, '_evk_object_type', true);
         $tax = get_post_meta($post->ID, '_evk_taxonomies', true);
 
+        $obj = in_array($obj, evk_rep_object_types(), true) ? $obj : 'post';
         $entry = [
             'id'          => (int) $post->ID,
             'label'       => $post->post_title,
-            'object_type' => in_array($obj, ['post', 'term', 'user', 'media'], true) ? $obj : 'post',
-            'post_types'  => is_array($pts) && $pts ? $pts : ['post'],
+            'object_type' => $obj,
+            // Grupa tylko strony ustawień nie ma typów treści — bez cichego ['post'] (1.71.0).
+            'post_types'  => $obj === 'options' ? [] : (is_array($pts) && $pts ? $pts : ['post']),
             'taxonomies'  => is_array($tax) ? array_values($tax) : [],
             'repeater'    => (bool) get_post_meta($post->ID, '_evk_repeater', true),
             'collapsed'   => (bool) get_post_meta($post->ID, '_evk_collapsed', true),

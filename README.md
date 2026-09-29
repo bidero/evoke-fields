@@ -16,7 +16,7 @@ System własnych pól dla WordPressa zintegrowany z **Bricks Builder**: grupy p�
 
 - **Grupa pojedyncza** — każde pole to osobna meta (`klucz pola` = klucz mety).
 - **Grupa-repeater** — cała grupa to powtarzalne wiersze; meta pod kluczem grupy (tablica wierszy).
-- **Lokalizacje:** wpisy/CPT (wybrane typy treści), **termy** wybranych taksonomii, **profil użytkownika**, **media** (panel załącznika — tylko proste typy pól: tekst, liczba, select itd.).
+- **Lokalizacje:** wpisy/CPT (wybrane typy treści), **termy** wybranych taksonomii, **profil użytkownika**, **media** (panel załącznika — tylko proste typy pól: tekst, liczba, select itd.), **tylko strona ustawień** (od 1.71.0: bez metaboksu gdziekolwiek; zakładki stron zaznaczasz w samej grupie albo w „Strony ustawień" — oba ekrany zapisują to samo).
 - Opcje grupy: repeater, zwinięte wiersze, bezramkowy, ukryj tytuł grupy, **etykieta z lewej** (input wyrównany do wspólnej kolumny; szerokość kolumny w Narzędzia → Wygląd pól).
 - Aktywność grupy przełączasz na liście grup (publish/draft). Grupę można **duplikować** (akcja „Duplikuj" na liście).
 
@@ -55,7 +55,7 @@ Dwa niezależne mechanizmy, do użycia osobno lub razem:
 | Plik | `id`, `filename`, `preview` (URL JPG podglądu PDF) — domyślnie URL pliku; w PHP też `path`, `title` |
 | Select / Radio / Grupa przycisków / Image Select | `label` — domyślnie wartość |
 | Taksonomia | `id`, `slug` — domyślnie nazwy termów |
-| Galeria | `ids`, `count` — domyślnie URL pierwszego obrazu |
+| Galeria | `ids`, `count` — w tekście domyślnie URL pierwszego obrazu; w elemencie Image Gallery cała galeria (niżej) |
 | Relacja | `ids`, `count`, `url` — domyślnie tytuły |
 | Użytkownik | `ids`, `count`, `email`, `url`, `avatar` — domyślnie display name |
 | Link/przycisk | `title`, `target`, `html` — domyślnie URL |
@@ -63,6 +63,8 @@ Dwa niezależne mechanizmy, do użycia osobno lub razem:
 
 - **Meta powiązanego obiektu:** `{evk_field_klucz__meta:inny_klucz}` (dla pól Użytkownik / Relacja / Taksonomia).
 - W elemencie **Image** Bricks używaj wariantu `__id` (pełny srcset i lightbox); `__preview` pliku PDF w kontekście Image zwraca ID podglądu automatycznie.
+- **Natywna galeria Bricksa (Image Gallery):** Dynamic data = `{evk_field_galeria}` (albo `__ids`, albo `{evk_opt_grupa_galeria}`), **bez pętli** — element dostaje całą listę obrazów, w kolejności z ustawienia „Sortowanie" pola (ta sama co w pętli „EVK Galeria"). Pętla galerii jest do własnego układu i filtrów Isotope.
+- **Pola pętli** (`{evk_field_img__id}`, `{evk_field_img}`, `{evk_field_cat__label}`, a w pętli kategorii `{evk_field_name}`, `{evk_field_slug}`) są w pickerze w grupach „EVK Pętla: …".
 
 ## Tłumaczenia wartości pól
 

@@ -2,6 +2,69 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.71.0] — 2026-09-29
+
+Galeria w natywnej galerii Bricksa, pola pętli w podpowiedziach i grupa
+tylko dla strony ustawień.
+
+### Dodane
+
+- **Lokalizacja „Tylko strona ustawień"** („Pokaż w").
+  - Grupa nie ma metaboksu przy wpisach, termach, profilach ani mediach.
+  - Zakładki stron ustawień zaznacza się w samej grupie („Strona ›
+    Zakładka", kilka naraz) albo jak dotąd w „Strony ustawień" — oba
+    ekrany zapisują tę samą konfigurację.
+  - Grupa bez żadnej zakładki dostaje ostrzeżenie.
+  - Kolumna listy grup pokazuje „Strona ustawień: …".
+  - Do 1.70 grupa bez zaznaczonych typów treści po cichu dostawała
+    „Wpisy" — i metaboks przy każdym wpisie.
+- **Pola pętli w podpowiedziach Bricksa:** grupy „EVK Pętla: galeria"
+  (`{evk_field_img__id}`, `{evk_field_img}`, `{evk_field_img__alt}`,
+  `{evk_field_cat}`, `{evk_field_cat__label}`) i „EVK Pętla: kategorie
+  galerii" (`{evk_field_name}`, `{evk_field_slug}`). Dotąd znała je tylko
+  ściąga w kreatorze pola.
+
+### Naprawione
+
+- **Galeria w natywnym elemencie „Image Gallery" Bricksa** (zgłoszenie):
+  `{evk_field_galeria}` i `__ids` w kontekście obrazu oddawały tylko
+  pierwsze ID. Galeria bez pętli miała więc jeden obraz, a w pętli powstawało
+  wiele galerii po jednym obrazie.
+  - Teraz w kontekście obrazu cała lista ID, w kolejności z ustawienia
+    „Sortowanie" (ta sama co w pętli tej galerii).
+  - Element Image bierze pierwszy obraz, jak dotąd.
+  - W tekście bez zmian (`__ids` = lista po przecinku).
+- **Grupa strony ustawień:**
+  - nie ma już pętli wpisowych ani tagów `{evk_field_…}` pól z góry grupy,
+    bo czytałyby meta wpisu, której ta grupa nie ma. Zostają pętle i tagi
+    „Opcje" oraz tagi pól list, używane w pętli „EVK Opcje";
+  - nie zasłania pola o tym samym kluczu w grupie wpisu (wygrywało pierwsze
+    trafienie na liście grup).
+- **Eksport, import, kopie konfiguracji i sejf** zachowują nowy typ.
+  - Pięć miejsc zamieniało nieznany typ lokalizacji na „Wpisy".
+  - Teraz lista typów jest w jednym miejscu (`evk_rep_object_types()`).
+
+### Testy
+
+- W repozytorium Evoke ONE, `fields-galeria-lokalizacja` (31 sprawdzeń,
+  pola.test):
+  - tagi galerii w kontekście obrazu i tekstu, kolejność zgodna z pętlą;
+  - podpowiedzi;
+  - pętle grupy opcji, także ze wspólnym kluczem przed grupą wpisu i za nią;
+  - konflikt klucza;
+  - eksport i import;
+  - w Chromium: zapis zakładek z edytora grupy, obcięty formularz, brak
+    metaboksu przy wpisie, 360 px.
+- Mutacje: 11, każda zapala inny zestaw sprawdzeń.
+- `fields-panel`, `fields-tlumaczenia`, `marquee` bez zmian (194 sprawdzenia).
+
+### Do sprawdzenia na stronie
+
+- Image Gallery z `{evk_field_galeria}` bez pętli pokazuje wszystkie obrazy
+  (Bricksa tu nie ma — tag idzie przez te same filtry).
+- Czy picker galerii w Bricksie w ogóle pokazuje tagi EVK (tagi nie mają
+  typu; w razie czego wpisz tag ręcznie).
+
 ## [1.70.1] — 2026-09-28
 
 Poprawki wyglądu tłumaczeń po pierwszym teście na stronie.

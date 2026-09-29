@@ -24,6 +24,65 @@ function evk_rep_get_option(string $group_key, string $field_key = '', $default 
     return array_key_exists($field_key, $vals) ? $vals[$field_key] : $default;
 }
 
+/**
+ * Wszystkie zakładki stron ustawień — do wyboru w grupie pól z lokalizacją
+ * „Tylko strona ustawień" (1.71.0). Identyfikator: „slug|indeks zakładki".
+ *
+ * @return list<array{id: string, label: string, groups: list<string>}>
+ */
+function evk_rep_settings_tabs_list(): array {
+    $out = [];
+    foreach (evk_rep_settings_pages() as $slug => $page) {
+        if (!is_array($page)) continue;
+        $plabel = (string) ($page['label'] ?? $slug);
+        foreach (array_values((array) ($page['tabs'] ?? [])) as $i => $tab) {
+            $tab    = (array) $tab;
+            $tlabel = trim((string) ($tab['label'] ?? '')) !== '' ? (string) $tab['label'] : 'Zakładka ' . ($i + 1);
+            $out[]  = ['id' => $slug . '|' . $i, 'label' => $plabel . ' › ' . $tlabel,
+                       'groups' => array_values(array_map('strval', (array) ($tab['groups'] ?? [])))];
+        }
+    }
+    return $out;
+}
+
+/** Miejsca grupy na stronach ustawień: „Strona › Zakładka". @return list<string> */
+function evk_rep_group_settings_places(string $gk): array {
+    $out = [];
+    foreach (evk_rep_settings_tabs_list() as $m) {
+        if (in_array($gk, $m['groups'], true)) $out[] = $m['label'];
+    }
+    return $out;
+}
+
+/**
+ * Zapis z grupy pól: grupa stoi dokładnie na zaznaczonych zakładkach. Inne grupy
+ * i reszta konfiguracji stron bez zmian (kreator stron zapisuje tę samą opcję).
+ *
+ * @param list<string> $wybrane identyfikatory „slug|indeks zakładki"
+ */
+function evk_rep_settings_set_group_tabs(string $gk, array $wybrane): void {
+    $pages  = evk_rep_settings_pages();
+    $zmiana = false;
+    foreach ($pages as $slug => $page) {
+        if (!is_array($page)) continue;
+        $tabs = array_values((array) ($page['tabs'] ?? []));
+        foreach ($tabs as $i => $tab) {
+            $tab   = (array) $tab;
+            $grupy = array_values(array_map('strval', (array) ($tab['groups'] ?? [])));
+            $ma    = in_array($gk, $grupy, true);
+            $chce  = in_array($slug . '|' . $i, $wybrane, true);
+            if ($chce === $ma) continue;
+            $grupy = $chce ? array_merge($grupy, [$gk]) : array_values(array_diff($grupy, [$gk]));
+            $tab['groups'] = $grupy;
+            $tabs[$i] = $tab;
+            $zmiana = true;
+        }
+        $page['tabs']   = $tabs;
+        $pages[$slug]   = $page;
+    }
+    if ($zmiana) update_option('evk_rep_settings_pages', $pages);
+}
+
 function evk_rep_group_on_page(string $gkey, array $page): bool {
     foreach ((array) ($page['tabs'] ?? []) as $tab) {
         if (in_array($gkey, (array) ($tab['groups'] ?? []), true)) return true;

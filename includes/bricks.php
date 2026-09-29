@@ -107,6 +107,14 @@ function evk_rep_extract_context_id($post_ctx): int {
 // REJESTR PĘTLI
 // =========================================================================
 
+/** Klucz pętli czytającej ze strony ustawień (warianty „Opcje"). */
+function evk_rep_loop_is_option(string $key): bool {
+    foreach (['evk_opt_', 'evk_galcatopt_', 'evk_galflatopt_', 'evk_galcatflatopt_'] as $p) {
+        if (strpos($key, $p) === 0) return true;
+    }
+    return false;
+}
+
 function evk_rep_loops(): array {
     // Memo per-żądanie — wołane z 3 filtrów Bricks (control_options, query/run,
     // query/loop_object) przy każdym renderze. Inwalidacja w evk_groups_cache_clear().
@@ -226,6 +234,10 @@ function evk_rep_loops(): array {
 
     foreach (evk_rep_groups() as $gk => $group) {
         $glabel = $group['label'] ?? $gk;
+        // Grupa tylko strony ustawień (1.71.0): pętle wpisowe (bez „Opcje") czytałyby meta,
+        // której ta grupa nie ma. Klucze pętli wpisowych bywają wspólne dla grup (klucz pola),
+        // więc zamiast kasować — przywracamy stan sprzed tej grupy.
+        $przed = ($group['object_type'] ?? 'post') === 'options' ? $loops : null;
         if (evk_rep_is_repeater($group)) {
             $walk_repeater($gk, $glabel, $group['fields'] ?? []);
         } else {
@@ -242,6 +254,13 @@ function evk_rep_loops(): array {
                 } elseif ($t === 'taxonomy') {
                     $add_tax($fk, $glabel . ' — ' . ($f['label'] ?? $fk), $gk . '.' . $fk);
                 }
+            }
+        }
+        if ($przed !== null) {
+            foreach (array_keys($loops) as $lk) {
+                if (evk_rep_loop_is_option((string) $lk)) continue;
+                if (array_key_exists($lk, $przed)) $loops[$lk] = $przed[$lk];
+                else unset($loops[$lk]);
             }
         }
     }
@@ -269,6 +288,7 @@ function evk_rep_loops(): array {
 function evk_rep_find_single_field(string $key): ?array {
     foreach (evk_rep_groups() as $group) {
         if (evk_rep_is_repeater($group)) continue;
+        if (($group['object_type'] ?? 'post') === 'options') continue; // tylko {evk_opt_…}
         $f = $group['fields'][$key] ?? null;
         if ($f && !evk_rep_is_layout($f['type'] ?? '') && ($f['type'] ?? '') !== 'repeater') return $f;
     }
@@ -279,6 +299,9 @@ function evk_rep_find_single_field(string $key): ?array {
 function evk_rep_find_single_field_ctx(string $key): ?array {
     foreach (evk_rep_groups() as $group) {
         if (evk_rep_is_repeater($group)) continue;
+        // Grupa tylko strony ustawień nie ma wartości w meta — pierwsze trafienie wygrywa,
+        // więc taka grupa zasłoniłaby to samo pole w grupie wpisów (1.71.0).
+        if (($group['object_type'] ?? 'post') === 'options') continue;
         $f = $group['fields'][$key] ?? null;
         if ($f && !evk_rep_is_layout($f['type'] ?? '') && ($f['type'] ?? '') !== 'repeater') {
             return ['field' => $f, 'object_type' => $group['object_type'] ?? 'post'];
@@ -401,6 +424,9 @@ function evk_rep_format_value(array $field, $val, string $prop) {
             $id = (int) (is_array($r) ? ($r['img'] ?? 0) : $r);
             if ($id > 0) $ids[] = $id;
         }
+        // Wewnętrzny prop kontekstu obrazu (evk_rep_image_tag_value, 1.71.0): cała lista ID
+        // + tryb sortowania pola. Spoza whitelisty parsera, więc z taga się go nie wpisze.
+        if ($prop === '__lista') return ['ids' => $ids, 'sort' => (string) ($field['gallery_sort'] ?? '')];
         if (empty($ids)) return '';
         if ($prop === 'ids')   return implode(',', $ids);
         if ($prop === 'count') return (string) count($ids);
@@ -583,6 +609,20 @@ function evk_rep_resolve_option(string $tagContent, string $prop = '') {
         // Tłumaczenie leży w tej samej tablicy opcji (includes/translations.php).
         $val  = evk_rep_tl_value($field, $fk, $val, function (string $k) use ($vals) { return $vals[$k] ?? ''; });
         return evk_rep_format_value($field, $val, $prop);
+    }
+    return '';
+}
+
+/**
+ * Ścieżka opcji pola („grupa.pole") z treści taga `{evk_opt_grupa_pole}` — ta sama, której
+ * używa klucz pętli opcji (`evk_opt_grupa.pole`). '' gdy tag nie wskazuje pola.
+ */
+function evk_rep_option_path(string $tagContent): string {
+    foreach (evk_rep_groups() as $gk => $group) {
+        $prefix = $gk . '_';
+        if (strpos($tagContent, $prefix) !== 0) continue;
+        $fk = substr($tagContent, strlen($prefix));
+        if (isset($group['fields'][$fk])) return $gk . '.' . $fk;
     }
     return '';
 }
@@ -940,12 +980,47 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
         if (evk_rep_is_repeater($group)) {
             $walk('', $group['fields'] ?? [], $gname);
         } else {
-            $walk('', $group['fields'] ?? [], $gname);
+            if (($group['object_type'] ?? 'post') === 'options') {
+                // Grupa tylko strony ustawień (1.71.0): jej pola z góry grupy czyta się
+                // wyłącznie przez {evk_opt_…} — {evk_field_…} szukałby w meta wpisu. Zostają
+                // pola list (repeaterów): w pętli „EVK Opcje" używa się ich jako {evk_field_…}.
+                foreach (($group['fields'] ?? []) as $fk => $f) {
+                    if (($f['type'] ?? '') !== 'repeater') continue;
+                    $walk((($f['label'] ?? '') !== '' ? $f['label'] : $fk), $f['sub_fields'] ?? [], $gname);
+                }
+            } else {
+                $walk('', $group['fields'] ?? [], $gname);
+            }
             foreach (($group['fields'] ?? []) as $fk => $f) {
                 $t = $f['type'] ?? '';
                 if (evk_rep_is_layout($t) || $t === 'repeater') continue;
                 $add_opt($gk, $fk, ($f['label'] ?? $fk), $t, $oname);
             }
+        }
+    }
+
+    // Pola pętli galerii i jej kategorii (1.71.0) — istnieją tylko wewnątrz tych pętli,
+    // więc do 1.70 znała je wyłącznie ściąga w kreatorze pola.
+    $ma_galerie = false;
+    $ma_kategorie = false;
+    foreach (evk_rep_loops() as $l) {
+        if (isset($l['sort'])) $ma_galerie = true;
+        if (isset($l['galcat']) || isset($l['galcatflat'])) $ma_kategorie = true;
+    }
+    if ($ma_galerie) {
+        foreach ([
+            '{evk_field_img__id}'    => 'Obraz (ID — do elementu Image)',
+            '{evk_field_img}'        => 'Obraz (URL)',
+            '{evk_field_img__alt}'   => 'Obraz (alt)',
+            '{evk_field_cat}'        => 'Kategoria obrazu (wartość)',
+            '{evk_field_cat__label}' => 'Kategoria obrazu (etykieta)',
+        ] as $nazwa => $etykieta) {
+            $tags[] = ['name' => $nazwa, 'label' => $etykieta, 'group' => 'EVK Pętla: galeria'];
+        }
+    }
+    if ($ma_kategorie) {
+        foreach (['{evk_field_name}' => 'Nazwa kategorii', '{evk_field_slug}' => 'Slug kategorii (np. do data-filter)'] as $nazwa => $etykieta) {
+            $tags[] = ['name' => $nazwa, 'label' => $etykieta, 'group' => 'EVK Pętla: kategorie galerii'];
         }
     }
     return $tags;
@@ -1047,6 +1122,17 @@ function evk_rep_image_tag_value(string $key, string $prop, int $ctx_pid, bool $
         $v = $is_option ? evk_rep_resolve_option($key, $prop) : evk_rep_resolve($key, $prop, $ctx_pid);
         $v = is_scalar($v) ? (string) $v : '';
         return $v !== '' ? [$v] : [];
+    }
+    // Galeria (bez propa albo __ids): CAŁA lista ID (1.71.0). Natywna „Image Gallery" Bricksa
+    // iteruje tablicę — do 1.70 dostawała tylko pierwsze ID, więc galeria bez pętli miała jeden
+    // obraz, a w pętli powstawało wiele jednoobrazkowych galerii. Element Image bierze [0].
+    // Kolejność jak w pętli tej galerii (ten sam tryb sortowania i to samo ziarno).
+    if ($prop === '' || $prop === 'ids') {
+        $lista = $is_option ? evk_rep_resolve_option($key, '__lista') : evk_rep_resolve($key, '__lista', $ctx_pid);
+        if (is_array($lista) && isset($lista['ids']) && is_array($lista['ids'])) {
+            $ziarno = $is_option ? 'evk_opt_' . evk_rep_option_path($key) : $key;
+            return array_values(evk_rep_sort_items($lista['ids'], (string) ($lista['sort'] ?? ''), $ziarno));
+        }
     }
     $id = $is_option
         ? (int) evk_rep_resolve_option($key, 'id')

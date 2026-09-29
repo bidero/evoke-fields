@@ -319,7 +319,9 @@
 .evk-group-location[data-object-type="post"] .evk-loc-post,
 .evk-group-location[data-object-type="term"] .evk-loc-term,
 .evk-group-location[data-object-type="user"] .evk-loc-user,
-.evk-group-location[data-object-type="media"] .evk-loc-media{display:block;}
+.evk-group-location[data-object-type="media"] .evk-loc-media,
+.evk-group-location[data-object-type="options"] .evk-loc-options{display:block;}
+.evk-loc-warn{margin:8px 0 0;padding:6px 10px;border-left:3px solid #dba617;background:#fcf9e8;color:#3c434a;}
 .evk-loc-block .evk-b-section-title{margin:0 0 8px;}
 .evk-loc-checks{display:flex;flex-direction:column;gap:6px;}
 .evk-loc-checks label{display:flex;align-items:center;gap:8px;margin:0;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff;cursor:pointer;line-height:1.3;white-space:normal;font-size:13px;color:#374151;transition:border-color .15s,background .15s,color .15s;}

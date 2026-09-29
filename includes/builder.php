@@ -112,7 +112,7 @@ function evk_group_opts_metabox(\WP_Post $post): void {
 
 function evk_group_pts_metabox(\WP_Post $post): void {
     $object_type = get_post_meta($post->ID, '_evk_object_type', true);
-    if (!in_array($object_type, ['post', 'term', 'user', 'media'], true)) $object_type = 'post';
+    if (!in_array($object_type, evk_rep_object_types(), true)) $object_type = 'post';
 
     $pts   = get_post_meta($post->ID, '_evk_post_types', true);
     $pts   = is_array($pts) ? $pts : [];
@@ -138,6 +138,7 @@ function evk_group_pts_metabox(\WP_Post $post): void {
                 <option value="term" <?php selected($object_type, 'term'); ?>>Termy taksonomii</option>
                 <option value="user" <?php selected($object_type, 'user'); ?>>Profil użytkownika</option>
                 <option value="media" <?php selected($object_type, 'media'); ?>>Media (załączniki)</option>
+                <option value="options" <?php selected($object_type, 'options'); ?>>Tylko strona ustawień</option>
             </select>
         </label>
 
@@ -167,6 +168,32 @@ function evk_group_pts_metabox(\WP_Post $post): void {
 
         <div class="evk-loc-block evk-loc-user">
             <p class="description">Pola pojawią się na ekranie edycji profilu każdego użytkownika.</p>
+        </div>
+
+        <?php
+        // Strona ustawień (1.71.0): te same zaznaczenia co w „Strony ustawień" — oba ekrany
+        // zapisują tę samą opcję. Znacznik końca listy: obcięty POST (max_input_vars) nie
+        // może zdjąć grupy ze stron.
+        $gk_loc  = (string) get_post_meta($post->ID, '_evk_key', true);
+        $miejsca = evk_rep_settings_tabs_list();
+        ?>
+        <div class="evk-loc-block evk-loc-options">
+            <div class="evk-b-section-title">Zakładki stron ustawień</div>
+            <?php if (!$miejsca): ?>
+                <p class="description">Nie ma jeszcze stron ustawień — utwórz je w <a href="<?php echo esc_url(admin_url('admin.php?page=evk-settings')); ?>">Strony ustawień</a>.</p>
+            <?php else: ?>
+                <p class="description">Grupa nie pojawia się przy wpisach, termach ani profilach — tylko na zaznaczonych zakładkach. Te same zaznaczenia widać w „Strony ustawień".</p>
+                <div class="evk-loc-checks">
+                    <?php foreach ($miejsca as $m): ?>
+                    <label><input type="checkbox" name="evk_group_settings_tabs[]" value="<?php echo esc_attr($m['id']); ?>" <?php checked($gk_loc !== '' && in_array($gk_loc, $m['groups'], true)); ?>>
+                        <?php echo esc_html($m['label']); ?></label>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <input type="hidden" name="evk_group_settings_tabs_sent" value="1">
+            <?php if ($object_type === 'options' && $gk_loc !== '' && !evk_rep_group_settings_places($gk_loc)): ?>
+                <p class="evk-loc-warn">Ta grupa nie jest na żadnej stronie ustawień, więc nigdzie się nie pojawia.</p>
+            <?php endif; ?>
         </div>
 
         <div class="evk-loc-block evk-loc-media">
@@ -260,8 +287,18 @@ add_action('save_post_evk_field_group', function ($post_id) {
 
     // ── Lokalizacja ──
     $obj = sanitize_key($_POST['evk_group_object_type'] ?? 'post');
-    if (!in_array($obj, ['post', 'term', 'user', 'media'], true)) $obj = 'post';
+    if (!in_array($obj, evk_rep_object_types(), true)) $obj = 'post';
     update_post_meta($post_id, '_evk_object_type', $obj);
+
+    // Tylko strona ustawień: zaznaczone zakładki → konfiguracja stron. Bez znacznika końca
+    // listy (obcięty POST) nic nie zapisujemy — brak zaznaczeń zdjąłby grupę ze wszystkich stron.
+    if ($obj === 'options' && !empty($_POST['evk_group_settings_tabs_sent'])) {
+        $gk_zap  = (string) get_post_meta($post_id, '_evk_key', true);
+        $wybrane = isset($_POST['evk_group_settings_tabs']) && is_array($_POST['evk_group_settings_tabs'])
+            ? array_values(array_map('sanitize_text_field', wp_unslash($_POST['evk_group_settings_tabs'])))
+            : [];
+        if ($gk_zap !== '') evk_rep_settings_set_group_tabs($gk_zap, $wybrane);
+    }
 
     $pts_raw = isset($_POST['evk_group_post_types']) && is_array($_POST['evk_group_post_types'])
         ? array_values(array_filter(array_map('sanitize_key', $_POST['evk_group_post_types'])))
@@ -954,9 +991,10 @@ function evk_rep_builder_field_row(string $base, array $field = [], bool $sub = 
                     </ol>
                     <div class="evk-b-cheat-row"><strong>Proste tagi:</strong></div>
                     <ul class="evk-b-cheat-tags">
-                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__ids}">{evk_field_<?php echo esc_html($cheat_key); ?>__ids}</code> — lista ID (np. natywny element Galeria Bricks)</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($cheat_key); ?>}</code> w natywnym elemencie <em>Image Gallery</em> (Dynamic data, BEZ pętli) — cała galeria, w kolejności z ustawienia „Sortowanie"</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__ids}">{evk_field_<?php echo esc_html($cheat_key); ?>__ids}</code> — lista ID po przecinku (w tekście); w galerii działa jak wyżej</li>
                         <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s__count}">{evk_field_<?php echo esc_html($cheat_key); ?>__count}</code> — liczba obrazów</li>
-                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($cheat_key); ?>}</code> — URL pierwszego obrazu</li>
+                        <li><code class="evk-b-cheat-tag" data-tpl="{evk_field_%s}">{evk_field_<?php echo esc_html($cheat_key); ?>}</code> w tekście — URL pierwszego obrazu</li>
                     </ul>
                 </div>
             </details>
