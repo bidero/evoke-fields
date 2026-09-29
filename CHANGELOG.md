@@ -2,6 +2,43 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.73.0] — 2026-09-29
+
+Galeria z listy (repeatera) w natywnej galerii Bricksa, bez pętli.
+
+### Dodane
+
+- **Płaska galeria jako tag** — obrazy ze WSZYSTKICH wierszy listy w jednej
+  natywnej „Image Gallery". Zgłoszenie: strona ustawień, galerie w liście,
+  tag w Image Gallery bez pętli nic nie zwracał, w pętli działał („nie ma
+  też spłaszczonej listy").
+  - Przyczyna: płaska lista istniała tylko jako pętla „EVK Galeria —
+    wszystkie wiersze", a pętla z galerią w środku daje osobną galerię na
+    każdy obraz. `{evk_field_galeria}` pola z listy poza pętlą nie ma
+    wiersza, więc nic nie zwraca.
+  - Tag ma nazwę pętli: `{evk_galflatopt_grupa.lista.galeria}` (strona
+    ustawień), `{evk_galflatopt_grupa.galeria}` (grupa-lista),
+    `{evk_galflat_lista.galeria}` (wpis). W podpowiedziach Bricksa w grupie
+    „EVK Galeria — wszystkie wiersze" (i „(Opcje)").
+  - Kolejność jak w tej pętli: ten sam tryb sortowania i to samo ziarno.
+  - W tekście jak pole galerii: `__ids`, `__count`, domyślnie URL pierwszego
+    obrazu; `:id` w elemencie Image — pierwszy obraz.
+  - Pole wrażliwe jak w pozostałych tagach: gość bez klucza dostaje pustkę.
+
+### Poprawione
+
+- **Ściąga galerii w kreatorze** obiecywała „`{evk_field_…}` BEZ pętli —
+  cała galeria" także dla galerii w liście. Teraz mówi, że w liście ten tag
+  działa tylko w pętli po wierszach, i podaje płaski tag.
+
+### Testy
+
+- `tests/fields-galeria-plaska.test.js` w Evoke ONE (czwarty testowy
+  WordPress): 20 sprawdzeń — pole-lista i grupa-lista strony ustawień, lista
+  wpisu, kolejność = pętla (także losowanie dobowe), pole wrażliwe, tekst
+  i treść mieszana, podpowiedzi, ściąga. Mutacje: 10, każda zapala swoje
+  sprawdzenia, zestawy różne.
+
 ## [1.72.0] — 2026-09-29
 
 Modyfikatory tagów jak w Bricksie.

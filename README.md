@@ -81,6 +81,10 @@ Dwa niezależne mechanizmy, do użycia osobno lub razem:
   - Najpierw język (tłumaczenie wartości), potem modyfikatory. Zapis `__prop` działa dalej.
 - W elemencie **Image** Bricks używaj wariantu `__id` (pełny srcset i lightbox); `__preview` pliku PDF w kontekście Image zwraca ID podglądu automatycznie.
 - **Natywna galeria Bricksa (Image Gallery):** Dynamic data = `{evk_field_galeria}` (albo `__ids`, albo `{evk_opt_grupa_galeria}`), **bez pętli** — element dostaje całą listę obrazów, w kolejności z ustawienia „Sortowanie" pola (ta sama co w pętli „EVK Galeria"). Pętla galerii jest do własnego układu i filtrów Isotope.
+- **Galeria w liście (repeaterze) w natywnej galerii:** `{evk_field_galeria}` pola z listy ma sens tylko w pętli po wierszach (poza nią nie ma wiersza, więc nic nie zwraca). Wszystkie obrazy ze **wszystkich wierszy** w jednej galerii, bez pętli, daje tag płaskiej galerii — ta sama nazwa co pętla „EVK Galeria — wszystkie wiersze", w podpowiedziach w grupie o tej nazwie:
+  - `{evk_galflat_lista.galeria}` — lista `lista` w meta wpisu (albo grupa-lista `lista`);
+  - `{evk_galflatopt_grupa.lista.galeria}` — lista w grupie `grupa` na stronie ustawień (grupa-lista: `{evk_galflatopt_grupa.galeria}`);
+  - kolejność jak w tej pętli (ten sam tryb sortowania i to samo ziarno); w tekście jak pole galerii: `__ids`, `__count`, domyślnie URL pierwszego obrazu.
 - **Pola pętli** (`{evk_field_img__id}`, `{evk_field_img}`, `{evk_field_cat__label}`, a w pętli kategorii `{evk_field_name}`, `{evk_field_slug}`) są w pickerze w grupach „EVK Pętla: …".
 
 ## Tłumaczenia wartości pól

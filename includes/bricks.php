@@ -226,8 +226,8 @@ function evk_rep_loops(): array {
         $catFields = ['slug' => ['type' => 'text', 'label' => 'Slug'], 'name' => ['type' => 'text', 'label' => 'Nazwa']];
 
         $fsort = $field['gallery_sort'] ?? '';
-        $loops['evk_galflat_' . $repPath . '.' . $subKey]          = ['label' => 'EVK Galeria — wszystkie wiersze: '           . $label, 'fields' => $imgFields, 'galflat' => $field, 'repPath' => $repPath,    'subKey' => $subKey, 'rowKeys' => $rowKeys, 'sort' => $fsort, 'flatOption' => false];
-        $loops['evk_galflatopt_' . $optRepPath . '.' . $subKey]    = ['label' => 'EVK Galeria — wszystkie wiersze (Opcje): '    . $label, 'fields' => $imgFields, 'galflat' => $field, 'repPath' => $optRepPath, 'subKey' => $subKey, 'rowKeys' => $rowKeys, 'sort' => $fsort, 'flatOption' => true];
+        $loops['evk_galflat_' . $repPath . '.' . $subKey]          = ['label' => 'EVK Galeria — wszystkie wiersze: '           . $label, 'fields' => $imgFields, 'galflat' => $field, 'repPath' => $repPath,    'subKey' => $subKey, 'rowKeys' => $rowKeys, 'sort' => $fsort, 'flatOption' => false, 'etykieta' => $label];
+        $loops['evk_galflatopt_' . $optRepPath . '.' . $subKey]    = ['label' => 'EVK Galeria — wszystkie wiersze (Opcje): '    . $label, 'fields' => $imgFields, 'galflat' => $field, 'repPath' => $optRepPath, 'subKey' => $subKey, 'rowKeys' => $rowKeys, 'sort' => $fsort, 'flatOption' => true,  'etykieta' => $label];
         $loops['evk_galcatflat_' . $repPath . '.' . $subKey]       = ['label' => 'EVK Galeria kategorie — wszystkie: '          . $label, 'fields' => $catFields, 'galcatflat' => $field, 'repPath' => $repPath,    'subKey' => $subKey, 'flatOption' => false];
         $loops['evk_galcatflatopt_' . $optRepPath . '.' . $subKey] = ['label' => 'EVK Galeria kategorie — wszystkie (Opcje): ' . $label, 'fields' => $catFields, 'galcatflat' => $field, 'repPath' => $optRepPath, 'subKey' => $subKey, 'flatOption' => true];
     };
@@ -1023,6 +1023,16 @@ add_filter('bricks/dynamic_tags_list', function ($tags) {
             $tags[] = ['name' => $nazwa, 'label' => $etykieta, 'group' => 'EVK Pętla: kategorie galerii'];
         }
     }
+    // Galeria z listy (repeatera): wszystkie obrazy ze wszystkich wierszy jako jeden tag
+    // (1.73.0) — do natywnej „Image Gallery" bez pętli.
+    foreach (evk_rep_loops() as $lk => $l) {
+        if (empty($l['galflat'])) continue;
+        $g = !empty($l['flatOption']) ? 'EVK Galeria — wszystkie wiersze (Opcje)' : 'EVK Galeria — wszystkie wiersze';
+        $e = (string) ($l['etykieta'] ?? $lk);
+        $tags[] = ['name' => '{' . $lk . '}',          'label' => $e,                'group' => $g];
+        $tags[] = ['name' => '{' . $lk . '__ids}',     'label' => $e . ' (lista ID)', 'group' => $g];
+        $tags[] = ['name' => '{' . $lk . '__count}',   'label' => $e . ' (liczba)',   'group' => $g];
+    }
     return $tags;
 });
 
@@ -1245,6 +1255,12 @@ function evk_rep_render_content($content, $post = null, $context = 'text') {
             return is_scalar($v) ? (string) $v : '';
         }, $content) ?? $content;
     }
+    if (strpos($content, '{evk_galflat') !== false) {
+        $content = preg_replace_callback('/\{(evk_galflat(?:opt)?_[a-zA-Z0-9_\.]+(?::[^{}\r\n]*)?)\}/iu', function ($m) use ($ctx_pid) {
+            $v = evk_rep_galeria_plaska_tekst($m[1], $ctx_pid);
+            return is_scalar($v) ? (string) $v : '';
+        }, $content) ?? $content;
+    }
     if (strpos($content, '{evk_opt_') !== false) {
         $content = preg_replace_callback('/\{evk_opt_([a-zA-Z0-9_\.]+(?::[^{}\r\n]*)?)\}/iu', function ($m) {
             [$tagContent, $prop, $mods] = evk_rep_parse_tag($m[1]);
@@ -1308,10 +1324,66 @@ function evk_rep_prop_obrazu(string $prop, array $mods): string {
     return $prop;
 }
 
+/**
+ * Płaska galeria jako tag (1.73.0): `{evk_galflat_…}` / `{evk_galflatopt_…}`, nazwa jak klucz
+ * pętli „EVK Galeria — wszystkie wiersze". Natywna „Image Gallery" dostaje obrazy ze WSZYSTKICH
+ * wierszy repeatera w jednej galerii, bez pętli. Do 1.72 płaska lista była tylko pętlą, a pętla
+ * z galerią w środku daje osobną galerię na każdy obraz; `{evk_field_galeria}` pola z repeatera
+ * poza pętlą nie ma wiersza, więc nic nie zwraca.
+ *
+ * Kolejność jak w tej pętli: te same wiersze, ten sam tryb sortowania i to samo ziarno (klucz
+ * pętli). Tasowanie z ziarnem zależy tylko od liczby pozycji, więc lista ID wychodzi w tym
+ * samym porządku co wiersze pętli.
+ *
+ * @return list<int>|null  null — nie ma takiej płaskiej galerii
+ */
+function evk_rep_galeria_plaska_ids(string $klucz, int $ctx_pid = 0): ?array {
+    $def = evk_rep_loops()[$klucz] ?? null;
+    if (!is_array($def) || empty($def['galflat'])) return null;
+    $opcje = !empty($def['flatOption']);
+    $pid   = $opcje ? 0 : evk_rep_filter_pid($ctx_pid);
+    // Pole wrażliwe jak w evk_rep_resolve(): gość bez klucza dostaje pustkę.
+    if (!$opcje && function_exists('evk_protect_field_blocked') && evk_protect_field_blocked((array) $def['galflat'], $pid)) return [];
+    $ids = [];
+    foreach (evk_rep_get_rows_for_path((string) $def['repPath'], $pid, $opcje) as $wiersz) {
+        $gal = is_array($wiersz) ? ($wiersz[$def['subKey']] ?? []) : [];
+        if (!is_array($gal)) continue;
+        foreach ($gal as $g) {
+            $id = is_array($g) ? (int) ($g['img'] ?? 0) : 0;   // jak pętla: tylko wiersze {img, cat}
+            if ($id > 0) $ids[] = $id;
+        }
+    }
+    return array_values(evk_rep_sort_items($ids, (string) ($def['sort'] ?? ''), $klucz));
+}
+
+/**
+ * `{evk_galflat…}` w tekście — jak pole galerii: `__ids`/`:ids` lista ID, `__count` liczba,
+ * domyślnie URL pierwszego obrazu. null — nie ma takiej płaskiej galerii.
+ *
+ * @return mixed
+ */
+function evk_rep_galeria_plaska_tekst(string $tresc, int $ctx_pid) {
+    [$klucz, $prop, $mods] = evk_rep_parse_tag($tresc);
+    $ids = evk_rep_galeria_plaska_ids($klucz, $ctx_pid);
+    if ($ids === null) return null;
+    $wiersze = array_map(function ($id) { return ['img' => $id]; }, $ids);
+    return evk_rep_formatuj((array) evk_rep_loops()[$klucz]['galflat'], $wiersze, $prop, $mods);
+}
+
 function evk_rep_render_tag($tag, $post = null, $context = 'text') {
     $t = is_string($tag) ? trim($tag, '{}') : '';
     $ctx_pid = evk_rep_extract_context_id($post);
     $img_ctx = in_array($context, ['image', 'media'], true);
+
+    if (strpos($t, 'evk_galflat') === 0) {
+        [$klucz, $prop, $mods] = evk_rep_parse_tag($t);
+        if ($img_ctx) {
+            $ids = evk_rep_galeria_plaska_ids($klucz, $ctx_pid) ?? [];
+            return evk_rep_prop_obrazu($prop, $mods) === 'id' ? array_slice($ids, 0, 1) : $ids;
+        }
+        $v = evk_rep_galeria_plaska_tekst($t, $ctx_pid);
+        return is_scalar($v) ? $v : '';
+    }
 
     if (strpos($t, 'evk_field_') === 0) {
         [$key, $prop, $mods] = evk_rep_parse_tag(substr($t, 10));
