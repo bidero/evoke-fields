@@ -62,6 +62,23 @@ Dwa niezależne mechanizmy, do użycia osobno lub razem:
 | Data / Czas / Data i godzina | `raw` (ISO), `timestamp` — domyślnie wg formatu wyświetlania |
 
 - **Meta powiązanego obiektu:** `{evk_field_klucz__meta:inny_klucz}` (dla pól Użytkownik / Relacja / Taksonomia).
+- **Modyfikatory po „:"** (od 1.72.0, jak w Bricksie), łańcuchowo, np. `{evk_field_opis:plain:20}`:
+
+| Modyfikator | Działanie |
+|---|---|
+| `:plain` | bez znaczników HTML i encji |
+| `:20` (liczba) | tyle słów, z „…" |
+| `:slug` | slug z tekstu (`Zażółć` → `zazolc`); przy Taksonomii slug termu |
+| `:d.m.Y`, `:H:i`, `:j F Y`… | format daty w tagu (Data / Czas / Data i godzina) |
+| `:timestamp`, `:raw` | jak `__timestamp` i `__raw` |
+| `:url`, `:link` | adres albo gotowy `<a>` (Link, Obraz, Plik, Relacja, Użytkownik, Taksonomia; tekst z adresem też) |
+| `:id`, `:large`, `:moj_rozmiar` | ID albo rozmiar obrazu — także własne rozmiary |
+| `:label`, `:value`, `:raw` | etykieta albo wartość pola wyboru, wartość zapisana |
+
+  - `:x`, gdy `x` jest wariantem tego typu pola, działa jak `__x` (np. `:slug` Taksonomii, `:raw` daty).
+  - Format daty zajmuje resztę tagu, więc modyfikatory stawiasz PRZED nim: `{evk_field_data:slug:j F Y}`.
+  - Nieznany modyfikator nic nie zmienia. W elemencie Image / Image Gallery modyfikatory tekstowe są pomijane.
+  - Najpierw język (tłumaczenie wartości), potem modyfikatory. Zapis `__prop` działa dalej.
 - W elemencie **Image** Bricks używaj wariantu `__id` (pełny srcset i lightbox); `__preview` pliku PDF w kontekście Image zwraca ID podglądu automatycznie.
 - **Natywna galeria Bricksa (Image Gallery):** Dynamic data = `{evk_field_galeria}` (albo `__ids`, albo `{evk_opt_grupa_galeria}`), **bez pętli** — element dostaje całą listę obrazów, w kolejności z ustawienia „Sortowanie" pola (ta sama co w pętli „EVK Galeria"). Pętla galerii jest do własnego układu i filtrów Isotope.
 - **Pola pętli** (`{evk_field_img__id}`, `{evk_field_img}`, `{evk_field_cat__label}`, a w pętli kategorii `{evk_field_name}`, `{evk_field_slug}`) są w pickerze w grupach „EVK Pętla: …".

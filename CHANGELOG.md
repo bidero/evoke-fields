@@ -2,6 +2,52 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.72.0] — 2026-09-29
+
+Modyfikatory tagów jak w Bricksie.
+
+### Dodane
+
+- **Modyfikatory po „:"**, łańcuchowo, np. `{evk_field_opis:plain:20}`
+  (zgłoszenie: „takie same opcje jak w Bricks do danych dynamicznych —
+  :slug, :plain itd."). Działają w pojedynczym tagu i w tekście z tagami,
+  w `{evk_field_…}` i `{evk_opt_…}`:
+  - tekst: `:plain` (bez znaczników i encji), liczba słów (`:20`), `:slug`;
+  - daty: format w tagu (`:d.m.Y`, `:H:i`, `:j F Y`), `:timestamp`;
+  - linki i obrazy: `:url`, `:link` (gotowy `<a>`), `:id`, rozmiar obrazu,
+    także własny (przez `__` własnych rozmiarów nie dało się podać);
+  - wybór: `:label`, `:value`, `:raw`.
+- **Zasady:**
+  - `:x` o nazwie wariantu tego typu pola działa jak `__x`: `:slug`
+    Taksonomii to slug termu, `:raw` daty to ISO;
+  - format daty może mieć „:" (`H:i`), więc zajmuje resztę tagu —
+    modyfikatory stawia się przed nim;
+  - `__meta:klucz` rozpoznawane pierwsze, a dalsze „:" to modyfikatory
+    (klucz mety może się nazywać jak modyfikator);
+  - najpierw tłumaczenie wartości (1.70), potem wariant, potem modyfikatory;
+  - w kontekście obrazu modyfikatory tekstowe są pomijane, a `:ids`, `:id`,
+    `:preview`, `:avatar` działają jak po „__";
+  - nieznany modyfikator nic nie zmienia; `__prop` działa jak dotąd.
+
+### Zmienione
+
+- W tekście z tagami działa teraz także `__meta:` (dotąd zostawał dosłownie).
+
+### Testy
+
+- W repozytorium Evoke ONE, `fields-modyfikatory` (29 sprawdzeń, pola.test):
+  każdy modyfikator, łańcuch, format daty z „:" i spacją, pierwszeństwo
+  wariantu, `__meta:` z modyfikatorem i z kluczem o nazwie modyfikatora,
+  strona ustawień, tekst z tagami, kontekst obrazu, tłumaczenie +
+  modyfikator.
+- Mutacje: 10, każda zapala inny zestaw sprawdzeń.
+- `fields-*` i `marquee`: 223 sprawdzenia.
+
+### Do sprawdzenia na stronie
+
+- Czy Bricks przekazuje tag z „:" do Evoke FIELDS bez zmian (np.
+  `{evk_field_opis:plain:20}` w elemencie Tekst i w Nagłówku).
+
 ## [1.71.0] — 2026-09-29
 
 Galeria w natywnej galerii Bricksa, pola pętli w podpowiedziach i grupa

@@ -496,7 +496,7 @@ function evk_rep_stack_pop(): void {
 // RESOLVER TAGÓW
 // =========================================================================
 
-function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
+function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0, array $mods = []) {
     // 1. Kontekst pętli (stos)
     $top = evk_rep_stack_top();
     if ($top) {
@@ -508,7 +508,7 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
             if (function_exists('evk_protect_field_blocked') && evk_protect_field_blocked($f, (int) ($top['post_id'] ?? 0))) return '';
             // Tłumaczenie z tego samego wiersza (includes/translations.php).
             $val = evk_rep_tl_value($f, $key, $row[$key], function (string $k) use ($row) { return $row[$k] ?? ''; });
-            return evk_rep_format_value($f, $val, $prop);
+            return evk_rep_formatuj($f, $val, $prop, $mods);
         }
         if (evk_rep_is_builder() && array_key_exists($key, $fields)) {
             return evk_rep_builder_placeholder($fields[$key], $key, $prop);
@@ -537,22 +537,22 @@ function evk_rep_resolve(string $key, string $prop = '', int $ctx_pid = 0) {
         if ($ot === 'term') {
             $tid = evk_rep_current_term_id();
             if ($tid && metadata_exists('term', $tid, $key)) {
-                return $blocked(0) ? '' : evk_rep_format_value($field, $w_jezyku('term', $tid), $prop);
+                return $blocked(0) ? '' : evk_rep_formatuj($field, $w_jezyku('term', $tid), $prop, $mods);
             }
         } elseif ($ot === 'user') {
             $uid = evk_rep_current_user_id_ctx();
             if ($uid && metadata_exists('user', $uid, $key)) {
-                return $blocked(0) ? '' : evk_rep_format_value($field, $w_jezyku('user', $uid), $prop);
+                return $blocked(0) ? '' : evk_rep_formatuj($field, $w_jezyku('user', $uid), $prop, $mods);
             }
         } elseif ($ot === 'media') {
             $aid = evk_rep_current_attachment_id();
             if ($aid && metadata_exists('post', $aid, $key)) {
-                return $blocked($aid) ? '' : evk_rep_format_value($field, evk_rep_tl_value($field, $key, get_post_meta($aid, $key, true), function (string $k) { return ''; }), $prop);
+                return $blocked($aid) ? '' : evk_rep_formatuj($field, evk_rep_tl_value($field, $key, get_post_meta($aid, $key, true), function (string $k) { return ''; }), $prop, $mods);
             }
         } else {
             $pid = evk_rep_filter_pid($ctx_pid);
             if ($pid && metadata_exists('post', $pid, $key)) {
-                return $blocked($pid) ? '' : evk_rep_format_value($field, $w_jezyku('post', $pid), $prop);
+                return $blocked($pid) ? '' : evk_rep_formatuj($field, $w_jezyku('post', $pid), $prop, $mods);
             }
         }
         if (evk_rep_is_builder()) return evk_rep_builder_placeholder($field, $key, $prop);
@@ -594,7 +594,7 @@ function evk_rep_builder_placeholder(array $field, string $key, string $prop) {
 // RESOLVER OPCJI GLOBALNYCH
 // =========================================================================
 
-function evk_rep_resolve_option(string $tagContent, string $prop = '') {
+function evk_rep_resolve_option(string $tagContent, string $prop = '', array $mods = []) {
     foreach (evk_rep_groups() as $gk => $group) {
         $prefix = $gk . '_';
         if (strpos($tagContent, $prefix) !== 0) continue;
@@ -608,7 +608,7 @@ function evk_rep_resolve_option(string $tagContent, string $prop = '') {
         $val  = array_key_exists($fk, $vals) ? $vals[$fk] : '';
         // Tłumaczenie leży w tej samej tablicy opcji (includes/translations.php).
         $val  = evk_rep_tl_value($field, $fk, $val, function (string $k) use ($vals) { return $vals[$k] ?? ''; });
-        return evk_rep_format_value($field, $val, $prop);
+        return evk_rep_formatuj($field, $val, $prop, $mods);
     }
     return '';
 }
@@ -1076,12 +1076,156 @@ function evk_rep_tag_props_pattern(): string {
     return $pat;
 }
 
+/**
+ * Treść taga → [klucz, prop, modyfikatory]. Składnia (1.72.0):
+ * `klucz[__prop][:mod[:mod…]]`, np. `opis:plain:20`, `data:d.m.Y`, `obraz:large`.
+ * `__meta:klucz` rozpoznajemy PIERWSZE, bo samo używa „:" — człon po nim to klucz mety
+ * (może się nazywać jak modyfikator), dopiero dalsze „:" to modyfikatory.
+ *
+ * @return array{0: string, 1: string, 2: list<string>}
+ */
 function evk_rep_parse_tag(string $raw): array {
     // __meta:klucz — meta powiązanego obiektu (user/relationship/taxonomy). Klucz dynamiczny.
-    if (preg_match('/^(.+)__meta:([A-Za-z0-9_\-]+)$/', $raw, $m)) return [$m[1], 'meta:' . $m[2]];
+    if (preg_match('/^(.+?)__meta:([A-Za-z0-9_\-]+)((?::[^:]*)*)$/', $raw, $m)) {
+        return [$m[1], 'meta:' . $m[2], $m[3] !== '' ? explode(':', substr($m[3], 1)) : []];
+    }
+    $mods = [];
+    $poz  = strpos($raw, ':');
+    if ($poz !== false) {
+        $mods = explode(':', substr($raw, $poz + 1));
+        $raw  = substr($raw, 0, $poz);
+    }
     // Whitelist z rejestru — zamknięta lista, by klucze pól z „__" nie były psute.
-    if (preg_match('/^(.*)__(' . evk_rep_tag_props_pattern() . ')$/', $raw, $m)) return [$m[1], $m[2]];
-    return [$raw, ''];
+    if (preg_match('/^(.*)__(' . evk_rep_tag_props_pattern() . ')$/', $raw, $m)) return [$m[1], $m[2], $mods];
+    return [$raw, '', $mods];
+}
+
+/**
+ * Propy, które rozumie `evk_rep_format_value()` dla typu pola — modyfikator o takiej
+ * nazwie działa jak `__prop` (znaczenie propa wygrywa: `:slug` taksonomii = slugi
+ * termów, `:raw` daty = ISO, `:url` według typu). Obraz: też każdy zarejestrowany
+ * rozmiar, więc `:moj_rozmiar` działa, choć `__moj_rozmiar` nie przechodzi whitelisty.
+ *
+ * @return list<string>
+ */
+function evk_rep_propy_typu(string $type): array {
+    $propy = array_keys(evk_rep_tag_prop_defs()[$type] ?? []);
+    $dodatki = [
+        'image'        => array_merge(['url', 'full'], function_exists('get_intermediate_image_sizes') ? get_intermediate_image_sizes() : []),
+        'file'         => ['path', 'title'],
+        'taxonomy'     => ['count'],
+        'gallery'      => ['id'],
+        'relationship' => ['id'],
+        'user'         => ['id'],
+        'link'         => ['text', 'label'],
+    ];
+    return array_values(array_unique(array_merge($propy, $dodatki[$type] ?? [])));
+}
+
+/** Modyfikatory ogólne — nazwy, których format daty w tagu nie może połknąć. */
+function evk_rep_modyfikatory_ogolne(): array {
+    return ['plain', 'slug', 'raw', 'value', 'label', 'url', 'link', 'id', 'timestamp'];
+}
+
+/**
+ * Wartość pola z propem i modyfikatorami (1.72.0). Kolejność: tłumaczenie wartości
+ * (przed wywołaniem) → prop → modyfikatory po kolei.
+ *
+ * @param mixed        $val
+ * @param list<string> $mods
+ * @return mixed
+ */
+function evk_rep_formatuj(array $field, $val, string $prop, array $mods) {
+    $type = (string) ($field['type'] ?? 'text');
+    if ($prop === '' && $mods && in_array($mods[0], evk_rep_propy_typu($type), true)) {
+        $prop = (string) array_shift($mods);
+    }
+    // Data: pierwszy człon spoza modyfikatorów ogólnych zaczyna format, który zjada resztę
+    // (format może mieć „:" — `H:i`). Modyfikatory przed nim działają na wynik.
+    if ($prop === '' && $mods && in_array($type, ['date', 'time', 'datetime'], true)) {
+        foreach ($mods as $i => $mod) {
+            if (in_array($mod, evk_rep_modyfikatory_ogolne(), true) || ctype_digit($mod)) continue;
+            $format = implode(':', array_slice($mods, $i));
+            $mods   = array_slice($mods, 0, $i);
+            $s      = is_scalar($val) ? trim((string) $val) : '';
+            $ts     = $s !== '' ? strtotime($s) : false;
+            $v      = $ts === false ? $s : date_i18n($format, $ts);
+            return $mods ? evk_rep_modyfikuj($v, $mods, $field, $val) : $v;
+        }
+    }
+    $v = evk_rep_format_value($field, $val, $prop);
+    return $mods ? evk_rep_modyfikuj($v, $mods, $field, $val) : $v;
+}
+
+/**
+ * Modyfikatory ogólne na gotowej wartości. Nieznany modyfikator nic nie zmienia.
+ *
+ * @param mixed        $v    wartość po propie
+ * @param list<string> $mods
+ * @param mixed        $val  wartość zapisana (dla :raw, :value, :url, :link)
+ * @return mixed
+ */
+function evk_rep_modyfikuj($v, array $mods, array $field, $val) {
+    if (!is_scalar($v)) return $v;
+    $s    = (string) $v;
+    $type = (string) ($field['type'] ?? 'text');
+    foreach ($mods as $mod) {
+        if ($mod === 'plain') {
+            $s = trim(html_entity_decode(wp_strip_all_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        } elseif (ctype_digit($mod) && (int) $mod > 0) {
+            $s = wp_trim_words($s, (int) $mod, '…');
+        } elseif ($mod === 'slug') {
+            $s = sanitize_title($s);
+        } elseif ($mod === 'raw' || $mod === 'value') {
+            if (is_scalar($val)) $s = (string) $val;
+        } elseif ($mod === 'label') {
+            if (in_array($type, ['select', 'radio', 'button_group', 'image_select', 'link'], true)) {
+                $l = evk_rep_format_value($field, $val, 'label');
+                $s = is_scalar($l) ? (string) $l : $s;
+            }
+        } elseif ($mod === 'url') {
+            $s = evk_rep_url_pola($field, $val, $s);
+        } elseif ($mod === 'link') {
+            $s = evk_rep_link_pola($field, $val, $s);
+        }
+    }
+    return $s;
+}
+
+/** Adres pola: link, obraz, plik, relacja, użytkownik, termy (pierwszy). Inne — bez zmian. */
+function evk_rep_url_pola(array $field, $val, string $s): string {
+    $type = (string) ($field['type'] ?? 'text');
+    if (in_array($type, ['link', 'image', 'file', 'relationship', 'user'], true)) {
+        $u = evk_rep_format_value($field, $val, $type === 'link' || $type === 'file' ? '' : 'url');
+        return is_scalar($u) ? (string) $u : $s;
+    }
+    if ($type === 'taxonomy') {
+        $ids = array_values(array_filter(array_map('intval', is_array($val) ? $val : [$val])));
+        $u = $ids ? get_term_link($ids[0]) : '';
+        return is_string($u) ? $u : '';
+    }
+    return $s;
+}
+
+/** Gotowy odnośnik `<a>` z adresem pola i jego nazwą. Tekst, który jest adresem, też. */
+function evk_rep_link_pola(array $field, $val, string $s): string {
+    $type = (string) ($field['type'] ?? 'text');
+    if ($type === 'link') {
+        $h = evk_rep_format_value($field, $val, 'html');
+        return is_scalar($h) ? (string) $h : '';
+    }
+    $url = evk_rep_url_pola($field, $val, '');
+    if ($url === '' && preg_match('#^https?://#i', trim($s))) $url = trim($s);
+    if ($url === '') return $s;
+    $tekst = $s;
+    if ($type === 'taxonomy' || $type === 'relationship' || $type === 'user') {
+        $t = evk_rep_format_value($field, $val, '');
+        $tekst = is_scalar($t) ? (string) $t : $s;
+    } elseif ($type === 'file') {
+        $t = evk_rep_format_value($field, $val, 'filename');
+        $tekst = is_scalar($t) ? (string) $t : $s;
+    }
+    return '<a href="' . esc_url($url) . '">' . esc_html($tekst !== '' ? wp_strip_all_tags($tekst) : $url) . '</a>';
 }
 
 add_filter('bricks/dynamic_data/render_content', 'evk_rep_render_content', 20, 3);
@@ -1092,19 +1236,21 @@ function evk_rep_render_content($content, $post = null, $context = 'text') {
     $content = (string) $content;
     $ctx_pid = evk_rep_extract_context_id($post);
 
+    /* Od 1.72.0 z modyfikatorami po „:" (i z `__meta:` — dotąd w treści mieszanej zostawał
+       dosłownie). Modyfikator nie ma klamer ani końca linii. */
     if (strpos($content, '{evk_field_') !== false) {
-        $content = preg_replace_callback('/\{evk_field_([a-zA-Z0-9_\.]+)\}/i', function ($m) use ($ctx_pid) {
-            [$key, $prop] = evk_rep_parse_tag($m[1]);
-            $v = evk_rep_resolve($key, $prop, $ctx_pid);
+        $content = preg_replace_callback('/\{evk_field_([a-zA-Z0-9_\.]+(?::[^{}\r\n]*)?)\}/iu', function ($m) use ($ctx_pid) {
+            [$key, $prop, $mods] = evk_rep_parse_tag($m[1]);
+            $v = evk_rep_resolve($key, $prop, $ctx_pid, $mods);
             return is_scalar($v) ? (string) $v : '';
-        }, $content);
+        }, $content) ?? $content;
     }
     if (strpos($content, '{evk_opt_') !== false) {
-        $content = preg_replace_callback('/\{evk_opt_([a-zA-Z0-9_\.]+)\}/i', function ($m) {
-            [$tagContent, $prop] = evk_rep_parse_tag($m[1]);
-            $v = evk_rep_resolve_option($tagContent, $prop);
+        $content = preg_replace_callback('/\{evk_opt_([a-zA-Z0-9_\.]+(?::[^{}\r\n]*)?)\}/iu', function ($m) {
+            [$tagContent, $prop, $mods] = evk_rep_parse_tag($m[1]);
+            $v = evk_rep_resolve_option($tagContent, $prop, $mods);
             return is_scalar($v) ? (string) $v : '';
-        }, $content);
+        }, $content) ?? $content;
     }
     return $content;
 }
@@ -1151,21 +1297,32 @@ function evk_rep_image_tag_value(string $key, string $prop, int $ctx_pid, bool $
     return [$id];
 }
 
+/**
+ * Kontekst obrazu (element Image, Image Gallery): modyfikatory tekstowe nic tu nie znaczą,
+ * a `:ids`, `:id`, `:preview`, `:avatar` działają jak ten sam prop po „__".
+ *
+ * @param list<string> $mods
+ */
+function evk_rep_prop_obrazu(string $prop, array $mods): string {
+    if ($prop === '' && $mods && in_array($mods[0], ['ids', 'id', 'preview', 'avatar'], true)) return $mods[0];
+    return $prop;
+}
+
 function evk_rep_render_tag($tag, $post = null, $context = 'text') {
     $t = is_string($tag) ? trim($tag, '{}') : '';
     $ctx_pid = evk_rep_extract_context_id($post);
     $img_ctx = in_array($context, ['image', 'media'], true);
 
     if (strpos($t, 'evk_field_') === 0) {
-        [$key, $prop] = evk_rep_parse_tag(substr($t, 10));
-        if ($img_ctx) return evk_rep_image_tag_value($key, $prop, $ctx_pid, false);
-        $v = evk_rep_resolve($key, $prop, $ctx_pid);
+        [$key, $prop, $mods] = evk_rep_parse_tag(substr($t, 10));
+        if ($img_ctx) return evk_rep_image_tag_value($key, evk_rep_prop_obrazu($prop, $mods), $ctx_pid, false);
+        $v = evk_rep_resolve($key, $prop, $ctx_pid, $mods);
         return is_scalar($v) ? $v : '';
     }
     if (strpos($t, 'evk_opt_') === 0) {
-        [$tagContent, $prop] = evk_rep_parse_tag(substr($t, 8));
-        if ($img_ctx) return evk_rep_image_tag_value($tagContent, $prop, 0, true);
-        $v = evk_rep_resolve_option($tagContent, $prop);
+        [$tagContent, $prop, $mods] = evk_rep_parse_tag(substr($t, 8));
+        if ($img_ctx) return evk_rep_image_tag_value($tagContent, evk_rep_prop_obrazu($prop, $mods), 0, true);
+        $v = evk_rep_resolve_option($tagContent, $prop, $mods);
         return is_scalar($v) ? $v : '';
     }
     return $tag;
