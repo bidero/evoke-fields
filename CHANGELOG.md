@@ -2,6 +2,35 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.76.0] — 2026-09-30
+
+✦ „Przetłumacz (AI)” także na stronach ustawień.
+
+### Dodane
+
+- **Strony ustawień: ✦ przy polu i ✦ „Przetłumacz puste pola (AI)”**, także
+  w wierszach repeaterów (uwaga zgłaszającego z testowej: na stronach
+  ustawień nie było AI).
+  - Przyciski widzi tylko ktoś z uprawnieniem tej strony (`capability`).
+  - Filtr `evk_fields_tl_ai` dostaje wtedy wpis 0 i kontekst `['strona' =>
+    slug, 'tytul' => nazwa]`; skrypt wysyła `strona` zamiast wpisu.
+  - Wynik trafia do pola, zapis przyciskiem strony („Zapisz zmiany”),
+    znacznik „AI — do sprawdzenia” jak we wpisie.
+- `evk_fields_tl_strona($slug)`: strona ustawień, którą bieżący użytkownik może
+  zapisywać (`{slug, nazwa}`), albo null — dla wtyczki od języków.
+
+### Testy
+
+- `tests/fields-ai.test.js` w Evoke ONE (40 sprawdzeń, +5):
+  - strona ustawień z grupą i repeaterem;
+  - dane i AJAX bez uprawnienia strony (403);
+  - przyciski, grupa EN, zapis ze znacznikiem w opcji i w wierszu repeatera.
+
+### Do sprawdzenia na testowej
+
+- Strona ustawień z repeaterem: ✦ w widoku EN, zapis, znacznik po
+  przeładowaniu.
+
 ## [1.75.0] — 2026-09-30
 
 Tłumaczenie AI wartości pól: ✦ w metaboksie, API dla wtyczki od języków,

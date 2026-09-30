@@ -647,10 +647,13 @@ function evk_rep_tl_render_twins(string $fkey, array $field, string $name, $val,
 
 /**
  * Tłumacz AI z wtyczki od języków (1.75.0) — filtr `evk_fields_tl_ai`
- * dostaje null i identyfikator edytowanego wpisu, a oddaje dane dla skryptu:
- * {ajax, nonce, post, model, porcja, znaki} albo null (bez przycisków). Fields
- * nie zna żadnego dostawcy: przycisk wysyła teksty tam, gdzie wskaże filtr.
- * Tylko ekran edycji wpisu — termy i strony ustawień bez przycisków.
+ * dostaje null, identyfikator edytowanego wpisu i kontekst, a oddaje dane dla
+ * skryptu: {ajax, nonce, model, porcja, znaki} albo null (bez przycisków).
+ * Fields nie zna żadnego dostawcy: przycisk wysyła teksty tam, gdzie wskaże filtr.
+ *
+ * Ekrany: edycja wpisu (identyfikator wpisu) i — od 1.76.0 — strona ustawień
+ * (wpis 0, kontekst ['strona' => slug, 'tytul' => nazwa strony], tylko dla
+ * kogoś z jej uprawnieniem). Termy bez przycisków.
  *
  * @return array<string,mixed>|null
  */
@@ -659,13 +662,33 @@ function evk_rep_tl_ai_dane(): ?array {
     if ($dane !== false) return $dane;
     $dane = null;
     $post = function_exists('get_current_screen') && get_current_screen() && get_current_screen()->base === 'post' ? get_post() : null;
-    if (!$post instanceof \WP_Post) return $dane;
-    $d = apply_filters('evk_fields_tl_ai', null, (int) $post->ID);
+    $strona = null;
+    if ($post instanceof \WP_Post) {
+        $d = apply_filters('evk_fields_tl_ai', null, (int) $post->ID, []);
+    } else {
+        $strona = is_admin() && isset($_GET['page']) ? evk_fields_tl_strona(sanitize_key(wp_unslash((string) $_GET['page']))) : null;
+        if ($strona === null) return $dane;
+        $d = apply_filters('evk_fields_tl_ai', null, 0, ['strona' => $strona['slug'], 'tytul' => $strona['nazwa']]);
+    }
     if (is_array($d) && is_string($d['ajax'] ?? null) && is_string($d['nonce'] ?? null)) {
-        $dane = ['ajax' => $d['ajax'], 'nonce' => $d['nonce'], 'post' => (int) $post->ID, 'model' => (string) ($d['model'] ?? ''),
+        $dane = ['ajax' => $d['ajax'], 'nonce' => $d['nonce'], 'post' => $post instanceof \WP_Post ? (int) $post->ID : 0,
+            'strona' => $strona ? $strona['slug'] : '', 'model' => (string) ($d['model'] ?? ''),
             'porcja' => max(1, (int) ($d['porcja'] ?? 25)), 'znaki' => max(1, (int) ($d['znaki'] ?? 6000))];
     }
     return $dane;
+}
+
+/**
+ * Strona ustawień, na której bieżący użytkownik może zapisywać (jej
+ * uprawnienie) — {slug, nazwa}; null: nie ma takiej strony albo brak prawa.
+ * Dla wtyczki od języków: przycisk AI na stronie ustawień (1.76.0).
+ *
+ * @return array{slug:string,nazwa:string}|null
+ */
+function evk_fields_tl_strona(string $slug): ?array {
+    $p = evk_rep_settings_pages()[$slug] ?? null;
+    if (!is_array($p) || !current_user_can((string) ($p['capability'] ?? 'manage_options'))) return null;
+    return ['slug' => $slug, 'nazwa' => (string) ($p['label'] ?? $slug)];
 }
 
 /** ✦ — znak AI jak w builderze (Evoke ONE), kolor z `currentColor`. */
