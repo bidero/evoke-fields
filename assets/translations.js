@@ -203,13 +203,17 @@
         var $z = $p.find('.evk-tl-zrodlo');
         if ($z.attr('data-pierwotne') === undefined) $z.attr('data-pierwotne', $z.val());
         $z.val('teraz');   // serwer wpisze skrót bieżącego oryginału przy zapisie
-        $p.removeAttr('data-sprawdz');
+        $p.removeAttr('data-sprawdz data-ai');
         $p.find('.evk-tl-kopiuj').trigger('focus');   // przycisk znika — fokus nie może przepaść
     });
 
     // ── Tłumacz zmienił tłumaczenie → przy zapisie źródło = bieżący oryginał ──
     $(document).on('input change evk-tl-edytor', '.evk-tl-pole .evk-tl-wejscie', function () {
-        $(this).closest('.evk-tl-pole').attr('data-zmienione', '1').removeAttr('data-sprawdz');
+        var $p = $(this).closest('.evk-tl-pole');
+        $p.attr('data-zmienione', '1').removeAttr('data-sprawdz');
+        /* Poprawka po wpisie AI: tłumacz przejrzał tekst — bez znacznika AI. */
+        var $z = $p.find('.evk-tl-zrodlo');
+        if ($z.val() === 'ai') { $z.val($z.attr('data-pierwotne') || ''); $p.removeAttr('data-ai'); }
         liczPozniej();
     });
 
@@ -228,6 +232,146 @@
     });
 
     $(document).on('click', '.evk-rep-add, .evk-rep-remove', liczPozniej);
+
+    // ── Przetłumacz (AI) (1.75.0) ──
+    /* Tłumacza podaje wtyczka od języków (filtr `evk_fields_tl_ai`, dane w
+       window.evkRepTlAi). Wynik trafia do pola, zapis zostaje ręczny
+       („Zaktualizuj”); źródło `ai` daje przy zapisie znacznik „AI — do
+       sprawdzenia”. Kontekst: wszystkie pola języka na ekranie, z obecnymi
+       tłumaczeniami — model trzyma się słownictwa reszty. */
+    var AI = window.evkRepTlAi || null;
+    var trwaAi = false;
+
+    function kontekstAi(lang) {
+        var lista = [];
+        $('.evk-tl-pole[data-lang="' + lang + '"]').each(function () {
+            var $p = $(this), typ = typPola($p);
+            var pl = plWartosc($p);
+            if (!tekst(pl, typ)) return;
+            lista.push({ $p: $p, pl: pl, tl: twinWartosc($p), opis: String($p.attr('data-opis') || '') });
+        });
+        return lista;
+    }
+
+    function porcjeAi(lista) {
+        var out = [], biez = [], suma = 0, enc = new TextEncoder();
+        lista.forEach(function (x) {
+            var b = enc.encode(x.pl).length;
+            if (biez.length && (biez.length >= AI.porcja || suma + b > AI.znaki)) { out.push(biez); biez = []; suma = 0; }
+            biez.push(x);
+            suma += b;
+        });
+        if (biez.length) out.push(biez);
+        return out;
+    }
+
+    function wpiszAi($p, v) {
+        var $z = $p.find('.evk-tl-zrodlo');
+        if ($z.attr('data-pierwotne') === undefined) $z.attr('data-pierwotne', $z.val());
+        ustawTwin($p, v);
+        $z.val('ai');
+        $p.attr('data-ai', '1').removeAttr('data-sprawdz');
+    }
+
+    /* Porcja do serwera → {wpisane, pamiec, bezZmian, odrzucone, pominiete, blad}. */
+    function tlumaczAi(lang, lista, doTl) {
+        var kontekst = lista.map(function (x) { return { el: 'evk_fields', opis: x.opis, pole: '', poz: 0, pl: x.pl, tl: doTl.indexOf(x) === -1 ? x.tl : '' }; });
+        var w = { wpisane: 0, pamiec: 0, bezZmian: 0, odrzucone: 0, pominiete: 0, blad: '' };
+        var partie = porcjeAi(doTl);
+        var krok = function (i) {
+            if (i >= partie.length) return $.Deferred().resolve(w).promise();
+            var teksty = {}, miejsca = {};
+            partie[i].forEach(function (x, j) {
+                teksty['k' + (j + 1)] = { n: lista.indexOf(x) + 1, bylo: x.tl };
+                miejsca['k' + (j + 1)] = x;
+            });
+            return $.post(AI.ajax, { action: 'evk_tl_ai_pola', nonce: AI.nonce, post_id: AI.post, lang: lang,
+                kontekst: JSON.stringify(kontekst), teksty: JSON.stringify(teksty) }).then(function (r) {
+                if (r === -1 || r === '-1' || r === 0 || r === '0') { w.blad = 'Sesja wygasła albo brak uprawnień — przeładuj stronę.'; return w; }
+                if (!r || !r.success) { w.blad = (r && typeof r.data === 'string' && r.data) || 'Serwer odmówił.'; return w; }
+                var d = r.data || {};
+                $.each(d.tlumaczenia || {}, function (k, v) {
+                    var x = miejsca[k];
+                    if (!x || typeof v !== 'string') return;
+                    /* Oryginał albo pole zmienione w trakcie — pisanie wygrywa. */
+                    if (plWartosc(x.$p) !== x.pl || twinWartosc(x.$p) !== x.tl) return;
+                    wpiszAi(x.$p, v);
+                    kontekst[lista.indexOf(x)].tl = v;
+                    w.wpisane++;
+                    if (d.zrodla && (d.zrodla[k] === 'pamiec' || d.zrodla[k] === 'wynik')) w.pamiec++;
+                });
+                w.bezZmian += (d.bez_zmian || []).length;
+                w.odrzucone += (d.odrzucone || []).length;
+                w.pominiete += (d.pominiete || []).length;
+                if (d.blad) {
+                    w.blad = d.czekaj ? 'Dostawca prosi o przerwę — spróbuj za ' + d.czekaj + ' s.' : String(d.blad);
+                    if (d.stop || d.czekaj) return w;
+                }
+                return krok(i + 1);
+            }, function () { w.blad = 'Brak połączenia z serwerem.'; return w; });
+        };
+        return krok(0);
+    }
+
+    function opisAi(w, jeden) {
+        var model = AI.model ? ' · ' + AI.model : '';
+        if (jeden) {
+            if (w.wpisane) return 'Wpisane (' + (w.pamiec ? 'z pamięci' : 'AI') + model + ') — sprawdź i zapisz wpis.';
+            if (w.blad) return w.blad;
+            if (w.bezZmian) return 'AI zwróciło ten sam tekst — bez zmian.';
+            if (w.odrzucone) return 'Tłumaczenie odrzucone: znaczniki HTML, tagi {…} albo shortcody nie zgadzają się z oryginałem.';
+            if (w.pominiete) return 'Tego tekstu AI nie tłumaczy (sam tag danych dynamicznych albo bez liter).';
+            return 'Brak tłumaczenia.';
+        }
+        var cz = [];
+        if (w.wpisane) cz.push('wpisane ' + w.wpisane + (w.pamiec ? ' (z pamięci ' + w.pamiec + ')' : ''));
+        if (w.bezZmian) cz.push('bez zmian ' + w.bezZmian);
+        if (w.odrzucone) cz.push('odrzucone ' + w.odrzucone);
+        if (w.pominiete) cz.push('pominięte ' + w.pominiete);
+        return (cz.length ? cz.join(', ') : 'nic nie wpisane') + '.' + (w.blad ? ' ' + w.blad : '') + (w.wpisane ? ' Sprawdź i zapisz wpis.' : '');
+    }
+
+    function zajetyAi(tak, $b) {
+        trwaAi = tak;
+        $('.evk-tl-ai, .evk-tl-ai-grupa').prop('disabled', tak);
+        if ($b) $b.attr('aria-busy', tak ? 'true' : 'false');
+    }
+
+    $(document).on('click', '.evk-tl-ai', function () {
+        if (!AI || trwaAi) return;
+        var $b = $(this), $p = $b.closest('.evk-tl-pole'), typ = typPola($p);
+        var lang = String($p.attr('data-lang') || ''), L = lang.toUpperCase();
+        var $stan = $p.find('.evk-tl-ai-stan');
+        var lista = kontekstAi(lang);
+        var x = lista.filter(function (e) { return e.$p[0] === $p[0]; })[0];
+        if (!x) { $stan.text('Brak tekstu w oryginale.'); return; }
+        if (tekst(x.tl, typ) && !window.confirm('Zastąpić obecne tłumaczenie ' + L + '?\n\n„' + tekst(x.tl, typ).slice(0, 200) + '”')) return;
+        zajetyAi(true, $b);
+        $stan.text('Tłumaczę na ' + L + '…');
+        tlumaczAi(lang, lista, [x]).then(function (w) {
+            $stan.text(opisAi(w, true));
+            zajetyAi(false, $b);
+            liczPozniej();
+        });
+    });
+
+    $(document).on('click', '.evk-tl-ai-grupa', function () {
+        if (!AI || trwaAi) return;
+        var $b = $(this), $g = $b.closest('.evk-tl-grupa');
+        var lang = String($g.attr('data-evk-jezyk') || ''), L = lang.toUpperCase();
+        var $stan = $b.siblings('.evk-tl-ai-grupa-stan');
+        if (lang === baza($g)) return;
+        var lista = kontekstAi(lang);
+        var puste = lista.filter(function (x) { return x.$p.closest('.evk-tl-grupa')[0] === $g[0] && !tekst(x.tl, typPola(x.$p)); });
+        if (!puste.length) { $stan.text(L + ': wszystkie pola tej grupy są już przetłumaczone.'); return; }
+        zajetyAi(true, $b);
+        $stan.text('Tłumaczę na ' + L + '… (' + puste.length + ')');
+        tlumaczAi(lang, lista, puste).then(function (w) {
+            $stan.text(L + ': ' + opisAi(w, false));
+            zajetyAi(false, $b);
+            liczPozniej();
+        });
+    });
 
     // Edytory oryginału (WYSIWYG): pisanie w ramce nie daje zdarzeń na stronie.
     function podepnij(ed) {

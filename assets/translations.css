@@ -29,6 +29,23 @@
 .evk-tl-pole[data-sprawdz] .evk-tl-narzedzia .evk-tl-sprawdzone{display:inline-flex;align-items:center;}
 .evk-tl-pole[data-sprawdz] .evk-tl-wejscie{border-color:#dba617;}
 
+/* ── AI (1.75.0): przycisk przy polu i dla grupy, znacznik „AI — do sprawdzenia” ──
+   Znacznik i „Sprawdzone” chowa reguła z `display`, nie atrybut `hidden`. */
+.wp-core-ui .evk-tl-narzedzia .button.evk-tl-ai,
+.wp-core-ui .evk-tl-przelacznik .button.evk-tl-ai-grupa{display:inline-flex;align-items:center;gap:5px;}
+.evk-tl-ai-ikona{flex:none;display:block;}
+.evk-tl-ai-znak{display:none;}
+.evk-tl-pole[data-ai] .evk-tl-ai-znak{display:inline;color:#6e00a5;font-size:12px;font-weight:600;}
+.evk-tl-pole[data-ai] .evk-tl-narzedzia .evk-tl-sprawdzone{display:inline-flex;align-items:center;}
+.evk-tl-pole[data-ai] .evk-tl-wejscie{border-color:#a855f7;}
+.evk-tl-ai-stan{margin:6px 0 0;font-size:12px;color:#3c434a;}
+.evk-tl-ai-stan:empty,
+.evk-tl-ai-grupa-stan:empty{display:none;}
+.evk-tl-ai-grupa-stan{font-size:12px;color:#3c434a;}
+/* Przycisk grupy tylko w widoku języka — w oryginale nie ma czego tłumaczyć. */
+.wp-core-ui .evk-tl-przelacznik .button.evk-tl-ai-grupa{display:none;min-height:26px;height:auto;margin:0 0 0 4px;padding:0 10px;font-size:12px;line-height:24px;}
+.wp-core-ui .evk-tl-obcy > .evk-tl-przelacznik .button.evk-tl-ai-grupa{display:inline-flex;}
+
 /* ── Widok innego języka ──
    Pola do tłumaczenia: pole języka zamiast oryginału. Pozostałe ZOSTAJĄ na
    swoim miejscu — układ się nie zmienia — przygaszone i nieaktywne (`inert`
@@ -54,6 +71,7 @@
     .evk-tl-pole textarea.evk-tl-wejscie{font-size:16px;}   /* mniej = Safari powiększa stronę */
     .wp-core-ui .evk-tl-przelacznik .button.evk-tl-jezyk{min-height:32px;line-height:30px;padding:0 12px;font-size:13px;}
     .wp-core-ui .evk-tl-narzedzia .button.button-small{min-height:30px;margin:0;padding:0 10px;font-size:12px;line-height:28px;}
+    .wp-core-ui .evk-tl-obcy > .evk-tl-przelacznik .button.evk-tl-ai-grupa{min-height:32px;line-height:30px;margin:0;padding:0 12px;font-size:13px;}
     .evk-tl-obcy .evk-label-left .evk-tl-etykieta{position:static;width:auto;height:auto;margin:0 0 6px;overflow:visible;clip:auto;white-space:normal;}
     .evk-tl-obcy .evk-label-left .evk-tl-tak > .evk-s-label{display:none;}
 }

@@ -2,6 +2,63 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.75.0] — 2026-09-30
+
+Tłumaczenie AI wartości pól: ✦ w metaboksie, API dla wtyczki od języków,
+znacznik „AI — do sprawdzenia”.
+
+### Dodane
+
+- **✦ „Przetłumacz” przy każdym polu tłumaczenia** (obok „Kopiuj z
+  polskiego”) i **✦ „Przetłumacz puste pola (AI)”** przy przełączniku języka
+  grupy (tylko w widoku języka). Decyzje zgłaszającego (30.09):
+  - ✦ jak w builderze, z krótkim tekstem, bo sąsiednie przyciski mają tekst;
+  - wynik trafia do pola, a zapis zostaje ręczny („Zaktualizuj”);
+  - wypełnione pole pyta przed nadpisaniem;
+  - kontekstem są wszystkie pola języka na ekranie z obecnymi tłumaczeniami.
+
+  Fields nie zna żadnego tłumacza. Przyciski są tylko wtedy, gdy filtr
+  `evk_fields_tl_ai` (dostaje identyfikator wpisu) poda `{ajax, nonce, post,
+  model, porcja, znaki}` — w praktyce Evoke ONE 1.267.0+ z kluczem API.
+  Termy i strony ustawień są bez przycisków.
+- **Znacznik „AI — do sprawdzenia”**: źródło tłumaczenia `ai-{skrót}`.
+  - Zdejmuje go „Sprawdzone” albo ręczna poprawka, także przed zapisem
+    (pisanie w polu po wpisie AI przywraca poprzednie źródło).
+  - „Do sprawdzenia — oryginał zmienił się” porównuje skrót bez
+    przedrostka, więc działa także dla tłumaczeń AI.
+- **API tekstów pól wpisu** (dla hurtu AI i listy „Do sprawdzenia” w Evoke
+  ONE):
+  - `evk_fields_tl_teksty($post_id)`: miejsca pól tłumaczonych (grupa
+    pojedyncza, repeater w grupie, grupa-repeater, podrepeatery), a przy
+    każdym tekst podstawowy, tłumaczenia, źródła, znacznik AI i „Do
+    sprawdzenia”. Klucz miejsca to `{meta}|{ścieżka}`, np. `faq|2.pytanie`;
+  - `evk_fields_tl_wpisz()`: zapis jak z formularza, z `$ai` ze znacznikiem;
+    pusty tekst usuwa tłumaczenie;
+  - `evk_fields_tl_sprawdzone()`;
+  - `evk_fields_tl_typy()`: typy treści z polami tłumaczonymi.
+
+  Odmowa (fałsz): miejsce spoza listy, pole „Nie tłumacz”, język spoza
+  ustawień, pusty oryginał.
+
+### Testy
+
+- `tests/fields-ai.test.js` w Evoke ONE (czwarty testowy WordPress, atrapa
+  AI): 35 sprawdzeń. Obejmuje API, hurt z polami, listę „Do sprawdzenia”,
+  metaboks w Chromium (przyciski, pytanie, grupa, ręczna poprawka,
+  klawiatura, zapis, „Sprawdzone”, 360 px) i ekran bez klucza API.
+- Mutacje w Fields:
+  - skrót ze znacznikiem w „Do sprawdzenia”;
+  - zapis gubi znacznik AI;
+  - wpis do złego wiersza.
+
+  Każda zapala swój zestaw sprawdzeń.
+
+### Do sprawdzenia na testowej
+
+- Metaboks wpisu z grupą pól: ✦ przy polach w widoku EN, przycisk grupy,
+  „AI — do sprawdzenia” po zapisie, „Sprawdzone”.
+- Pole WYSIWYG: wynik w edytorze wizualnym i w trybie „Tekst”.
+
 ## [1.74.0] — 2026-09-29
 
 Pętle nad „Polem wrażliwym" z tą samą bramką co tagi.

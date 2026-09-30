@@ -147,12 +147,26 @@ function evk_rep_tl_src(string $pl): string {
     return $h !== '' ? $h : 'pusty';
 }
 
+/**
+ * Tłumaczenie AI jeszcze nieprzejrzane (1.75.0): źródło z przedrostkiem `ai-`.
+ * Zdejmuje go „Sprawdzone" i każda ręczna zmiana tłumaczenia — wtedy źródło
+ * to znów sam skrót (evk_rep_tl_clean()).
+ */
+function evk_rep_tl_ai(string $zrodlo): bool {
+    return strpos($zrodlo, 'ai-') === 0;
+}
+
+/** Źródło bez znacznika AI — sam skrót tekstu podstawowego. */
+function evk_rep_tl_src_hash(string $zrodlo): string {
+    return evk_rep_tl_ai($zrodlo) ? substr($zrodlo, 3) : $zrodlo;
+}
+
 /** Czy tłumaczenie powstało z innego tekstu podstawowego niż bieżący. */
 function evk_rep_tl_stale(string $tv, string $zrodlo, string $pl): bool {
     if (evk_rep_tl_empty($tv) || $zrodlo === '') return false;
     $h = evk_rep_tl_hash($pl);
     if ($h === '') return false;   // tekst podstawowy pusty — nie ma czego porównać
-    return $zrodlo !== $h;
+    return evk_rep_tl_src_hash($zrodlo) !== $h;
 }
 
 // =========================================================================
@@ -207,6 +221,9 @@ function evk_rep_tl_value(array $field, string $key, $val, callable $twin) {
  * `teraz`) albo źródła jeszcze nie było. Inaczej zostaje stare — więc zmiana
  * samego tekstu podstawowego zostawia tłumaczenie „Do sprawdzenia".
  *
+ * `__zrodlo` = `ai` (1.75.0): pole wypełnił przycisk AI i nikt go potem nie
+ * poprawiał (translations.js) — źródło bieżące ze znacznikiem `ai-`.
+ *
  * @param array<string,mixed> $post Dane formularza tego poziomu (wiersz, grupa).
  * @param mixed               $pl   Wartość podstawowa po sanitizacji.
  * @return array{0:string,1:string}
@@ -221,6 +238,7 @@ function evk_rep_tl_clean(array $field, array $post, string $tk, $pl): array {
     if (evk_rep_tl_empty($tv)) return ['', ''];
     $przed  = sanitize_key((string) ($post[$tk . '__przed'] ?? ''));
     $zrodlo = sanitize_key((string) ($post[$tk . '__zrodlo'] ?? ''));
+    if ($zrodlo === 'ai') return [$tv, 'ai-' . evk_rep_tl_src(evk_rep_tl_base_text($field, $pl))];
     if ($zrodlo === '' || $zrodlo === 'teraz' || evk_rep_tl_hash($tv) !== $przed) {
         return [$tv, evk_rep_tl_src(evk_rep_tl_base_text($field, $pl))];
     }
@@ -275,6 +293,262 @@ function evk_rep_tl_save_meta(string $meta_type, int $object_id, string $fkey, a
 }
 
 // =========================================================================
+// API DLA WTYCZKI OD JĘZYKÓW (1.75.0): teksty pól wpisu i zapis tłumaczeń
+// =========================================================================
+
+/*
+ * Tłumaczenie hurtem (np. AI w Evoke ONE) potrzebuje tekstów pól wpisu bez
+ * formularza. Fields dalej nie zna żadnego tłumacza: podaje teksty, przyjmuje
+ * tłumaczenie i zapisuje je tak jak formularz — bliźniak `evk_tl_{język}__{klucz}`
+ * obok oryginału i źródło obok niego.
+ *
+ * Klucz miejsca: `{meta}|{ścieżka}`. Grupa pojedyncza — meta pola, ścieżka
+ * pusta (`tytul|`). Wiersz repeatera — meta repeatera i ścieżka
+ * `{wiersz}.{pole}`, głębiej `{wiersz}.{pole}.{wiersz}.{pole}` (`faq|2.pytanie`).
+ */
+
+/**
+ * Grupy pól wpisu (typ treści) — te same, które dostają metabox.
+ *
+ * @return array<string,array<string,mixed>>
+ */
+function evk_rep_tl_grupy_wpisu(int $post_id): array {
+    $pt = (string) get_post_type($post_id);
+    if ($pt === '') return [];
+    $out = [];
+    foreach (evk_rep_groups() as $key => $g) {
+        if (($g['object_type'] ?? 'post') !== 'post' || !in_array($pt, (array) ($g['post_types'] ?? []), true)) continue;
+        $out[(string) $key] = $g;
+    }
+    return $out;
+}
+
+/**
+ * Pola tłumaczone jednego poziomu wierszy → miejsca (rekurencyjnie w podrepeaterach).
+ *
+ * @param array<string,array> $fields
+ * @param mixed               $rows
+ * @param array<int,array<string,mixed>> $out
+ */
+function evk_rep_tl_miejsca_wierszy(string $meta, string $sciezka, string $grupa, string $opis, array $fields, $rows, array &$out): void {
+    if (!is_array($rows)) return;
+    foreach (array_values($rows) as $i => $row) {
+        if (!is_array($row)) continue;
+        foreach ($fields as $fk => $f) {
+            $fk = (string) $fk;
+            $t  = (string) ($f['type'] ?? 'text');
+            if (evk_rep_is_layout($t)) continue;
+            $etyk = trim((string) ($f['label'] ?? '')) !== '' ? (string) $f['label'] : $fk;
+            $gdzie = ($opis !== '' ? $opis . ' · ' : '') . 'pozycja ' . ($i + 1);
+            if ($t === 'repeater') {
+                evk_rep_tl_miejsca_wierszy($meta, $sciezka . $i . '.' . $fk . '.', $grupa, $gdzie . ' · ' . $etyk,
+                    (array) ($f['sub_fields'] ?? []), $row[$fk] ?? [], $out);
+                continue;
+            }
+            $twin = static function (string $k) use ($row) { return $row[$k] ?? null; };
+            evk_rep_tl_miejsce($out, $meta . '|' . $sciezka . $i . '.' . $fk, $grupa, $gdzie . ' · ' . $etyk, $fk, $f, $row[$fk] ?? '', $twin);
+        }
+    }
+}
+
+/**
+ * Jedno miejsce z tekstem podstawowym i stanem każdego języka.
+ *
+ * @param array<int,array<string,mixed>> $out
+ * @param mixed    $val
+ * @param callable $twin fn(string $klucz): mixed
+ */
+function evk_rep_tl_miejsce(array &$out, string $klucz, string $grupa, string $opis, string $fk, array $f, $val, callable $twin): void {
+    if (!evk_rep_tl_field_on($f)) return;
+    $pl = evk_rep_tl_base_text($f, $val);
+    if (evk_rep_tl_empty($pl)) return;
+    $m = ['klucz' => $klucz, 'grupa' => $grupa, 'opis' => $opis, 'typ' => (string) ($f['type'] ?? 'text'), 'pl' => $pl,
+        'tl' => [], 'zrodlo' => [], 'ai' => [], 'stale' => []];
+    foreach (array_keys(evk_rep_tl_langs()) as $lang) {
+        $tk = evk_rep_tl_key($lang, $fk);
+        $tv = $twin($tk);
+        $tv = is_scalar($tv) ? (string) $tv : '';
+        $z  = $twin($tk . '__zrodlo');
+        $z  = is_scalar($z) ? (string) $z : '';
+        $jest = !evk_rep_tl_empty($tv);
+        $m['tl'][$lang]     = $jest ? $tv : '';
+        $m['zrodlo'][$lang] = $jest ? $z : '';
+        $m['ai'][$lang]     = $jest && evk_rep_tl_ai($z);
+        $m['stale'][$lang]  = evk_rep_tl_stale($tv, $z, $pl);
+    }
+    $out[] = $m;
+}
+
+/**
+ * Typy treści z grupami, które mają pola tłumaczone — tam szukać tekstów.
+ *
+ * @return list<string>
+ */
+function evk_fields_tl_typy(): array {
+    if (!evk_rep_tl_langs()) return [];
+    $pts = [];
+    foreach (evk_rep_groups() as $g) {
+        if (($g['object_type'] ?? 'post') !== 'post' || !evk_rep_tl_fields_have((array) ($g['fields'] ?? []))) continue;
+        foreach ((array) ($g['post_types'] ?? []) as $pt) $pts[(string) $pt] = true;
+    }
+    return array_keys($pts);
+}
+
+/**
+ * Teksty pól wpisu do tłumaczenia: pola z tłumaczeniami (bez „Nie tłumacz")
+ * i z niepustym tekstem podstawowym, w kolejności grup i pól.
+ *
+ * @return list<array{klucz:string,grupa:string,opis:string,typ:string,pl:string,tl:array<string,string>,zrodlo:array<string,string>,ai:array<string,bool>,stale:array<string,bool>}>
+ */
+function evk_fields_tl_teksty(int $post_id): array {
+    $out = [];
+    if ($post_id <= 0 || !evk_rep_tl_langs()) return $out;
+    foreach (evk_rep_tl_grupy_wpisu($post_id) as $gkey => $g) {
+        $grupa  = (string) ($g['label'] ?? $gkey);
+        $fields = (array) ($g['fields'] ?? []);
+        if (evk_rep_is_repeater($g)) {
+            evk_rep_tl_miejsca_wierszy($gkey, '', $grupa, '', $fields, get_post_meta($post_id, $gkey, true), $out);
+            continue;
+        }
+        foreach ($fields as $fk => $f) {
+            $fk = (string) $fk;
+            $t  = (string) ($f['type'] ?? 'text');
+            if (evk_rep_is_layout($t) || $t === 'calc') continue;
+            $etyk = trim((string) ($f['label'] ?? '')) !== '' ? (string) $f['label'] : $fk;
+            if ($t === 'repeater') {
+                evk_rep_tl_miejsca_wierszy($fk, '', $grupa, $etyk, (array) ($f['sub_fields'] ?? []), get_post_meta($post_id, $fk, true), $out);
+                continue;
+            }
+            $twin = static function (string $k) use ($post_id) { return get_post_meta($post_id, $k, true); };
+            evk_rep_tl_miejsce($out, $fk . '|', $grupa, $etyk, $fk, $f, get_post_meta($post_id, $fk, true), $twin);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Definicja pola i położenie miejsca z klucza: [meta, pole, definicja, ścieżka wierszy].
+ * Ścieżka wierszy to lista [indeks, pole repeatera] od góry, bez ostatniego pola.
+ *
+ * @return array{0:string,1:string,2:array<string,mixed>,3:list<array{0:int,1:string}>}|null
+ */
+function evk_rep_tl_znajdz(int $post_id, string $klucz): ?array {
+    $p = strpos($klucz, '|');
+    if ($p === false) return null;
+    $meta = substr($klucz, 0, $p);
+    $sciezka = substr($klucz, $p + 1);
+    foreach (evk_rep_tl_grupy_wpisu($post_id) as $gkey => $g) {
+        $fields = (array) ($g['fields'] ?? []);
+        if (evk_rep_is_repeater($g)) {
+            if ($gkey !== $meta || $sciezka === '') continue;
+        } else {
+            if (!isset($fields[$meta])) continue;
+            $f = (array) $fields[$meta];
+            if ($sciezka === '') return ($f['type'] ?? 'text') === 'repeater' ? null : [$meta, $meta, $f, []];
+            if (($f['type'] ?? '') !== 'repeater') continue;
+            $fields = (array) ($f['sub_fields'] ?? []);
+        }
+        $cz = explode('.', $sciezka);
+        if (count($cz) % 2 !== 0) return null;
+        $droga = [];
+        for ($i = 0; $i < count($cz); $i += 2) {
+            if (!ctype_digit($cz[$i]) || !isset($fields[$cz[$i + 1]])) return null;
+            $f = (array) $fields[$cz[$i + 1]];
+            if ($i + 2 < count($cz)) {
+                if (($f['type'] ?? '') !== 'repeater') return null;
+                $droga[] = [(int) $cz[$i], (string) $cz[$i + 1]];
+                $fields = (array) ($f['sub_fields'] ?? []);
+                continue;
+            }
+            $droga[] = [(int) $cz[$i], ''];
+            return [$meta, (string) $cz[$i + 1], $f, $droga];
+        }
+    }
+    return null;
+}
+
+/**
+ * Zapis tłumaczenia jednego miejsca — jak formularz: bliźniak i źródło
+ * (skrót bieżącego tekstu podstawowego; z `$ai` — ze znacznikiem `ai-`).
+ * Pusty tekst usuwa tłumaczenie. Fałsz: nie ma takiego miejsca, języka albo
+ * tekstu podstawowego.
+ */
+function evk_fields_tl_wpisz(int $post_id, string $klucz, string $lang, string $tekst, bool $ai = false): bool {
+    return evk_rep_tl_zmien($post_id, $klucz, $lang, static function (array $f, string $pl, string $tv, string $z) use ($tekst, $ai): ?array {
+        $nowy = ($f['type'] ?? '') === 'link' ? sanitize_text_field($tekst) : evk_rep_sanitize_value((string) ($f['type'] ?? 'text'), $tekst, $f);
+        $nowy = is_string($nowy) ? $nowy : '';
+        if (evk_rep_tl_empty($nowy)) return ['', ''];
+        return [$nowy, ($ai ? 'ai-' : '') . evk_rep_tl_src($pl)];
+    });
+}
+
+/** „Sprawdzone": tłumaczenie bez zmian, źródło = bieżący tekst podstawowy, bez znacznika AI. */
+function evk_fields_tl_sprawdzone(int $post_id, string $klucz, string $lang): bool {
+    return evk_rep_tl_zmien($post_id, $klucz, $lang, static function (array $f, string $pl, string $tv, string $z): ?array {
+        return evk_rep_tl_empty($tv) ? null : [$tv, evk_rep_tl_src($pl)];
+    });
+}
+
+/**
+ * Wspólna droga zapisu: $zmiana(pole, tekst podstawowy, obecne tłumaczenie,
+ * obecne źródło) → [tłumaczenie, źródło] albo null (bez zmian).
+ */
+function evk_rep_tl_zmien(int $post_id, string $klucz, string $lang, callable $zmiana): bool {
+    $lang = sanitize_key($lang);
+    if ($post_id <= 0 || !isset(evk_rep_tl_langs()[$lang])) return false;
+    $gdzie = evk_rep_tl_znajdz($post_id, $klucz);
+    if (!$gdzie) return false;
+    [$meta, $fk, $f, $droga] = $gdzie;
+    if (!evk_rep_tl_field_on($f)) return false;
+    $tk = evk_rep_tl_key($lang, $fk);
+
+    if (!$droga) {
+        $pl = evk_rep_tl_base_text($f, get_post_meta($post_id, $meta, true));
+        if (evk_rep_tl_empty($pl)) return false;
+        $tv = get_post_meta($post_id, $tk, true);
+        $z  = get_post_meta($post_id, $tk . '__zrodlo', true);
+        $w  = $zmiana($f, $pl, is_scalar($tv) ? (string) $tv : '', is_scalar($z) ? (string) $z : '');
+        if ($w === null) return true;
+        if ($w[0] === '') {
+            delete_post_meta($post_id, $tk);
+            delete_post_meta($post_id, $tk . '__zrodlo');
+        } else {
+            update_post_meta($post_id, $tk, wp_slash($w[0]));
+            update_post_meta($post_id, $tk . '__zrodlo', $w[1]);
+        }
+        return true;
+    }
+
+    $rows = get_post_meta($post_id, $meta, true);
+    if (!is_array($rows)) return false;
+    $rows = array_values($rows);
+    $wez = &$rows;
+    foreach ($droga as $n => [$i, $sub]) {
+        if (!isset($wez[$i]) || !is_array($wez[$i])) return false;
+        if ($sub === '') { $wez = &$wez[$i]; break; }
+        if (!isset($wez[$i][$sub]) || !is_array($wez[$i][$sub])) return false;
+        $wez[$i][$sub] = array_values($wez[$i][$sub]);
+        $wez = &$wez[$i][$sub];
+    }
+    $pl = evk_rep_tl_base_text($f, $wez[$fk] ?? '');
+    if (evk_rep_tl_empty($pl)) return false;
+    $tv = $wez[$tk] ?? '';
+    $z  = $wez[$tk . '__zrodlo'] ?? '';
+    $w  = $zmiana($f, $pl, is_scalar($tv) ? (string) $tv : '', is_scalar($z) ? (string) $z : '');
+    if ($w === null) return true;
+    if ($w[0] === '') {
+        unset($wez[$tk], $wez[$tk . '__zrodlo']);
+    } else {
+        $wez[$tk] = $w[0];
+        $wez[$tk . '__zrodlo'] = $w[1];
+    }
+    unset($wez);
+    /* Cała lista wierszy — update_metadata() zdejmuje ukośniki, więc wp_slash(). */
+    update_post_meta($post_id, $meta, wp_slash($rows));
+    return true;
+}
+
+// =========================================================================
 // PANEL: POLA TŁUMACZEŃ I PRZEŁĄCZNIK JĘZYKA
 // =========================================================================
 
@@ -312,6 +586,7 @@ function evk_rep_tl_render_twins(string $fkey, array $field, string $name, $val,
     if (!evk_rep_tl_ui() || !evk_rep_tl_field_on($field)) return;
     $langs = evk_rep_tl_langs();
     if (!$langs) return;
+    $ai = evk_rep_tl_ai_dane() !== null;
 
     $type  = (string) ($field['type'] ?? 'text');
     $pl    = evk_rep_tl_base_text($field, $val);
@@ -332,7 +607,9 @@ function evk_rep_tl_render_twins(string $fkey, array $field, string $name, $val,
         $L      = strtoupper($lang);
         $opis   = $type === 'link' ? $label . ' — etykieta ' . $L : $label . ' — ' . $L;
 
-        echo '<div class="evk-tl-pole" data-lang="' . esc_attr($lang) . '"' . (evk_rep_tl_stale($tv, $zrodlo, $pl) ? ' data-sprawdz="1"' : '') . '>';
+        echo '<div class="evk-tl-pole" data-lang="' . esc_attr($lang) . '" data-opis="' . esc_attr($label) . '"'
+            . (evk_rep_tl_stale($tv, $zrodlo, $pl) ? ' data-sprawdz="1"' : '')
+            . (!evk_rep_tl_empty($tv) && evk_rep_tl_ai($zrodlo) ? ' data-ai="1"' : '') . '>';
         echo '<label class="evk-tl-etykieta" for="' . esc_attr($id) . '">' . esc_html($opis) . '</label>';
         echo '<p class="evk-tl-oryginal"><span class="evk-tl-oryginal-jezyk">' . esc_html($kod) . ':</span> '
             . '<span class="evk-tl-oryginal-tekst">' . ($podgl !== '' ? esc_html($podgl) : '<em>(puste)</em>') . '</span></p>';
@@ -354,11 +631,47 @@ function evk_rep_tl_render_twins(string $fkey, array $field, string $name, $val,
         echo '<input type="hidden" name="' . esc_attr($base . '[' . $tk . '__przed]') . '" value="' . esc_attr(evk_rep_tl_hash($tv)) . '">';
         echo '<div class="evk-tl-narzedzia">';
         echo '<button type="button" class="button button-small evk-tl-kopiuj">' . esc_html($kopiuj) . '</button>';
+        /* Przycisk AI (1.75.0) — tylko gdy wtyczka od języków podaje tłumacza (filtr `evk_fields_tl_ai`). */
+        if ($ai) {
+            echo '<button type="button" class="button button-small evk-tl-ai" aria-label="' . esc_attr('Przetłumacz (AI) — ' . $opis) . '">'
+                . evk_rep_tl_ikona_ai() . '<span>Przetłumacz</span></button>';
+        }
+        echo '<span class="evk-tl-ai-znak">AI — do sprawdzenia</span>';
         echo '<span class="evk-tl-do-sprawdzenia">Do sprawdzenia — oryginał zmienił się po tłumaczeniu.</span>';
         echo '<button type="button" class="button button-small evk-tl-sprawdzone">Sprawdzone</button>';
         echo '</div>';
+        if ($ai) echo '<p class="evk-tl-ai-stan" role="status"></p>';
         echo '</div>';
     }
+}
+
+/**
+ * Tłumacz AI z wtyczki od języków (1.75.0) — filtr `evk_fields_tl_ai`
+ * dostaje null i identyfikator edytowanego wpisu, a oddaje dane dla skryptu:
+ * {ajax, nonce, post, model, porcja, znaki} albo null (bez przycisków). Fields
+ * nie zna żadnego dostawcy: przycisk wysyła teksty tam, gdzie wskaże filtr.
+ * Tylko ekran edycji wpisu — termy i strony ustawień bez przycisków.
+ *
+ * @return array<string,mixed>|null
+ */
+function evk_rep_tl_ai_dane(): ?array {
+    static $dane = false;
+    if ($dane !== false) return $dane;
+    $dane = null;
+    $post = function_exists('get_current_screen') && get_current_screen() && get_current_screen()->base === 'post' ? get_post() : null;
+    if (!$post instanceof \WP_Post) return $dane;
+    $d = apply_filters('evk_fields_tl_ai', null, (int) $post->ID);
+    if (is_array($d) && is_string($d['ajax'] ?? null) && is_string($d['nonce'] ?? null)) {
+        $dane = ['ajax' => $d['ajax'], 'nonce' => $d['nonce'], 'post' => (int) $post->ID, 'model' => (string) ($d['model'] ?? ''),
+            'porcja' => max(1, (int) ($d['porcja'] ?? 25)), 'znaki' => max(1, (int) ($d['znaki'] ?? 6000))];
+    }
+    return $dane;
+}
+
+/** ✦ — znak AI jak w builderze (Evoke ONE), kolor z `currentColor`. */
+function evk_rep_tl_ikona_ai(): string {
+    return '<svg class="evk-tl-ai-ikona" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">'
+        . '<path fill="currentColor" d="M8 0C8.6 4.6 11.4 7.4 16 8C11.4 8.6 8.6 11.4 8 16C7.4 11.4 4.6 8.6 0 8C4.6 7.4 7.4 4.6 8 0Z"/></svg>';
 }
 
 /**
@@ -408,6 +721,12 @@ function evk_rep_tl_group_open(array $fields): bool {
             . esc_html(strtoupper($lang)) . '<span class="screen-reader-text"> — ' . esc_html($lname) . '</span>'
             . ' <span class="evk-tl-licznik" aria-hidden="true"></span><span class="screen-reader-text evk-tl-licznik-sr"></span></button>';
     }
+    /* Cała grupa naraz (1.75.0): puste pola widocznego języka. Widać go tylko
+       w widoku języka (CSS), bez atrybutu `hidden` — przegrywa z `display`. */
+    if (evk_rep_tl_ai_dane() !== null) {
+        echo '<button type="button" class="button evk-tl-ai-grupa">' . evk_rep_tl_ikona_ai() . '<span>Przetłumacz puste pola (AI)</span></button>';
+        echo '<span class="evk-tl-ai-grupa-stan" role="status"></span>';
+    }
     echo '</div>';
     return true;
 }
@@ -431,6 +750,8 @@ add_action('admin_enqueue_scripts', function () {
     wp_enqueue_editor();   // strona ustawień sama go nie woła, a pola WYSIWYG języków go potrzebują
     wp_enqueue_script('evk-rep-tl', EVK_REP_URL . 'assets/translations.js', ['jquery', 'evk-rep-admin'], EVK_REP_VERSION, true);
     wp_enqueue_style('evk-rep-tl', EVK_REP_URL . 'assets/translations.css', ['evk-rep-admin'], EVK_REP_VERSION);
+    $ai = evk_rep_tl_ai_dane();
+    if ($ai !== null) wp_add_inline_script('evk-rep-tl', 'window.evkRepTlAi = ' . wp_json_encode($ai) . ';', 'before');
     /* Pole języka widać tylko w widoku tego języka. Kody są z sanitize_key(),
        więc w selektorze nie ma czego uciekać. */
     $css = '';
