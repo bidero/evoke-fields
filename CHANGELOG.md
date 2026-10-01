@@ -2,6 +2,32 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.78.0] — 2026-10-01
+
+Pola stron ustawień w hurtowym tłumaczeniu AI (Evoke ONE 1.272.0).
+
+Zgłoszenie: w „Przetłumacz strony” brakowało grup pól przypisanych do stron
+ustawień.
+
+### Dodane
+
+- **API tekstów grup stron ustawień**:
+  - `evk_fields_tl_grupy_stron()` — strona ⇒ {nazwa, prawo, grupy ⇒ {nazwa,
+    zakladka}}; tylko grupy z polami tłumaczonymi, grupa na kilku stronach
+    należy do pierwszej;
+  - `evk_fields_tl_teksty_opcji($grupa)`, `evk_fields_tl_wpisz_opcji(…)`
+    i `evk_fields_tl_sprawdzone_opcji(…)` — jak dla wpisów i termów, na
+    opcji `evk_rep_opt_{grupa}` (grupa pojedyncza i grupa-repeater), zapis
+    bez autoloadu jak formularz strony ustawień; grupa spoza stron
+    ustawień — pusto i bez zapisu;
+  - `evk_fields_tl_obiekty()` oddaje też `opcje`.
+
+### Zmienione
+
+- Odczyt i zapis tłumaczeń idą przez jedną warstwę („magazyn”: grupy,
+  odczyt klucza, zapis zmian naraz) — wpis, term i grupa strony ustawień.
+  Zachowanie dla wpisów i termów bez zmian.
+
 ## [1.77.0] — 2026-10-01
 
 Pola tłumaczeń ułożone w wierszach, krótszy przycisk grupy i ✦ w edycji
