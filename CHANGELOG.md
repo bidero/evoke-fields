@@ -2,6 +2,46 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.77.0] — 2026-10-01
+
+Pola tłumaczeń ułożone w wierszach, krótszy przycisk grupy i ✦ w edycji
+kategorii i tagów (z Evoke ONE 1.270.0).
+
+Uwagi zgłaszającego po 1.76.0: „Przetłumacz puste pola (AI)” spadał do
+drugiego wiersza już przy dwóch językach, a pola mogłyby być ułożone ładniej
+(część w jednym wierszu, na telefonie pod spodem).
+
+### Zmienione
+
+- **Układ pola tłumaczenia**: etykieta i przyciski („Kopiuj z polskiego”,
+  „✦ Przetłumacz”) w jednym wierszu nad oryginałem i polem. Gdy się nie
+  mieszczą (kolumna boczna, telefon), przyciski schodzą pod etykietę —
+  `flex-wrap`, bez progu szerokości. Znaczniki („AI — do sprawdzenia”,
+  „Do sprawdzenia”, „Sprawdzone”) pod polem, tylko gdy są.
+- **Przycisk grupy: „✦ Tłumacz puste”** (nazwa dla czytnika bez zmian:
+  „Przetłumacz puste pola (AI)”). PL | EN i przycisk mieszczą się w jednym
+  wierszu także w kolumnie bocznej.
+
+### Dodane
+
+- **API tekstów dla termów**: `evk_fields_tl_teksty()`, `evk_fields_tl_wpisz()`
+  i `evk_fields_tl_sprawdzone()` przyjmują ostatni parametr `$obiekt`
+  (`'post'` — domyślnie, jak dotąd — albo `'term'`). Grupy termu jak
+  w formularzu (taksonomia termu), metadane termu.
+- `evk_fields_tl_taksonomie()` (taksonomie z polami do tłumaczenia)
+  i `evk_fields_tl_obiekty()` (`['post', 'term']`) — po niej wtyczka od
+  języków poznaje, że Fields umie termy.
+- **✦ w edycji termu**: filtr `evk_fields_tl_ai` dostaje kontekst
+  `['term' => id]`, skrypt wysyła `term_id`. Formularz dodawania termu —
+  bez przycisków.
+
+### Do sprawdzenia na testowej
+
+- Metaboks w kolumnie bocznej („Dane klienta”) przy PL i EN: „✦ Tłumacz
+  puste” w wierszu przełącznika, przyciski pola pod etykietą.
+- Metaboks w głównej kolumnie: przyciski w wierszu etykiety.
+- Edycja kategorii z grupą pól: ✦ przy polu i dla grupy, zapis „Aktualizuj”.
+
 ## [1.76.0] — 2026-09-30
 
 ✦ „Przetłumacz (AI)” także na stronach ustawień.

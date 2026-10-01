@@ -240,6 +240,8 @@
        sprawdzenia”. Kontekst: wszystkie pola języka na ekranie, z obecnymi
        tłumaczeniami — model trzyma się słownictwa reszty. */
     var AI = window.evkRepTlAi || null;
+    /* Co zapisać po wpisaniu: wpis, ustawienia albo — od 1.77.0 — term. */
+    function zapisz() { return AI && AI.strona ? 'ustawienia.' : (AI && AI.term ? 'term (Aktualizuj).' : 'wpis.'); }
     var trwaAi = false;
 
     function kontekstAi(lang) {
@@ -285,7 +287,7 @@
                 teksty['k' + (j + 1)] = { n: lista.indexOf(x) + 1, bylo: x.tl };
                 miejsca['k' + (j + 1)] = x;
             });
-            return $.post(AI.ajax, { action: 'evk_tl_ai_pola', nonce: AI.nonce, post_id: AI.post, strona: AI.strona || '', lang: lang,
+            return $.post(AI.ajax, { action: 'evk_tl_ai_pola', nonce: AI.nonce, post_id: AI.post, strona: AI.strona || '', term_id: AI.term || '', lang: lang,
                 kontekst: JSON.stringify(kontekst), teksty: JSON.stringify(teksty) }).then(function (r) {
                 if (r === -1 || r === '-1' || r === 0 || r === '0') { w.blad = 'Sesja wygasła albo brak uprawnień — przeładuj stronę.'; return w; }
                 if (!r || !r.success) { w.blad = (r && typeof r.data === 'string' && r.data) || 'Serwer odmówił.'; return w; }
@@ -316,7 +318,7 @@
     function opisAi(w, jeden) {
         var model = AI.model ? ' · ' + AI.model : '';
         if (jeden) {
-            if (w.wpisane) return 'Wpisane (' + (w.pamiec ? 'z pamięci' : 'AI') + model + ') — sprawdź i zapisz ' + (AI.strona ? 'ustawienia.' : 'wpis.');
+            if (w.wpisane) return 'Wpisane (' + (w.pamiec ? 'z pamięci' : 'AI') + model + ') — sprawdź i zapisz ' + zapisz();
             if (w.blad) return w.blad;
             if (w.bezZmian) return 'AI zwróciło ten sam tekst — bez zmian.';
             if (w.odrzucone) return 'Tłumaczenie odrzucone: znaczniki HTML, tagi {…} albo shortcody nie zgadzają się z oryginałem.';
@@ -328,7 +330,7 @@
         if (w.bezZmian) cz.push('bez zmian ' + w.bezZmian);
         if (w.odrzucone) cz.push('odrzucone ' + w.odrzucone);
         if (w.pominiete) cz.push('pominięte ' + w.pominiete);
-        return (cz.length ? cz.join(', ') : 'nic nie wpisane') + '.' + (w.blad ? ' ' + w.blad : '') + (w.wpisane ? ' Sprawdź i zapisz ' + (AI.strona ? 'ustawienia.' : 'wpis.') : '');
+        return (cz.length ? cz.join(', ') : 'nic nie wpisane') + '.' + (w.blad ? ' ' + w.blad : '') + (w.wpisane ? ' Sprawdź i zapisz ' + zapisz() : '');
     }
 
     function zajetyAi(tak, $b) {
