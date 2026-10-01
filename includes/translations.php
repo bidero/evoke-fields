@@ -418,14 +418,91 @@ function evk_fields_tl_taksonomie(): array {
     return array_keys($tx);
 }
 
-/** Obiekty, których teksty podaje API (1.77.0: także termy) — po tym wtyczka od języków poznaje wersję. */
+/**
+ * Grupy na stronach ustawień z polami tłumaczonymi (1.78.0) — tam szukać
+ * tekstów opcji. Strona ⇒ {nazwa, prawo, grupy: klucz ⇒ {nazwa, zakladka}}.
+ * Grupa stojąca na kilku stronach należy do pierwszej (wartość i tak jest jedna,
+ * w `evk_rep_opt_{grupa}`). Bez sprawdzania prawa — robi to wtyczka od języków.
+ *
+ * @return array<string,array{nazwa:string,prawo:string,grupy:array<string,array{nazwa:string,zakladka:int}>}>
+ */
+function evk_fields_tl_grupy_stron(): array {
+    $out = [];
+    if (!evk_rep_tl_langs()) return $out;
+    $grupy = evk_rep_groups();
+    $byla = [];
+    foreach (evk_rep_settings_pages() as $slug => $page) {
+        if (!is_array($page)) continue;
+        $slug = (string) $slug;
+        foreach (array_values((array) ($page['tabs'] ?? [])) as $i => $tab) {
+            foreach ((array) (((array) $tab)['groups'] ?? []) as $gk) {
+                $gk = (string) $gk;
+                if (isset($byla[$gk]) || !isset($grupy[$gk]) || !evk_rep_tl_fields_have((array) ($grupy[$gk]['fields'] ?? []))) continue;
+                $byla[$gk] = true;
+                if (!isset($out[$slug])) $out[$slug] = ['nazwa' => (string) ($page['label'] ?? $slug), 'prawo' => (string) ($page['capability'] ?? 'manage_options'), 'grupy' => []];
+                $out[$slug]['grupy'][$gk] = ['nazwa' => (string) ($grupy[$gk]['label'] ?? $gk), 'zakladka' => (int) $i];
+            }
+        }
+    }
+    return $out;
+}
+
+/** Obiekty, których teksty podaje API (1.77.0: także termy, 1.78.0: grupy stron ustawień) — po tym wtyczka od języków poznaje wersję. */
 function evk_fields_tl_obiekty(): array {
-    return EVK_REP_TL_OBIEKTY;
+    return array_merge(EVK_REP_TL_OBIEKTY, ['opcje']);
 }
 
 /** Odczyt metadanej wpisu albo termu. @return mixed */
 function evk_rep_tl_meta(string $obiekt, int $id, string $klucz) {
     return get_metadata($obiekt === 'term' ? 'term' : 'post', $id, $klucz, true);
+}
+
+/**
+ * Miejsce przechowania wartości pól (1.78.0): grupy, odczyt klucza i zapis
+ * zmian naraz. Wpis i term — metadane obiektu; grupa strony ustawień — jedna
+ * opcja `evk_rep_opt_{grupa}`: grupa pojedyncza trzyma `pole ⇒ wartość`
+ * (i bliźniaki obok), grupa-repeater — listę wierszy pod kluczem grupy.
+ * Null: nie ma takiego obiektu albo grupy.
+ *
+ * @param int|string $id Identyfikator wpisu albo termu; dla `opcje` — klucz grupy.
+ * @return array{grupy:array<string,array<string,mixed>>,czytaj:callable,zapisz:callable}|null
+ */
+function evk_rep_tl_magazyn(string $obiekt, $id): ?array {
+    if ($obiekt === 'opcje') {
+        $gk = (string) $id;
+        $g = evk_rep_groups()[$gk] ?? null;
+        if (!is_array($g) || $gk === '') return null;
+        $rep = evk_rep_is_repeater($g);
+        $czytaj = static function (string $k) use ($gk, $rep) {
+            $v = get_option('evk_rep_opt_' . $gk, []);
+            if ($rep) return $k === $gk ? $v : null;
+            return is_array($v) ? ($v[$k] ?? null) : null;
+        };
+        /* Opcja zapisuje się w całości, bez autoloadu — jak formularz strony ustawień. */
+        $zapisz = static function (array $zmiany) use ($gk, $rep): void {
+            $v = get_option('evk_rep_opt_' . $gk, []);
+            $v = is_array($v) ? $v : [];
+            foreach ($zmiany as $k => $w) {
+                if ($rep) { if ((string) $k === $gk && is_array($w)) $v = $w; continue; }
+                if ($w === null) unset($v[$k]); else $v[$k] = $w;
+            }
+            update_option('evk_rep_opt_' . $gk, $v, false);
+        };
+        return ['grupy' => [$gk => $g], 'czytaj' => $czytaj, 'zapisz' => $zapisz];
+    }
+    $id = (int) $id;
+    if ($id <= 0 || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return null;
+    return [
+        'grupy'  => evk_rep_tl_grupy_wpisu($id, $obiekt),
+        'czytaj' => static function (string $k) use ($obiekt, $id) { return evk_rep_tl_meta($obiekt, $id, $k); },
+        /* update_metadata() zdejmuje ukośniki, więc wp_slash(). */
+        'zapisz' => static function (array $zmiany) use ($obiekt, $id): void {
+            foreach ($zmiany as $k => $w) {
+                if ($w === null) delete_metadata($obiekt, $id, (string) $k);
+                else update_metadata($obiekt, $id, (string) $k, wp_slash($w));
+            }
+        },
+    ];
 }
 
 /**
@@ -435,13 +512,40 @@ function evk_rep_tl_meta(string $obiekt, int $id, string $klucz) {
  * @return list<array{klucz:string,grupa:string,opis:string,typ:string,pl:string,tl:array<string,string>,zrodlo:array<string,string>,ai:array<string,bool>,stale:array<string,bool>}>
  */
 function evk_fields_tl_teksty(int $post_id, string $obiekt = 'post'): array {
+    if ($post_id <= 0 || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return [];
+    return evk_rep_tl_teksty_z(evk_rep_tl_magazyn($obiekt, $post_id));
+}
+
+/**
+ * Teksty grupy ze strony ustawień (1.78.0) — ten sam kształt co
+ * evk_fields_tl_teksty(). Grupa spoza stron ustawień: pusto.
+ *
+ * @return list<array<string,mixed>>
+ */
+function evk_fields_tl_teksty_opcji(string $grupa): array {
+    return evk_rep_tl_na_stronie($grupa) ? evk_rep_tl_teksty_z(evk_rep_tl_magazyn('opcje', $grupa)) : [];
+}
+
+/** Czy grupa stoi na stronie ustawień z polami tłumaczonymi (1.78.0). */
+function evk_rep_tl_na_stronie(string $grupa): bool {
+    foreach (evk_fields_tl_grupy_stron() as $s) if (isset($s['grupy'][$grupa])) return true;
+    return false;
+}
+
+/**
+ * @param array{grupy:array<string,array<string,mixed>>,czytaj:callable,zapisz:callable}|null $mag
+ * @return list<array<string,mixed>>
+ */
+function evk_rep_tl_teksty_z(?array $mag): array {
     $out = [];
-    if ($post_id <= 0 || !evk_rep_tl_langs() || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return $out;
-    foreach (evk_rep_tl_grupy_wpisu($post_id, $obiekt) as $gkey => $g) {
+    if (!$mag || !evk_rep_tl_langs()) return $out;
+    $czytaj = $mag['czytaj'];
+    foreach ($mag['grupy'] as $gkey => $g) {
+        $gkey   = (string) $gkey;
         $grupa  = (string) ($g['label'] ?? $gkey);
         $fields = (array) ($g['fields'] ?? []);
         if (evk_rep_is_repeater($g)) {
-            evk_rep_tl_miejsca_wierszy($gkey, '', $grupa, '', $fields, evk_rep_tl_meta($obiekt, $post_id, $gkey), $out);
+            evk_rep_tl_miejsca_wierszy($gkey, '', $grupa, '', $fields, $czytaj($gkey), $out);
             continue;
         }
         foreach ($fields as $fk => $f) {
@@ -450,11 +554,10 @@ function evk_fields_tl_teksty(int $post_id, string $obiekt = 'post'): array {
             if (evk_rep_is_layout($t) || $t === 'calc') continue;
             $etyk = trim((string) ($f['label'] ?? '')) !== '' ? (string) $f['label'] : $fk;
             if ($t === 'repeater') {
-                evk_rep_tl_miejsca_wierszy($fk, '', $grupa, $etyk, (array) ($f['sub_fields'] ?? []), evk_rep_tl_meta($obiekt, $post_id, $fk), $out);
+                evk_rep_tl_miejsca_wierszy($fk, '', $grupa, $etyk, (array) ($f['sub_fields'] ?? []), $czytaj($fk), $out);
                 continue;
             }
-            $twin = static function (string $k) use ($post_id, $obiekt) { return evk_rep_tl_meta($obiekt, $post_id, $k); };
-            evk_rep_tl_miejsce($out, $fk . '|', $grupa, $etyk, $fk, $f, evk_rep_tl_meta($obiekt, $post_id, $fk), $twin);
+            evk_rep_tl_miejsce($out, $fk . '|', $grupa, $etyk, $fk, $f, $czytaj($fk), $czytaj);
         }
     }
     return $out;
@@ -464,17 +567,18 @@ function evk_fields_tl_teksty(int $post_id, string $obiekt = 'post'): array {
  * Definicja pola i położenie miejsca z klucza: [meta, pole, definicja, ścieżka wierszy].
  * Ścieżka wierszy to lista [indeks, pole repeatera] od góry, bez ostatniego pola.
  *
+ * @param array<string,array<string,mixed>> $grupy
  * @return array{0:string,1:string,2:array<string,mixed>,3:list<array{0:int,1:string}>}|null
  */
-function evk_rep_tl_znajdz(int $post_id, string $klucz, string $obiekt = 'post'): ?array {
+function evk_rep_tl_znajdz(array $grupy, string $klucz): ?array {
     $p = strpos($klucz, '|');
     if ($p === false) return null;
     $meta = substr($klucz, 0, $p);
     $sciezka = substr($klucz, $p + 1);
-    foreach (evk_rep_tl_grupy_wpisu($post_id, $obiekt) as $gkey => $g) {
+    foreach ($grupy as $gkey => $g) {
         $fields = (array) ($g['fields'] ?? []);
         if (evk_rep_is_repeater($g)) {
-            if ($gkey !== $meta || $sciezka === '') continue;
+            if ((string) $gkey !== $meta || $sciezka === '') continue;
         } else {
             if (!isset($fields[$meta])) continue;
             $f = (array) $fields[$meta];
@@ -501,6 +605,21 @@ function evk_rep_tl_znajdz(int $post_id, string $klucz, string $obiekt = 'post')
     return null;
 }
 
+/** Nowe tłumaczenie z tekstu: [tłumaczenie, źródło] — skrót tekstu podstawowego, z `$ai` ze znacznikiem `ai-`. */
+function evk_rep_tl_wpis_tekstu(string $tekst, bool $ai): callable {
+    return static function (array $f, string $pl, string $tv, string $z) use ($tekst, $ai): ?array {
+        $nowy = ($f['type'] ?? '') === 'link' ? sanitize_text_field($tekst) : evk_rep_sanitize_value((string) ($f['type'] ?? 'text'), $tekst, $f);
+        $nowy = is_string($nowy) ? $nowy : '';
+        if (evk_rep_tl_empty($nowy)) return ['', ''];
+        return [$nowy, ($ai ? 'ai-' : '') . evk_rep_tl_src($pl)];
+    };
+}
+
+/** „Sprawdzone": tłumaczenie bez zmian, źródło = bieżący tekst podstawowy, bez znacznika AI. */
+function evk_rep_tl_wpis_sprawdzony(array $f, string $pl, string $tv, string $z): ?array {
+    return evk_rep_tl_empty($tv) ? null : [$tv, evk_rep_tl_src($pl)];
+}
+
 /**
  * Zapis tłumaczenia jednego miejsca — jak formularz: bliźniak i źródło
  * (skrót bieżącego tekstu podstawowego; z `$ai` — ze znacznikiem `ai-`).
@@ -508,56 +627,60 @@ function evk_rep_tl_znajdz(int $post_id, string $klucz, string $obiekt = 'post')
  * tekstu podstawowego.
  */
 function evk_fields_tl_wpisz(int $post_id, string $klucz, string $lang, string $tekst, bool $ai = false, string $obiekt = 'post'): bool {
-    return evk_rep_tl_zmien($post_id, $klucz, $lang, static function (array $f, string $pl, string $tv, string $z) use ($tekst, $ai): ?array {
-        $nowy = ($f['type'] ?? '') === 'link' ? sanitize_text_field($tekst) : evk_rep_sanitize_value((string) ($f['type'] ?? 'text'), $tekst, $f);
-        $nowy = is_string($nowy) ? $nowy : '';
-        if (evk_rep_tl_empty($nowy)) return ['', ''];
-        return [$nowy, ($ai ? 'ai-' : '') . evk_rep_tl_src($pl)];
-    }, $obiekt);
+    if ($post_id <= 0 || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return false;
+    return evk_rep_tl_zmien(evk_rep_tl_magazyn($obiekt, $post_id), $klucz, $lang, evk_rep_tl_wpis_tekstu($tekst, $ai));
 }
 
 /** „Sprawdzone": tłumaczenie bez zmian, źródło = bieżący tekst podstawowy, bez znacznika AI. */
 function evk_fields_tl_sprawdzone(int $post_id, string $klucz, string $lang, string $obiekt = 'post'): bool {
-    return evk_rep_tl_zmien($post_id, $klucz, $lang, static function (array $f, string $pl, string $tv, string $z): ?array {
-        return evk_rep_tl_empty($tv) ? null : [$tv, evk_rep_tl_src($pl)];
-    }, $obiekt);
+    if ($post_id <= 0 || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return false;
+    return evk_rep_tl_zmien(evk_rep_tl_magazyn($obiekt, $post_id), $klucz, $lang, 'evk_rep_tl_wpis_sprawdzony');
+}
+
+/** Zapis tłumaczenia w grupie strony ustawień (1.78.0) — jak evk_fields_tl_wpisz(). */
+function evk_fields_tl_wpisz_opcji(string $grupa, string $klucz, string $lang, string $tekst, bool $ai = false): bool {
+    if (!evk_rep_tl_na_stronie($grupa)) return false;
+    return evk_rep_tl_zmien(evk_rep_tl_magazyn('opcje', $grupa), $klucz, $lang, evk_rep_tl_wpis_tekstu($tekst, $ai));
+}
+
+/** „Sprawdzone" w grupie strony ustawień (1.78.0). */
+function evk_fields_tl_sprawdzone_opcji(string $grupa, string $klucz, string $lang): bool {
+    if (!evk_rep_tl_na_stronie($grupa)) return false;
+    return evk_rep_tl_zmien(evk_rep_tl_magazyn('opcje', $grupa), $klucz, $lang, 'evk_rep_tl_wpis_sprawdzony');
 }
 
 /**
  * Wspólna droga zapisu: $zmiana(pole, tekst podstawowy, obecne tłumaczenie,
  * obecne źródło) → [tłumaczenie, źródło] albo null (bez zmian).
+ *
+ * @param array{grupy:array<string,array<string,mixed>>,czytaj:callable,zapisz:callable}|null $mag
  */
-function evk_rep_tl_zmien(int $post_id, string $klucz, string $lang, callable $zmiana, string $obiekt = 'post'): bool {
+function evk_rep_tl_zmien(?array $mag, string $klucz, string $lang, callable $zmiana): bool {
     $lang = sanitize_key($lang);
-    if ($post_id <= 0 || !isset(evk_rep_tl_langs()[$lang]) || !in_array($obiekt, EVK_REP_TL_OBIEKTY, true)) return false;
-    $gdzie = evk_rep_tl_znajdz($post_id, $klucz, $obiekt);
+    if (!$mag || !isset(evk_rep_tl_langs()[$lang])) return false;
+    $gdzie = evk_rep_tl_znajdz($mag['grupy'], $klucz);
     if (!$gdzie) return false;
     [$meta, $fk, $f, $droga] = $gdzie;
     if (!evk_rep_tl_field_on($f)) return false;
     $tk = evk_rep_tl_key($lang, $fk);
+    $czytaj = $mag['czytaj'];
 
     if (!$droga) {
-        $pl = evk_rep_tl_base_text($f, evk_rep_tl_meta($obiekt, $post_id, $meta));
+        $pl = evk_rep_tl_base_text($f, $czytaj($meta));
         if (evk_rep_tl_empty($pl)) return false;
-        $tv = evk_rep_tl_meta($obiekt, $post_id, $tk);
-        $z  = evk_rep_tl_meta($obiekt, $post_id, $tk . '__zrodlo');
+        $tv = $czytaj($tk);
+        $z  = $czytaj($tk . '__zrodlo');
         $w  = $zmiana($f, $pl, is_scalar($tv) ? (string) $tv : '', is_scalar($z) ? (string) $z : '');
         if ($w === null) return true;
-        if ($w[0] === '') {
-            delete_metadata($obiekt, $post_id, $tk);
-            delete_metadata($obiekt, $post_id, $tk . '__zrodlo');
-        } else {
-            update_metadata($obiekt, $post_id, $tk, wp_slash($w[0]));
-            update_metadata($obiekt, $post_id, $tk . '__zrodlo', $w[1]);
-        }
+        ($mag['zapisz'])($w[0] === '' ? [$tk => null, $tk . '__zrodlo' => null] : [$tk => $w[0], $tk . '__zrodlo' => $w[1]]);
         return true;
     }
 
-    $rows = evk_rep_tl_meta($obiekt, $post_id, $meta);
+    $rows = $czytaj($meta);
     if (!is_array($rows)) return false;
     $rows = array_values($rows);
     $wez = &$rows;
-    foreach ($droga as $n => [$i, $sub]) {
+    foreach ($droga as [$i, $sub]) {
         if (!isset($wez[$i]) || !is_array($wez[$i])) return false;
         if ($sub === '') { $wez = &$wez[$i]; break; }
         if (!isset($wez[$i][$sub]) || !is_array($wez[$i][$sub])) return false;
@@ -577,8 +700,8 @@ function evk_rep_tl_zmien(int $post_id, string $klucz, string $lang, callable $z
         $wez[$tk . '__zrodlo'] = $w[1];
     }
     unset($wez);
-    /* Cała lista wierszy — update_metadata() zdejmuje ukośniki, więc wp_slash(). */
-    update_metadata($obiekt, $post_id, $meta, wp_slash($rows));
+    /* Cała lista wierszy naraz. */
+    ($mag['zapisz'])([$meta => $rows]);
     return true;
 }
 
