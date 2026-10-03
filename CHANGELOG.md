@@ -2,6 +2,49 @@
 
 Format wg [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](https://semver.org/).
 
+## [1.79.0] — 2026-10-03
+
+Repeatery w CSV (Evoke ONE 1.293.0, decyzje zgłaszającego z 03.10).
+
+### Dodane
+
+- **Repeatery w imporcie i eksporcie wpisów** („Migracja CSV”): kolumna na
+  każdą grupę-repeater i każde pole „repeater” w grupie. Komórka to lista
+  wierszy w JSON z kluczami pól (import przyjmie też etykiety):
+  `[{"tytul":"Pakiet S","cena":99,"ikona":123,"en":{"tytul":"Package S"}}]`.
+  - tłumaczenia — obiekt języka w wierszu (`"en": {…}`), tylko pola
+    z wersjami językowymi;
+  - obraz, plik, galeria — ID albo adres pliku z biblioteki mediów, także
+    rozmiar (`-300x200`), `-scaled` i adres z innej domeny z tą samą
+    ścieżką w uploads; pliku nie ma → pole puste i ostrzeżenie (bez
+    pobierania);
+  - relacje — ID albo nazwa: slug/tytuł wpisu, nazwa/slug termu,
+    login/e-mail użytkownika; liczby po polsku, „tak/nie”, etykiety opcji
+    i daty jak w kolumnach pól;
+  - przy aktualizacji wpisu wybór na kolumnę: „zastąp wiersze” albo
+    „dopisz na końcu”; pusta komórka zostawia wiersze bez zmian;
+  - eksport w tej samej postaci (ID, obiekt języka, bez pustych pól) —
+    plik wraca importem 1:1, a tłumaczenie, które się nie zmieniło,
+    zachowuje znacznik „Do sprawdzenia” po AI.
+- **Import stron ustawień** w formacie eksportu: grupa-repeater jako
+  tabela, grupa pojedyncza jako „Pole | Wartość” (zmieniają się tylko pola
+  z pliku), pole-repeater jako JSON w „Wartość”, tłumaczenie jako kolumna
+  albo wiersz „Etykieta [en]”; „zastąp” albo „dopisz” wiersze.
+- Raport importu ma listę **ostrzeżeń** (obraz spoza biblioteki, nieznane
+  pole, brak wpisu, termu albo użytkownika) — z numerem wiersza pliku
+  i wiersza listy.
+
+### Zmienione
+
+- Eksport stron ustawień obejmuje wszystkie pola (dotąd tylko proste):
+  obraz i plik jako ID, galeria, relacje, link i pole-repeater jako JSON,
+  tłumaczenia „Etykieta [en]”.
+
+### Naprawione
+
+- Komunikaty importu podawały numer pierwszego wiersza porcji zamiast
+  wiersza, którego dotyczyły.
+
 ## [1.78.0] — 2026-10-01
 
 Pola stron ustawień w hurtowym tłumaczeniu AI (Evoke ONE 1.272.0).

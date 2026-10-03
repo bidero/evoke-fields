@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Evoke FIELDS
  * Description: System własnych pól do Bricks Builder — repeater, pola pojedyncze, zakładki, akordeony, query loop, Settings Pages, taksonomie.
- * Version: 1.78.0
+ * Version: 1.79.0
  * Author: Evoke Design Studio
  * Text Domain: evk-repeater
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('EVK_REP_VERSION', '1.78.0');
+define('EVK_REP_VERSION', '1.79.0');
 define('EVK_REP_FILE', __FILE__);
 define('EVK_REP_URL', plugin_dir_url(__FILE__));
 define('EVK_REP_PATH', plugin_dir_path(__FILE__));
@@ -248,6 +248,8 @@ require_once EVK_REP_PATH . 'includes/settings.php';
 require_once EVK_REP_PATH . 'includes/tools.php';
 require_once EVK_REP_PATH . 'includes/backups.php'; // auto-kopie konfiguracji (po tools.php — używa jego eksportu/importu)
 require_once EVK_REP_PATH . 'includes/vault.php'; // sejf konfiguracji w bazie (po backups.php i tools.php — używa ich helperów)
+require_once EVK_REP_PATH . 'includes/csv-repeater.php'; // repeatery w CSV jako JSON (1.79.0)
 require_once EVK_REP_PATH . 'includes/import-csv.php'; // import CSV z mapowaniem (po backups.php — używa evk_backups_ensure_protection)
+require_once EVK_REP_PATH . 'includes/csv-ustawienia.php'; // strony ustawień w CSV: pełny eksport i import (1.79.0)
 require_once EVK_REP_PATH . 'includes/admin-columns.php';
 require_once EVK_REP_PATH . 'includes/github-updater.php'; // aktualizacje z GitHub (port z Evoke ONE 1.19.4)

@@ -12,8 +12,8 @@ if (!defined('ABSPATH')) exit;
  *   3. Import porcjami (time-box jak w „Przelicz") ze wznowieniem; po każdym wpisie
  *      przeliczamy pola calc (evk_rep_recalc). Raport na końcu.
  *
- * Zakres MVP: typy treści (post/CPT) i proste typy pól. Bez repeaterów, relacji po
- * nazwie i sideloadu obrazów (planowane jako kolejne iteracje).
+ * Zakres: typy treści (post/CPT), proste typy pól i (od 1.79.0) repeatery jako
+ * JSON w jednej komórce — includes/csv-repeater.php. Bez sideloadu obrazów.
  */
 
 const EVK_CSV_TIME_BUDGET = 20;   // sekundy na porcję w fallbacku POST (limit czasu hostingu)
@@ -195,6 +195,7 @@ function evk_csv_export_targets(string $post_type): array {
         'core:menu_order' => 'Kolejność',
     ];
     foreach (evk_csv_evk_targets($post_type) as $k => $d) $out[$k] = $d['label'];
+    foreach (evk_csv_rep_targets($post_type) as $k => $d) $out[$k] = $d['label'];   // repeatery: JSON (1.79.0)
     foreach (evk_csv_tax_targets($post_type) as $k => $l) $out[$k] = $l;
     return $out;
 }
@@ -225,6 +226,14 @@ function evk_csv_export_cell(WP_Post $post, string $target, array $evk_defs): st
     if (strpos($target, 'evk:') === 0 && isset($evk_defs[$target])) {
         $key = substr($target, 4);
         return evk_csv_export_field_value($evk_defs[$target]['type'], get_post_meta($post->ID, $key, true));
+    }
+    if (strpos($target, 'rep:') === 0) {
+        static $rep = [];
+        $rep[$post->post_type] = $rep[$post->post_type] ?? evk_csv_rep_targets($post->post_type);
+        $def = $rep[$post->post_type][$target] ?? null;
+        if (!$def) return '';
+        $rows = get_post_meta($post->ID, $def['key'], true);
+        return is_array($rows) ? evk_csv_rep_export($rows, $def['fields']) : '';
     }
     return '';
 }
@@ -307,8 +316,7 @@ add_action('admin_init', function () {
 // więc eksport ma inny kształt niż typy treści:
 //   • grupa-repeater  → TABELA: nagłówek = etykiety pól, jeden wiersz = jeden wiersz repeatera;
 //   • grupa pojedyncza → PIONOWO: kolumny „Pole” | „Wartość”, jeden wiersz na pole.
-// Round-trip (import) nie dotyczy opcji — to zrzut/kopia wartości. Kolumny obejmują
-// wyłącznie proste typy pól (te same co eksport wpisów).
+// Od 1.79.0 wszystkie pola i import w tym samym formacie (includes/csv-ustawienia.php).
 
 /**
  * Grupy pól przypisane do którejkolwiek strony ustawień → cele eksportu opcji.
@@ -338,18 +346,6 @@ function evk_csv_option_group_targets(): array {
     return $out;
 }
 
-/** Proste pola danych grupy jako kolumny eksportu: [ fkey => ['label','type'] ]. Pomija pola układu i typy złożone. */
-function evk_csv_group_simple_fields(array $group): array {
-    $simple = evk_csv_simple_types();
-    $out    = [];
-    foreach (($group['fields'] ?? []) as $fk => $f) {
-        $t = $f['type'] ?? 'text';
-        if (!in_array($t, $simple, true)) continue;
-        $out[(string) $fk] = ['label' => (($f['label'] ?? '') !== '' ? $f['label'] : $fk), 'type' => $t];
-    }
-    return $out;
-}
-
 // Handler eksportu opcji — streamuje CSV bezpośrednio na wyjście.
 add_action('admin_init', function () {
     if (empty($_POST['evk_csv_opt_export'])) return;
@@ -363,11 +359,9 @@ add_action('admin_init', function () {
         evk_csv_redirect();
     }
 
-    $group    = (array) $targets[$gk]['group'];
-    $repeater = !empty($targets[$gk]['repeater']);
-    $fields   = evk_csv_group_simple_fields($group);
-    if (!$fields) {
-        evk_csv_notice('error', 'Ta grupa nie ma prostych pól, które można wyeksportować do CSV.');
+    $group = (array) $targets[$gk]['group'];
+    if (!evk_csv_rep_data_fields((array) ($group['fields'] ?? []))) {
+        evk_csv_notice('error', 'Ta grupa nie ma pól z wartościami, które można wyeksportować do CSV.');
         evk_csv_redirect();
     }
 
@@ -392,24 +386,8 @@ add_action('admin_init', function () {
         return mb_convert_encoding($s, $enc, 'UTF-8');
     };
 
-    if ($repeater) {
-        // TABELA: nagłówek = etykiety pól, jeden wiersz repeatera = jeden wiersz CSV.
-        fputcsv($out, array_map($conv, array_map(static fn($d) => $d['label'], $fields)), $delim);
-        foreach (array_values($stored) as $row) {
-            if (!is_array($row)) continue;
-            $line = [];
-            foreach ($fields as $fk => $d) {
-                $line[] = $conv(evk_csv_export_field_value($d['type'], $row[$fk] ?? ''));
-            }
-            fputcsv($out, $line, $delim);
-        }
-    } else {
-        // PIONOWO: Pole | Wartość, jeden wiersz na pole.
-        fputcsv($out, array_map($conv, ['Pole', 'Wartość']), $delim);
-        foreach ($fields as $fk => $d) {
-            fputcsv($out, [$conv($d['label']), $conv(evk_csv_export_field_value($d['type'], $stored[$fk] ?? ''))], $delim);
-        }
-    }
+    /* Wszystkie pola (od 1.79.0): złożone jako JSON, obraz i plik jako ID, tłumaczenia „Etykieta [en]” — csv-ustawienia.php. */
+    foreach (evk_csv_opt_export_rows($group, $stored) as $w) fputcsv($out, array_map($conv, $w), $delim);
     fclose($out);
     exit;
 });
@@ -533,12 +511,18 @@ add_action('admin_init', function () {
     foreach (evk_csv_core_targets() as $k => $_) $valid[$k] = true;
     foreach (evk_csv_tax_targets($post_type) as $k => $_) $valid[$k] = true;
     foreach (evk_csv_evk_targets($post_type) as $k => $_) $valid[$k] = true;
+    foreach (evk_csv_rep_targets($post_type) as $k => $_) $valid[$k] = true;
 
-    $mapping = [];
+    $mapping  = [];
+    $rep_mode = [];
     foreach ((array) ($_POST['evk_csv_map'] ?? []) as $idx => $target) {
         $idx = (int) $idx;
         $target = (string) $target;
         if ($target !== '' && isset($valid[$target])) $mapping[$idx] = $target;
+        /* Repeater przy aktualizacji wpisu: zastąp wiersze albo dopisz na końcu (decyzja 03.10). */
+        if (strpos($target, 'rep:') === 0) {
+            $rep_mode[$target] = (($_POST['evk_csv_rep_mode'][$idx] ?? '') === 'append') ? 'append' : 'replace';
+        }
     }
     if (!$mapping) { evk_csv_notice('error', 'Zmapuj co najmniej jedną kolumnę.'); evk_csv_redirect(); }
 
@@ -561,6 +545,7 @@ add_action('admin_init', function () {
 
     $s['post_type']      = $post_type;
     $s['mapping']        = $mapping;
+    $s['rep_mode']       = $rep_mode;
     $s['match_key']      = $match_key;
     $s['on_match']       = $on_match;
     $s['status_default'] = sanitize_key($_POST['evk_csv_status'] ?? 'publish') ?: 'publish';
@@ -568,7 +553,7 @@ add_action('admin_init', function () {
     $s['skip_empty']     = !isset($_POST['evk_csv_write_empty']); // domyślnie: pusta komórka nie nadpisuje
     $s['offset']         = 0;
     $s['total']          = evk_csv_count_rows((string) $s['file'], (string) $s['delimiter']);
-    $s['stats']          = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => []];
+    $s['stats']          = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => [], 'warnings' => []];
     $s['step']           = 'run';
     evk_csv_set_session($s);
     evk_csv_redirect();
@@ -628,6 +613,7 @@ function evk_csv_process_chunk(int $budget): array {
     while (($row = fgetcsv($fh, 0, $delim)) !== false) {
         if (evk_csv_is_blank_row($row)) continue;
         $row = array_map(function ($v) use ($enc) { return evk_csv_conv((string) $v, $enc); }, $row);
+        $s['offset'] = $offset; // numer wiersza w komunikatach (do 1.78.0 zawsze pierwszy wiersz porcji)
         evk_csv_import_row($s, $row);
         $offset++;
         $processed++;
@@ -743,6 +729,31 @@ function evk_csv_import_row(array &$s, array $row): void {
         else                                  update_post_meta($pid, $key, $store);
     }
 
+    // ── Repeatery (JSON w komórce, 1.79.0) ──
+    $rep_targets = evk_csv_rep_targets($post_type);
+    foreach ($vals as $target => $v) {
+        if (strpos($target, 'rep:') !== 0 || !isset($rep_targets[$target])) continue;
+        if ($v === '') continue; // pusta komórka zostawia wiersze bez zmian (decyzja 03.10)
+        $def   = $rep_targets[$target];
+        $gdzie = 'Wiersz ' . ($s['offset'] + 1) . ', „' . $def['label'] . '”';
+        $warn  = [];
+        $raw   = evk_csv_rep_decode($v, $def['fields'], $warn, $gdzie);
+        if ($raw === null) {
+            $s['stats']['errors'][] = $gdzie . ': to nie jest lista wierszy w JSON — kolumna pominięta';
+            if (count($s['stats']['errors']) > 50) array_shift($s['stats']['errors']);
+            continue;
+        }
+        evk_csv_warn($s, $warn);
+        $clean = evk_rep_sanitize_rows($def['fields'], $raw);
+        $old   = get_post_meta($pid, $def['key'], true);
+        $old   = is_array($old) ? array_values($old) : [];
+        /* Dopisanie nie przepuszcza starych wierszy przez sanityzację drugi raz — zgubiłaby znaczniki tłumaczeń AI. */
+        $new   = (($s['rep_mode'][$target] ?? 'replace') === 'append') ? array_merge($old, $clean) : evk_csv_rep_keep_sources($clean, $old);
+        if ($new) update_post_meta($pid, $def['key'], wp_slash($new));
+        else      delete_post_meta($pid, $def['key']);
+        if (function_exists('evk_rep_sync_bidirectional_rows')) evk_rep_sync_bidirectional_rows($pid, $def['fields'], $old, $new);
+    }
+
     // Tytuł z pola EVK (CPT bez „title") — po zapisaniu mety, przed recalc.
     // Import zapisuje metę sam (poza save_post EVK), więc wołamy jawnie.
     if (function_exists('evk_sync_cpt_title')) evk_sync_cpt_title($pid);
@@ -753,6 +764,16 @@ function evk_csv_import_row(array &$s, array $row): void {
 
 /** Konwersja wartości CSV → wartość przechowywana, wg typu pola (+ sanityzacja EVK). */
 function evk_csv_field_value(string $type, array $field, string $v) {
+    $v = evk_csv_field_raw($type, $field, $v);
+    if (in_array($type, ['checkbox', 'toggle'], true)) return $v;
+    return function_exists('evk_rep_sanitize_value') ? evk_rep_sanitize_value($type, $v, $field) : $v;
+}
+
+/**
+ * Zamiany komórki przed sanityzacją: liczby po polsku, tak/nie, etykiety opcji,
+ * daty. Wspólne dla kolumny pola i pól wiersza repeatera z JSON (1.79.0).
+ */
+function evk_csv_field_raw(string $type, array $field, string $v): string {
     switch ($type) {
         case 'number':
         case 'range':
@@ -781,7 +802,7 @@ function evk_csv_field_value(string $type, array $field, string $v) {
             $v = evk_csv_normalize_datetime($type, $v);
             break;
     }
-    return function_exists('evk_rep_sanitize_value') ? evk_rep_sanitize_value($type, $v, $field) : $v;
+    return $v;
 }
 
 /** Znajdź istniejący wpis wg klucza dopasowania. 0 = brak / tryb „zawsze twórz". */
@@ -832,8 +853,9 @@ function evk_csv_resolve_term(string $name, string $tax, bool $create): array {
 // NOTICE / REDIRECT (wzorzec PRG, jak w tools.php)
 // =========================================================================
 
-function evk_csv_notice(string $type, string $msg): void {
-    set_transient('evk_csv_notice_' . get_current_user_id(), ['type' => $type, 'msg' => $msg], 60);
+/** @param list<string> $lista szczegóły pod komunikatem (ostrzeżenia importu stron ustawień) */
+function evk_csv_notice(string $type, string $msg, array $lista = []): void {
+    set_transient('evk_csv_notice_' . get_current_user_id(), ['type' => $type, 'msg' => $msg, 'lista' => array_slice($lista, 0, 100)], 60);
 }
 function evk_csv_redirect(): void {
     wp_safe_redirect(add_query_arg(['page' => 'evk-import'], admin_url('admin.php')));
@@ -854,20 +876,22 @@ function evk_csv_page(): void {
     <div class="wrap evk-b-wrap">
         <h1><span class="dashicons dashicons-database-import"></span> Import / Eksport CSV</h1>
         <?php if ($notice): ?>
-            <div class="notice notice-<?php echo in_array($notice['type'], ['error', 'warning'], true) ? esc_attr($notice['type']) : 'success'; ?> is-dismissible"><p><?php echo esc_html($notice['msg']); ?></p></div>
+            <div class="notice notice-<?php echo in_array($notice['type'], ['error', 'warning'], true) ? esc_attr($notice['type']) : 'success'; ?> is-dismissible"><p><?php echo esc_html($notice['msg']); ?></p>
+                <?php if (!empty($notice['lista'])): ?><ul class="evk-csv-notice-lista" style="margin:0 0 8px 18px;list-style:disc;"><?php foreach ((array) $notice['lista'] as $evk_l): ?><li><?php echo esc_html((string) $evk_l); ?></li><?php endforeach; ?></ul><?php endif; ?></div>
         <?php endif; ?>
 
         <div class="evk-b-info">
             <span class="dashicons dashicons-info-outline"></span>
             <div>Import do <strong>typów treści</strong>: rdzeń wpisu (tytuł/treść/status…), <strong>taksonomie</strong>
-            (po nazwie/slug) i <strong>proste pola EVK</strong> grup pojedynczych. Pola obliczeniowe przeliczają się po imporcie.
+            (po nazwie/slug), <strong>proste pola EVK</strong> grup pojedynczych i <strong>repeatery</strong> (lista wierszy w JSON w jednej komórce).
+            Pola obliczeniowe przeliczają się po imporcie.
             Duże pliki przetwarzane są porcjami — nie zamykaj karty w trakcie.</div>
         </div>
 
         <?php
         if ($step === 'map' && !empty($s['headers']))      evk_csv_render_map($s);
         elseif (in_array($step, ['run', 'done'], true))    evk_csv_render_run($s);
-        else { evk_csv_render_upload(); evk_csv_render_export(); evk_csv_render_opt_export(); }
+        else { evk_csv_render_upload(); evk_csv_render_export(); evk_csv_render_opt_export(); evk_csv_render_opt_import(); }
         ?>
     </div>
     <?php
@@ -917,7 +941,7 @@ function evk_csv_render_export(): void {
     ?>
     <div class="evk-settings-group">
         <h2 class="evk-settings-group-title"><span class="dashicons dashicons-database-export" style="vertical-align:text-bottom;color:#2563eb;"></span> Eksport wartości do CSV</h2>
-        <p style="margin-top:0;color:#475569;">Pobierz wartości wpisów (rdzeń + proste pola EVK + taksonomie po nazwie) jako CSV.
+        <p style="margin-top:0;color:#475569;">Pobierz wartości wpisów (rdzeń + proste pola EVK + repeatery jako JSON + taksonomie po nazwie) jako CSV.
             Nagłówki są tak dobrane, aby ten sam plik dało się z powrotem <strong>zaimportować</strong> (auto-mapowanie po nazwie kolumny).</p>
 
         <form method="get" style="margin-bottom:10px;">
@@ -946,7 +970,7 @@ function evk_csv_render_export(): void {
                     <?php foreach ($targets as $target => $label): ?>
                     <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
                         <input type="checkbox" name="evk_csv_export_cols[]" value="<?php echo esc_attr($target); ?>" checked>
-                        <?php echo esc_html($label); ?>
+                        <?php echo esc_html($label); ?><?php if (strpos($target, 'rep:') === 0): ?> <span class="description">(repeater, JSON)</span><?php endif; ?>
                     </label>
                     <?php endforeach; ?>
                 </div>
@@ -998,7 +1022,7 @@ function evk_csv_render_opt_export(): void {
         <h2 class="evk-settings-group-title"><span class="dashicons dashicons-admin-settings" style="vertical-align:text-bottom;color:#2563eb;"></span> Eksport wartości stron opcji do CSV</h2>
         <p style="margin-top:0;color:#475569;">Pobierz wartości zapisane na <strong>stronach ustawień</strong> (opcje witryny, nie wpisy).
             Grupa-repeater eksportuje się jako <strong>tabela</strong> (wiersz = wiersz repeatera), grupa pojedyncza jako pary <strong>Pole / Wartość</strong>.
-            Uwzględniane są proste typy pól.</p>
+            Obrazy i pliki jako ID, galerie, relacje, linki i pola-repeatery jako JSON, tłumaczenia jako „Etykieta [en]”. Plik wraca importem niżej.</p>
 
         <?php if (!$targets): ?>
             <div class="evk-b-info" style="margin:0;">
@@ -1072,13 +1096,15 @@ function evk_csv_render_map(array $s): void {
     $core = evk_csv_core_targets();
     $tax  = evk_csv_tax_targets($sel_pt);
     $evk  = evk_csv_evk_targets($sel_pt);
+    $rep  = evk_csv_rep_targets($sel_pt);
 
     // Auto-dopasowanie kolumny → cel po nazwie nagłówka (etykieta/klucz).
-    $auto = function (string $header) use ($core, $tax, $evk): string {
+    $auto = function (string $header) use ($core, $tax, $evk, $rep): string {
         $h = mb_strtolower(trim($header));
         $map = ['tytuł' => 'core:title', 'title' => 'core:title', 'treść' => 'core:content', 'content' => 'core:content', 'status' => 'core:status', 'slug' => 'core:slug', 'data' => 'core:date', 'id' => 'core:id', 'zajawka' => 'core:excerpt', 'excerpt' => 'core:excerpt', 'kolejność' => 'core:menu_order', 'menu_order' => 'core:menu_order'];
         if (isset($map[$h])) return $map[$h];
         foreach ($evk as $k => $d) { if (mb_strtolower($d['label']) === $h || 'evk:' . $h === $k) return $k; }
+        foreach ($rep as $k => $d) { if (mb_strtolower($d['label']) === $h || 'rep:' . $h === $k) return $k; }
         foreach ($tax as $k => $l) { if (mb_strtolower($l) === $h) return $k; }
         return '';
     };
@@ -1124,12 +1150,38 @@ function evk_csv_render_map(array $s): void {
                                 <?php if ($evk): ?><optgroup label="Pola EVK">
                                     <?php foreach ($evk as $k => $d): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($pre, $k); ?>><?php echo esc_html($d['label']); ?> (<?php echo esc_html($d['type']); ?>)</option><?php endforeach; ?>
                                 </optgroup><?php endif; ?>
+                                <?php if ($rep): ?><optgroup label="Repeatery (JSON)">
+                                    <?php foreach ($rep as $k => $d): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($pre, $k); ?>><?php echo esc_html($d['label']); ?> (repeater)</option><?php endforeach; ?>
+                                </optgroup><?php endif; ?>
                             </select>
+                            <?php if ($rep): ?>
+                            <select name="evk_csv_rep_mode[<?php echo (int) $i; ?>]" class="evk-csv-rep-mode" aria-label="<?php echo esc_attr('Wiersze repeatera z kolumny „' . (string) $h . '” przy aktualizacji wpisu'); ?>" style="width:100%;margin-top:4px;">
+                                <option value="replace">Przy aktualizacji: zastąp wiersze</option>
+                                <option value="append">Przy aktualizacji: dopisz na końcu</option>
+                            </select>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php if ($rep): ?>
+            <p class="description">Repeater: komórka z listą wierszy w JSON, z kluczami (albo etykietami) pól, np.
+                <code>[{"tytul":"Pakiet S","cena":99,"en":{"tytul":"Package S"}}]</code>. Obraz po ID albo adresie z biblioteki mediów,
+                relacja po ID albo nazwie. Pusta komórka zostawia wiersze wpisu bez zmian.</p>
+            <script>
+            (function () {
+                /* Wybór „zastąp / dopisz” tylko przy kolumnie przypisanej do repeatera. */
+                document.querySelectorAll('select[name^="evk_csv_map["]').forEach(function (cel) {
+                    var tryb = cel.parentNode.querySelector('.evk-csv-rep-mode');
+                    if (!tryb) return;
+                    function pokaz() { tryb.style.display = cel.value.indexOf('rep:') === 0 ? '' : 'none'; }
+                    cel.addEventListener('change', pokaz);
+                    pokaz();
+                });
+            })();
+            </script>
+            <?php endif; ?>
         </div>
 
         <div class="evk-settings-group">
@@ -1203,6 +1255,14 @@ function evk_csv_render_run(array $s): void {
             </details>
         </div>
 
+        <div id="evk-csv-warnings" style="<?php echo empty($st['warnings']) ? 'display:none;' : ''; ?>margin:8px 0;">
+            <details><summary style="cursor:pointer;color:#92400e;">Ostrzeżenia (<span id="evk-csv-warncount"><?php echo count((array) ($st['warnings'] ?? [])); ?></span>)</summary>
+                <ul id="evk-csv-warnlist" style="margin:6px 0 0 18px;list-style:disc;color:#92400e;font-size:12px;">
+                    <?php foreach ((array) ($st['warnings'] ?? []) as $w): ?><li><?php echo esc_html($w); ?></li><?php endforeach; ?>
+                </ul>
+            </details>
+        </div>
+
         <div id="evk-csv-done-box" style="<?php echo $finished ? '' : 'display:none;'; ?>">
             <p style="color:#166534;"><span class="dashicons dashicons-yes-alt" style="vertical-align:text-bottom;"></span> Import zakończony.</p>
             <a href="<?php echo $reset_url; ?>" class="button button-primary">Nowy import</a>
@@ -1234,7 +1294,8 @@ function evk_csv_render_run(array $s): void {
             elC = document.getElementById('evk-csv-created'), elU = document.getElementById('evk-csv-updated'),
             elS = document.getElementById('evk-csv-skipped'), elState = document.getElementById('evk-csv-state'),
             errBox = document.getElementById('evk-csv-errors'), errCount = document.getElementById('evk-csv-errcount'),
-            errList = document.getElementById('evk-csv-errlist'), running = document.getElementById('evk-csv-running'),
+            errList = document.getElementById('evk-csv-errlist'), warnBox = document.getElementById('evk-csv-warnings'),
+            warnCount = document.getElementById('evk-csv-warncount'), warnList = document.getElementById('evk-csv-warnlist'), running = document.getElementById('evk-csv-running'),
             doneBox = document.getElementById('evk-csv-done-box');
 
         function render(d) {
@@ -1247,6 +1308,11 @@ function evk_csv_render_run(array $s): void {
             if (errs.length) {
                 errBox.style.display = ''; errCount.textContent = errs.length;
                 errList.innerHTML = errs.map(function (e) { var li = document.createElement('li'); li.textContent = e; return li.outerHTML; }).join('');
+            }
+            var warns = st.warnings || [];
+            if (warns.length) {
+                warnBox.style.display = ''; warnCount.textContent = warns.length + (st.warnings_more ? ' + ' + st.warnings_more : '');
+                warnList.innerHTML = warns.map(function (e) { var li = document.createElement('li'); li.textContent = e; return li.outerHTML; }).join('');
             }
         }
         function finish() {
